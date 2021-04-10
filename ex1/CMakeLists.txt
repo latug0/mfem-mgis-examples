@@ -20,7 +20,7 @@ if (NOT TARGET mfem-mgis::MFEMMGIS)
 endif(NOT TARGET mfem-mgis::MFEMMGIS)
 
 # Specific setup to copy files from MFEM-MGIS main project
-include(ex1.cmake)
+include(setup.cmake)
 
 # Define the executable to build for this example
 
