@@ -23,25 +23,22 @@ endif(NOT TARGET mfem-mgis::MFEMMGIS)
 include(setup.cmake)
 
 # Define the executable to build for this example
-
 add_executable(UniaxialTensileTestEx UniaxialTensileTest.cxx)
 target_link_libraries(UniaxialTensileTestEx mfem-mgis::MFEMMGIS)
 
 # Use mfront to generate libBehaviour.so
-
 add_custom_command(
   OUTPUT "src/libBehaviour.so"
   COMMAND mfront --obuild --interface=generic ${CMAKE_CURRENT_BINARY_DIR}/Plasticity.mfront
   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/Plasticity.mfront
   COMMENT "Performing mfront code generation")
 
-add_custom_target(generate-libBehaviour ALL
+add_custom_target(generate-libBehaviour-ex1 ALL
   DEPENDS "src/libBehaviour.so")
 
-add_dependencies(check UniaxialTensileTestEx generate-libBehaviour)
+add_dependencies(check UniaxialTensileTestEx generate-libBehaviour-ex1)
 
 # Define a test that will be called during the "make check"
-
 function(add_uniaxial_tensile_test_ex)
   set(test "UniaxialTensileTestEx")
   add_test(NAME ${test} COMMAND UniaxialTensileTestEx)
