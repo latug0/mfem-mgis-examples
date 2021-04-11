@@ -42,10 +42,10 @@ add_executable(UniaxialTensileTestEx UniaxialTensileTest.cxx)
 target_link_libraries(UniaxialTensileTestEx mfem-mgis::MFEMMGIS)
 
 # Copy needed file for execution
-#file(COPY
-#  ${CMAKE_CURRENT_BINARY_DIR}/Plasticity.mfront
-#  ${CMAKE_CURRENT_BINARY_DIR}/cube.mesh
-#  DESTINATION ${PROJECT_BINARY_DIR})
+file(COPY
+  ${PROJECT_SOURCE_DIR}/Plasticity.mfront
+  ${PROJECT_SOURCE_DIR}/cube.mesh
+  DESTINATION ${PROJECT_BINARY_DIR})
 
 # Use mfront to generate libBehaviour.so
 add_custom_command(
