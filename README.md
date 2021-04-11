@@ -1,3 +1,5 @@
 # mfem-mgis-data
 
-Storage area for data, meshes and documentation related to mfem-mgis repository.
+User oriented material for the mfem-mgis repository.
+You have access to data, meshes and use cases for mfem-mgis library.
+

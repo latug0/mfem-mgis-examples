@@ -30,19 +30,9 @@ else(CMAKE_CONFIGURATION_TYPES)
 endif(CMAKE_CONFIGURATION_TYPES)
 
 
+add_subdirectory(config)
 add_subdirectory(ex1)
 add_subdirectory(ex2)
-
-#install(FILES
-#  ex1/CMakeLists.txt
-#  ex1/Makefile
-#  DESTINATION share/mfem-mgis/examples/ex1)
-#
-#install(FILES
-#  ex2/CMakeLists.txt
-#  ex2/ssna303.cxx
-#  ${mfem-mgis-data_SOURCE_DIR}/mesh/ssna303.msh
-#  DESTINATION share/mfem-mgis/examples/ex2)
 
 
 #include(FetchContent)

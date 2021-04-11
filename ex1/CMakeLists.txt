@@ -19,9 +19,6 @@ if (NOT TARGET mfem-mgis::MFEMMGIS)
   find_package(MFEMMGIS REQUIRED)
 endif(NOT TARGET mfem-mgis::MFEMMGIS)
 
-# Specific setup to copy files from MFEM-MGIS main project
-include(setup.cmake)
-
 # Define the executable to build for this example
 add_executable(UniaxialTensileTestEx UniaxialTensileTest.cxx)
 target_link_libraries(UniaxialTensileTestEx mfem-mgis::MFEMMGIS)
