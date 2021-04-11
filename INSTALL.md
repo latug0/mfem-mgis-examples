@@ -27,22 +27,26 @@ List of prerequisites:
 - [`MFEM-MGIS`](https://github.com/thelfer/mfem-mgis)
 
 We refer to the `mfem-mgis` installation guide to install
-prerequisites and `mfem-mgis` library.
-In addition to that, you shall activate the MUMPS support or SUITESPARSE support in MFEM. Without this, you will not be able to activate all the examples.
+prerequisites and also the `mfem-mgis` library itseld.  In addition to
+that, you shall activate the MUMPS support or SUITESPARSE support
+within MFEM. Without this, you will not be able to successfully run
+all the examples.
 
 Warning: to have access to all the examples, you should :
 
-- go through the `mfem-mgis` install procedure and perform a `make install`.
-- define an environment variable MFEMMGIS_DIR that contains the cmake configure file. For example with the command :
+- go through the `mfem-mgis` install procedure and ultimately perform a `make install`.
+- define an environment variable MFEMMGIS_DIR that contains the cmake configure file named `MFEMMGISConfig.cmake`. For example with the command :
 ~~~~{.bash}
    export MFEMMGIS_DIR=${WORK_PLACE}/mfem-mgis/install/share/mfem-mgis/cmake
 ~~~~
 
-# Check all exemples are correctly executed
+# Checking that all exemples are correctly executed
 
 ~~~~{.bash}
 $ mkdir build
-$ cmake .. -DCMAKE_INSTALL_PREFIX=$PWD/install
+$ cd build
+$ export INSTALL_DIR=$PWD/install
+$ cmake .. -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
 $ make -j check && make install
 ~~~~
 
@@ -52,16 +56,12 @@ Through the `make install` command, some examples has been created in
 your installation directory.
 
 You can copy them elsewhere together with the `env.sh` file. The example
-can be compiled either using the build systems `cmake` or`make`.
+can be compiled either using the build systems `cmake` or directly with a `make`.
 
 ## Building the example using the `cmake` build-system
 
 ~~~~{.bash}
-$ export INSTALLDIR=<your_mfemmgis_install_directory>
-$ export TGDIR=<your_work_directory>
-$ cd ${TGDIR}
-$ cp -r ${INSTALLDIR}/share/mfem-mgis-examples/ex1 .
-$ cp ${INSTALLDIR}/share/mfem-mgis-examples/env.sh ex1/
+$ cp -r ${INSTALL_DIR}/share/mfem-mgis-examples/ex1 .
 $ cd ex1
 $ source env.sh
 $ mkdir build
@@ -70,7 +70,7 @@ $ cmake ..
 $ make
 ~~~~
 
-The example may then be run as follows:
+Then, the example may be run as follows:
 
 ~~~~{.bash}
 $ ./UniaxialTensileTest 
@@ -82,17 +82,13 @@ own case of study.
 ## Building the example using the `make` build-system
 
 ~~~~{.bash}
-$ export INSTALLDIR=<your_mfemmgis_install_directory>
-$ export TGDIR=<your_work_directory>
-$ cd ${TGDIR}
-$ cp -r ${INSTALLDIR}/share/mfem-mgis-examples/ex1 .
-$ cp ${INSTALLDIR}/share/mfem-mgis-examples/env.sh ex1/
+$ cp -r ${INSTALL_DIR}/share/mfem-mgis-examples/ex1 .
 $ cd ex1
 $ source env.sh
 $ make
 ~~~~
 
-### Building in debug mode
+## Building in debug mode
 
 The example and the `MFront` behaviour may be compiled in `debug` mode
 by changing the call to make as follows:
