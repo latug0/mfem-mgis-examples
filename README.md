@@ -1,5 +1,5 @@
 # mfem-mgis-data
 
-User oriented material for the mfem-mgis repository.
-You have access to data, meshes and use cases for mfem-mgis library.
+This repository provides user oriented material for the external `mfem-mgis` repository.
+You will find here meshes and a collection of use cases for the `mfem-mgis` library.
 
