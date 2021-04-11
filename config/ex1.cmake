@@ -1,19 +1,21 @@
-set(MFEMMGIS_EX1 "${MFEMMGIS_DIR}/../examples/ex1")
-set(REF_DIR "${CMAKE_SOURCE_DIR}/ex1")
+set(MFEMMGIS_EXDIR "${MFEMMGIS_DIR}/../examples")
+set(LOCAL_SOURCE_DIR "${CMAKE_SOURCE_DIR}/ex1")
 
 file(COPY
-  ${MFEMMGIS_EX1}/Plasticity.mfront
-  ${MFEMMGIS_EX1}/cube.mesh
-  ${MFEMMGIS_EX1}/UniaxialTensileTest.cxx
-  ${MFEMMGIS_EX1}/UnitTestingUtilities.hxx
+  ${MFEMMGIS_EXDIR}/ex1/Plasticity.mfront
+  ${MFEMMGIS_EXDIR}/ex1/cube.mesh
+  ${MFEMMGIS_EXDIR}/ex1/UniaxialTensileTest.cxx
+  ${MFEMMGIS_EXDIR}/ex1/UnitTestingUtilities.hxx
+  ${MFEMMGIS_EXDIR}/env.sh
   DESTINATION ${CMAKE_BINARY_DIR}/ex1)
 
 install(FILES
-  ${REF_DIR}/CMakeLists.txt
-  ${REF_DIR}/Makefile
-  ${MFEMMGIS_EX1}/Plasticity.mfront
-  ${MFEMMGIS_EX1}/cube.mesh
-  ${MFEMMGIS_EX1}/UniaxialTensileTest.cxx
-  ${MFEMMGIS_EX1}/UnitTestingUtilities.hxx
+  ${MFEMMGIS_EXDIR}/ex1/Plasticity.mfront
+  ${MFEMMGIS_EXDIR}/ex1/cube.mesh
+  ${MFEMMGIS_EXDIR}/ex1/UniaxialTensileTest.cxx
+  ${MFEMMGIS_EXDIR}/ex1/UnitTestingUtilities.hxx
+  ${MFEMMGIS_EXDIR}/env.sh
+  ${LOCAL_SOURCE_DIR}/CMakeLists.txt
+  ${LOCAL_SOURCE_DIR}/Makefile
   DESTINATION share/mfem-mgis-examples/ex1)
 
