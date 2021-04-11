@@ -36,14 +36,14 @@ add_subdirectory(ex2)
 
 
 #include(FetchContent)
-#FetchContent_Declare(mfem-mgis-data
-#  GIT_REPOSITORY https://github.com/latug0/mfem-mgis-data.git
+#FetchContent_Declare(mfem-mgis
+#  GIT_REPOSITORY https://github.com/thelfer/mfem-mgis.git
 #  GIT_TAG master
 #  CONFIGURE_COMMAND ""
 #  BUILD_COMMAND ""
 #  )
 #
 #FetchContent_GetProperties(mfem-mgis-data)
-#if(NOT mfem-mgis-data_POPULATED)
-#  FetchContent_Populate(mfem-mgis-data)
+#if(NOT mfem-mgis_POPULATED)
+#  FetchContent_Populate(mfem-mgis)
 #endif()
