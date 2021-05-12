@@ -32,11 +32,12 @@ int main(int argc, char** argv) {
   const char* library = "src/libBehaviour.so";
   auto order = 1;
 
+  PRINT_DEBUG;
   //file creation 
-https://meet.jit.si/cea-cad
-  std::string const myFile("/home/hc265945/spack_codes/mfem-mgis/ssna303/ssna303-3D/Test_Ssna303.txt");
+  std::string const myFile("Test_Ssna303.txt");
   std::ofstream out(myFile.c_str());
 
+  PRINT_DEBUG;
   // options treatment
   mfem::OptionsParser args(argc, argv);
   args.AddOption(&order, "-o", "--order",
@@ -47,12 +48,13 @@ https://meet.jit.si/cea-cad
     return EXIT_FAILURE;
   }
   args.PrintOptions(std::cout);
+
   // loading the mesh
   int nbr_ref_parallel = 1;
   int nbr_ref_sequential = 1;
   {
-  const auto main_timer = mfem_mgis::getTimer("main_timer");
-mfem_mgis::NonLinearEvolutionProblem problem(
+    const auto main_timer = mfem_mgis::getTimer("main_timer");
+    mfem_mgis::NonLinearEvolutionProblem problem(
       {{"MeshFileName", mesh_file},
        {"FiniteElementFamily", "H1"},
        {"FiniteElementOrder", order},
@@ -61,74 +63,97 @@ mfem_mgis::NonLinearEvolutionProblem problem(
        {"Hypothesis", "Tridimensional"},
        {"Parallel", true}});
 
-  auto mesh = problem.getImplementation<true>().getFiniteElementSpace().GetMesh();
+    auto mesh = problem.getImplementation<true>().getFiniteElementSpace().GetMesh();
+    
+    PRINT_DEBUG;
+    //get the number of vertices
+    int numbers_of_vertices = mesh->GetNV();
+    //get the number of elements
+    int numbers_of_elements = mesh->GetNE();
+    //get the element size
+    double h;
+    h = mesh->GetElementSize(0);
+    double t_m = 1/h;
+    PRINT_DEBUG;
 
-//get the number of vertices
-  int numbers_of_vertices = mesh->GetNV();
-//get the number of elements
-  int numbers_of_elements = mesh->GetNE();
-//get the element size
-  double h;
-  h = mesh->GetElementSize(0);
-  double t_m = 1/h;
-
-/*  mfem_mgis::NonLinearEvolutionProblem problem(
-      {{"MeshFileName", mesh_file},
-       {"FiniteElementFamily", "H1"},
-       {"FiniteElementOrder", order},
-       {"UnknownsSize", dim},
-//       {"NumberOfUniformRefinements", parallel ? 2 : 0},
-       {"Hypothesis", "Tridimensional"},
-       {"Parallel", true}});*/
-
-/*  // building the non linear problem
-  mfem_mgis::NonLinearEvolutionProblem problem(
-      std::make_shared<mfem_mgis::FiniteElementDiscretization>(
-          mesh, std::make_shared<mfem::H1_FECollection>(order, dim), dim),
-      mgis::behaviour::Hypothesis::TRIDIMENSIONAL); */
-  // 2 1 "Volume"
-  problem.addBehaviourIntegrator("Mechanics", 1, library, behaviour);
-  // materials
-  auto& m1 = problem.getMaterial(1);
-  mgis::behaviour::setExternalStateVariable(m1.s0, "Temperature", 293.15);
-  mgis::behaviour::setExternalStateVariable(m1.s1, "Temperature", 293.15);
-  // boundary conditions
-
-  // 3 LowerBoundary
-  problem.addBoundaryCondition(
+    if (mesh->Dimension() != dim) {
+      std::cerr << "Invalid mesh dimension\n";
+      mfem_mgis::abort(EXIT_FAILURE);
+    }
+    //
+    const auto& bdr_attributes = mesh->bdr_attributes;
+    std::cout << "boundaries: ";
+    for (mfem_mgis::size_type i = 0; i != bdr_attributes.Size(); ++i) {
+      std::cout << " " << bdr_attributes[i];
+    }
+    std::cout << '\n';
+    //
+    const auto& material_attributes = mesh->attributes;
+    std::cout << "materials: ";
+    for (mfem_mgis::size_type i = 0; i != material_attributes.Size(); ++i) {
+      std::cout << " " << material_attributes[i];
+    }
+    std::cout << '\n';
+    
+    /*  mfem_mgis::NonLinearEvolutionProblem problem(
+	{{"MeshFileName", mesh_file},
+	{"FiniteElementFamily", "H1"},
+	{"FiniteElementOrder", order},
+	{"UnknownsSize", dim},
+	//       {"NumberOfUniformRefinements", parallel ? 2 : 0},
+	{"Hypothesis", "Tridimensional"},
+	{"Parallel", true}});*/
+    
+    /*  // building the non linear problem
+	mfem_mgis::NonLinearEvolutionProblem problem(
+	std::make_shared<mfem_mgis::FiniteElementDiscretization>(
+	mesh, std::make_shared<mfem::H1_FECollection>(order, dim), dim),
+	mgis::behaviour::Hypothesis::TRIDIMENSIONAL); */
+    // 2 1 "Volume"
+    problem.addBehaviourIntegrator("Mechanics", 1, library, behaviour);
+    // materials
+    auto& m1 = problem.getMaterial(1);
+    mgis::behaviour::setExternalStateVariable(m1.s0, "Temperature", 293.15);
+    mgis::behaviour::setExternalStateVariable(m1.s1, "Temperature", 293.15);
+    // boundary conditions
+    
+    PRINT_DEBUG;
+    // 3 LowerBoundary
+    problem.addBoundaryCondition(
       std::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
           problem.getFiniteElementDiscretizationPointer(), 3, 1));
-  // 4 SymmetryPlane1
-  problem.addBoundaryCondition(
+    // 4 SymmetryPlane1
+    problem.addBoundaryCondition(
       std::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
           problem.getFiniteElementDiscretizationPointer(), 4, 0));
-  // 5 SymmetryPlane2
-  problem.addBoundaryCondition(
+    // 5 SymmetryPlane2
+    problem.addBoundaryCondition(
       std::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
           problem.getFiniteElementDiscretizationPointer(), 5, 2));
-  // 2 UpperBoundary 
-  problem.addBoundaryCondition(
+    // 2 UpperBoundary 
+    problem.addBoundaryCondition(
       std::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
           problem.getFiniteElementDiscretizationPointer(), 2, 1,
           [](const auto t) {
             const auto u = 6e-3 * t;
             return u;
           }));
+    PRINT_DEBUG;
 
-  // solving the problem
+    // solving the problem
   
-  problem.setSolverParameters({{"VerbosityLevel", 0},
+    problem.setSolverParameters({{"VerbosityLevel", 0},
                                {"RelativeTolerance", 1e-6},
-                               {"AbsoluteTolerance", 0.},
+                               {"AbsoluteTolerance", 1e-8},
                                {"MaximumNumberOfIterations", 10}});
+    PRINT_DEBUG;
 
   // selection of the linear solver
 
-
     problem.setLinearSolver("CGSolver", {{"VerbosityLevel", 0},
-                                             {"RelativeTolerance", 1e-12},
-                                             {"MaximumNumberOfIterations",
-                                             300}});
+					 {"RelativeTolerance", 1e-12},
+					 {"MaximumNumberOfIterations",
+					  300}});
 	// print on file
   out << "SetLinearSolver" << std::endl;
   out << "VerbosityLevel = " << 0 << std::endl;
@@ -141,7 +166,6 @@ mfem_mgis::NonLinearEvolutionProblem problem(
   out << " nbr_ref_sequential = " << nbr_ref_sequential << std::endl;
   out << " numbers_of_vertices = " << numbers_of_vertices << std::endl;
   out << " numbers_of_elements = " << numbers_of_elements << std::endl;
-  exit(0);
     //auto prec_none = mfem_mgis::Parameters{{"Name", "None"}};
 
 /*  auto prec_boomer =

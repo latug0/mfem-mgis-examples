@@ -25,6 +25,7 @@ endif(CMAKE_CONFIGURATION_TYPES)
 add_subdirectory(config)
 add_subdirectory(ex1)
 add_subdirectory(ex2)
+add_subdirectory(precond)
 
 
 #include(FetchContent)
