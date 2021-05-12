@@ -30,18 +30,32 @@ int main(int argc, char** argv) {
   const char* mesh_file = "ssna303_3d.msh";
   const char* behaviour = "Plasticity";
   const char* library = "src/libBehaviour.so";
+  auto solver = "BiCGSTABSolver";
+  auto preconditioner = "HypreBoomerAMG";
+  auto ref_para = 0;
+  auto ref_seq = 0;
   auto order = 1;
+  // initialization for the MPI 
+  int rank;
+  MPI_Comm_rank (MPI_COMM_WORLD,&rank);
 
-  PRINT_DEBUG;
+
   //file creation 
-  std::string const myFile("Test_Ssna303.txt");
+  std::string const myFile("./CG_test.txt");
   std::ofstream out(myFile.c_str());
 
-  PRINT_DEBUG;
   // options treatment
   mfem::OptionsParser args(argc, argv);
   args.AddOption(&order, "-o", "--order",
                  "Finite element order (polynomial degree).");
+  args.AddOption(&solver,"-s", "--solver",
+                 "Solver of the Problem.");
+  args.AddOption(&preconditioner,"-p", "--preconditioner",
+                 "Preconditioner uses for the Problem.");
+  args.AddOption(&ref_para,"-rp", "--refinement_parallel",
+                 "Number of Refinement for parallel call.");
+  args.AddOption(&ref_seq,"-rs", "--refinement_sequential",
+                 "Number of Refinement for sequential call.");
   args.Parse();
   if (!args.Good()) {
     args.PrintUsage(std::cout);
@@ -50,253 +64,103 @@ int main(int argc, char** argv) {
   args.PrintOptions(std::cout);
 
   // loading the mesh
-  int nbr_ref_parallel = 1;
-  int nbr_ref_sequential = 1;
   {
-    const auto main_timer = mfem_mgis::getTimer("main_timer");
-    mfem_mgis::NonLinearEvolutionProblem problem(
+  const auto main_timer = mfem_mgis::getTimer("main_timer");
+  mfem_mgis::NonLinearEvolutionProblem problem(
       {{"MeshFileName", mesh_file},
        {"FiniteElementFamily", "H1"},
        {"FiniteElementOrder", order},
        {"UnknownsSize", dim},
-       {"NumberOfUniformRefinements", parallel ? nbr_ref_parallel : nbr_ref_sequential},
+       {"NumberOfUniformRefinements", parallel ? ref_para : ref_seq},
        {"Hypothesis", "Tridimensional"},
        {"Parallel", true}});
 
-    auto mesh = problem.getImplementation<true>().getFiniteElementSpace().GetMesh();
-    
-    PRINT_DEBUG;
-    //get the number of vertices
-    int numbers_of_vertices = mesh->GetNV();
-    //get the number of elements
-    int numbers_of_elements = mesh->GetNE();
-    //get the element size
-    double h;
-    h = mesh->GetElementSize(0);
-    double t_m = 1/h;
-    PRINT_DEBUG;
+  auto mesh = problem.getImplementation<true>().getFiniteElementSpace().GetMesh();
+  //get the number of vertices
+  int numbers_of_vertices = mesh->GetNV();
+  //get the number of elements
+  int numbers_of_elements = mesh->GetNE();
+  //get the element size
+  double h = mesh->GetElementSize(0);
 
-    if (mesh->Dimension() != dim) {
-      std::cerr << "Invalid mesh dimension\n";
-      mfem_mgis::abort(EXIT_FAILURE);
-    }
-    //
-    const auto& bdr_attributes = mesh->bdr_attributes;
-    std::cout << "boundaries: ";
-    for (mfem_mgis::size_type i = 0; i != bdr_attributes.Size(); ++i) {
-      std::cout << " " << bdr_attributes[i];
-    }
-    std::cout << '\n';
-    //
-    const auto& material_attributes = mesh->attributes;
-    std::cout << "materials: ";
-    for (mfem_mgis::size_type i = 0; i != material_attributes.Size(); ++i) {
-      std::cout << " " << material_attributes[i];
-    }
-    std::cout << '\n';
-    
-    /*  mfem_mgis::NonLinearEvolutionProblem problem(
-	{{"MeshFileName", mesh_file},
-	{"FiniteElementFamily", "H1"},
-	{"FiniteElementOrder", order},
-	{"UnknownsSize", dim},
-	//       {"NumberOfUniformRefinements", parallel ? 2 : 0},
-	{"Hypothesis", "Tridimensional"},
-	{"Parallel", true}});*/
-    
-    /*  // building the non linear problem
-	mfem_mgis::NonLinearEvolutionProblem problem(
-	std::make_shared<mfem_mgis::FiniteElementDiscretization>(
-	mesh, std::make_shared<mfem::H1_FECollection>(order, dim), dim),
-	mgis::behaviour::Hypothesis::TRIDIMENSIONAL); */
-    // 2 1 "Volume"
-    problem.addBehaviourIntegrator("Mechanics", 1, library, behaviour);
-    // materials
-    auto& m1 = problem.getMaterial(1);
-    mgis::behaviour::setExternalStateVariable(m1.s0, "Temperature", 293.15);
-    mgis::behaviour::setExternalStateVariable(m1.s1, "Temperature", 293.15);
-    // boundary conditions
-    
-    PRINT_DEBUG;
-    // 3 LowerBoundary
-    problem.addBoundaryCondition(
+  // 2 1 "Volume"
+  problem.addBehaviourIntegrator("Mechanics", 1, library, behaviour);
+  // materials
+  auto& m1 = problem.getMaterial(1);
+  mgis::behaviour::setExternalStateVariable(m1.s0, "Temperature", 293.15);
+  mgis::behaviour::setExternalStateVariable(m1.s1, "Temperature", 293.15);
+  // boundary conditions
+
+  // 3 LowerBoundary
+  problem.addBoundaryCondition(
       std::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
           problem.getFiniteElementDiscretizationPointer(), 3, 1));
-    // 4 SymmetryPlane1
-    problem.addBoundaryCondition(
+  // 4 SymmetryPlane1
+  problem.addBoundaryCondition(
       std::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
           problem.getFiniteElementDiscretizationPointer(), 4, 0));
-    // 5 SymmetryPlane2
-    problem.addBoundaryCondition(
+  // 5 SymmetryPlane2
+  problem.addBoundaryCondition(
       std::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
           problem.getFiniteElementDiscretizationPointer(), 5, 2));
-    // 2 UpperBoundary 
-    problem.addBoundaryCondition(
+  // 2 UpperBoundary 
+  problem.addBoundaryCondition(
       std::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
           problem.getFiniteElementDiscretizationPointer(), 2, 1,
           [](const auto t) {
             const auto u = 6e-3 * t;
             return u;
           }));
-    PRINT_DEBUG;
 
-    // solving the problem
-  
-    problem.setSolverParameters({{"VerbosityLevel", 0},
+  // solving the problem
+  problem.setSolverParameters({{"VerbosityLevel", 0},
                                {"RelativeTolerance", 1e-6},
-                               {"AbsoluteTolerance", 1e-8},
+                               {"AbsoluteTolerance", 0.},
                                {"MaximumNumberOfIterations", 10}});
-    PRINT_DEBUG;
 
-  // selection of the linear solver
+  // selection of the linear solver without preconditioner
+  if (solver == ""){
+    return EXIT_FAILURE;
+  }
+  if ( preconditioner == ""){
+  problem.setLinearSolver(solver,  {{"VerbosityLevel", 0},
+                                   {"RelativeTolerance", 1e-12},
+                                   {"MaximumNumberOfIterations",300}});
+  }
+  else{
+  // with the HypreBoomerAMG preconditioner
+//  auto prec_none = mfem_mgis::Parameters{{"Name", "None"}};
+  auto prec_boomer =
+      mfem_mgis::Parameters{{"Name", preconditioner},  //
+                           {"Options", mfem_mgis::Parameters{
+//                           {"Strategy", "Elasticity"},
+                           {"VerbosityLevel", 0}}}};
 
-    problem.setLinearSolver("CGSolver", {{"VerbosityLevel", 0},
-					 {"RelativeTolerance", 1e-12},
-					 {"MaximumNumberOfIterations",
-					  300}});
+   problem.setLinearSolver(solver, {{"VerbosityLevel", 0},
+                                          {"AbsoluteTolerance", 1e-12},
+                                          {"RelativeTolerance", 1e-12},
+                                          {"MaximumNumberOfIterations", 300},
+                                          {"Preconditioner", prec_boomer}});
+  }
 	// print on file
   out << "SetLinearSolver" << std::endl;
   out << "VerbosityLevel = " << 0 << std::endl;
   out << "RelativeTolerance = " << 1e-12 << std::endl;
   out << "MaximumNumberOfIterations = " << 300 << std::endl;
-  out << "Preconditioner = " << false << std::endl;
+  out << "Preconditioner = " << preconditioner << std::endl;
   out << "taille_maille = " << h << std::endl;
   out << "1/h = " << 1/h << std::endl;
-  out << " nbr_ref_parallel = " << nbr_ref_parallel << std::endl;
-  out << " nbr_ref_sequential = " << nbr_ref_sequential << std::endl;
+  out << " nbr_ref_parallel = " << ref_para << std::endl;
+  out << " nbr_ref_sequential = " << ref_seq << std::endl;
   out << " numbers_of_vertices = " << numbers_of_vertices << std::endl;
   out << " numbers_of_elements = " << numbers_of_elements << std::endl;
-    //auto prec_none = mfem_mgis::Parameters{{"Name", "None"}};
-
-/*  auto prec_boomer =
-      mfem_mgis::Parameters{{"Name", "HypreBoomerAMG"},  //
-                           {"Options", mfem_mgis::Parameters{
-//                                            {"Strategy", "Elasticity"},  //
-                                            {"VerbosityLevel", 0}        //
-                                        }}};*/
-
-/*problem.setLinearSolver("CGSolver", {{"VerbosityLevel", 1},
-                                          {"AbsoluteTolerance", 1e-12},
-                                          {"RelativeTolerance", 1e-12},
-                                          {"MaximumNumberOfIterations", 300},
-                                          {"Preconditioner", prec_boomer}});*/
-
-/*problem.setLinearSolver("BiCGSTABSolver", {{"VerbosityLevel", 0},
-                                          {"AbsoluteTolerance", 1e-12},
-                                          {"RelativeTolerance", 1e-12},
-                                          {"MaximumNumberOfIterations", 300},
-                                          {"Preconditioner", prec_boomer}});*/
-
-/*problem.setLinearSolver("MINRESSolver", {{"VerbosityLevel", 1},
-                                          {"AbsoluteTolerance", 1e-12},
-                                          {"RelativeTolerance", 1e-12},
-                                          {"MaximumNumberOfIterations", 300},
-                                          {"Preconditioner", prec_boomer}});*/
-
-/*  problem.setLinearSolver("GMRESSolver", {{"VerbosityLevel", 1},
-                                          {"AbsoluteTolerance", 1e-12},
-                                          {"RelativeTolerance", 1e-12},
-                                          {"MaximumNumberOfIterations", 300},
-                                          {"Preconditioner", prec_boomer}});*/
-
-	// print on file
-/*  out << "SetLinearSolver" << std::endl;
-  out << "VerbosityLevel = " << 0 << std::endl;
-  out << "RelativeTolerance = " << 1e-12 << std::endl;
-  out << "MaximumNumberOfIterations = " << 300 << std::endl;
-  out << "Preconditioner = " << false << std::endl;
-  out << "taille_maille = " << h << std::endl;
-  out << "1/h = " << t_m << std::endl;
-  out << " nbr_ref_parallel = " << nbr_ref_parallel << std::endl;
-  out << " nbr_ref_sequential = " << nbr_ref_sequential << std::endl;
-  out << " numbers_of_vertices = " << numbers_of_vertices << std::endl;
-  out << " numbers_of_elements = " << numbers_of_elements << std::endl;*/
-
-/*     constexpr auto parallel = true;
-     auto& lsf =
-     mfem_mgis::LinearSolverFactory<parallel>::getFactory();
-     auto lsh = lsf.generate("GMRESSolver",
-     problem.getImplementation<parallel>(),
-                             {{"VerbosityLevel", 1},
-                              {"AbsoluteTolerance", 1e-12},
-                              {"RelativeTolerance", 1e-12},
-                              {"MaximumNumberOfIterations",
-                              300}});
-     if constexpr (parallel) {
-       auto amg = std::make_unique<mfem::HypreTriSolve>();//remplacer par les autres préconditionneur
-       //       amg->SetElasticityOptions(
-       //
-       &(problem.getImplementation<parallel>().getFiniteElementSpace());
-       //    amg->SetSystemsOptions(dim);
-       amg->SetPrintLevel(0);
-       lsh.preconditioner = std::move(amg);//
-     }
-     problem.getImplementation<parallel>().updateLinearSolver(std::move(lsh));*/
-
-//version Guillaume pour les hypreboomer
-
-/*     constexpr auto parallel = true;
-     auto& lsf =
-     mfem_mgis::LinearSolverFactory<parallel>::getFactory();
-     auto lsh = lsf.generate("GMRESSolver",
-			     problem.getImplementation<parallel>(),
-                             {{"VerbosityLevel", 0},
-                              {"AbsoluteTolerance", 1e-12},
-                              {"RelativeTolerance", 1e-12},
-                              {"MaximumNumberOfIterations",
-                              300}});
-     if constexpr (parallel) {
-	 //       auto amg = std::make_unique<mfem::HypreBoomerAMG>();
-       //       amg->SetElasticityOptions(
-       //
-	 auto amg = std::make_unique<mfem::HypreSmoother>();
-	 amg->SetType(mfem::HypreSmoother::l1GStr,3);
-       &(problem.getImplementation<parallel>().getFiniteElementSpace());
-       //    amg->SetSystemsOptions(dim);
-       //       amg->SetPrintLevel(0);
-       lsh.preconditioner = std::move(amg);
-     }
-     problem.getImplementation<parallel>().updateLinearSolver(std::move(lsh));*/
-
-//print file preconditionner
-/*  out << "SetLinearSolver" << std::endl;
-  out << " " << std::endl;
-  out << "VerbosityLevel = " << 1 << std::endl;
-  out << "RelativeTolerance = " << 1e-12 << std::endl;
-  out << "RelativeTolerance = " << 1e-12 << std::endl;
-  out << "MaximumNumberOfIterations = " << 300 << std::endl;
-  out << "Preconditioner = " << true << std::endl;
-  out << "Preconditioner's name = " << "HypreBoomerAMG" << std::endl;
-  //out << "Number of relaxation = " << 0 <<std::endl; */
-
-	// print on file
-/*  out << "SetLinearSolver" << std::endl;
-  out << "VerbosityLevel = " << 0 << std::endl;
-  out << "RelativeTolerance = " << 1e-12 << std::endl;
-  out << "MaximumNumberOfIterations = " << 300 << std::endl;
-  out << "Preconditioner = " << "HypreSmoother" << std::endl;
-  out << "taille_maille = " << h << std::endl;
-  out << "1/h = " << t_m << std::endl;
-  out << " nbr_ref_parallel = " << nbr_ref_parallel << std::endl;
-  out << " nbr_ref_sequential = " << nbr_ref_sequential << std::endl;
-  out << " numbers_of_vertices = " << numbers_of_vertices << std::endl;
-  out << " numbers_of_elements = " << numbers_of_elements << std::endl;*/
-
-// selection of the linear solver
-//#ifdef MFEM_USE_SUITESPARSE
-//  problem.setLinearSolver("UMFPackSolver", {});
-//#else
-//  problem.setLinearSolver("CGSolver", {{"VerbosityLevel", 1},
-//                                       {"RelativeTolerance", 1e-12},
- //                                      {"MaximumNumberOfIterations", 300}});
-//#endif
 
   // vtk export
   problem.addPostProcessing("ParaviewExportResults",
-                            {{"OutputFileName", std::string("ssna303-displacements")}});
+                            {{"OutputFileName", std::string("ssna303-displacements-CG_HBAMG_1")}});
   problem.addPostProcessing("ComputeResultantForceOnBoundary",
-                            {{"Boundary", 2}, {"OutputFileName", "force.txt"}});
-
+                            {{"Boundary", 2}, {"OutputFileName", "force_CG_HBAMG_1.txt"}});
+  
   // loop over time step
   const auto nsteps = mfem_mgis::size_type{50};
   const auto dt = mfem_mgis::real{1} / nsteps;
@@ -305,28 +169,22 @@ int main(int argc, char** argv) {
   for (mfem_mgis::size_type i = 0; i != nsteps; ++i) {
     std::cout << "iteration " << iteration << " from " << t << " to " << t + dt
               << '\n';
-//PRINT_DEBUG;
     // resolution
     auto ct = t;
     auto dt2 = dt;
     auto nsteps = mfem_mgis::size_type{1};
     auto niter  = mfem_mgis::size_type{0};
-//PRINT_DEBUG;
     while (nsteps != 0) {
       bool converged = true;
       try {
-//PRINT_DEBUG;
         problem.solve(ct, dt2);
-//PRINT_DEBUG;
       } catch (std::runtime_error&) {
         converged = false;
       }
       if (converged) {
-//PRINT_DEBUG;
         --nsteps;
         ct += dt2;
       } else {
-//PRINT_DEBUG;
         std::cout << "\nsubstep: " << niter << '\n';
         nsteps *= 2;
         dt2 /= 2;
