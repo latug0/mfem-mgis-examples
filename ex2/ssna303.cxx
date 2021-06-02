@@ -26,16 +26,16 @@ int main(int argc, char** argv) {
   const char* behaviour = "Plasticity";
   const char* library = "src/libBehaviour.so";
 #if defined(MFEM_USE_MUMPS) && defined(MFEM_USE_MPI)
-  auto parallel = int{1};
+  bool parallel = true;
 #else
-  auto parallel = int{};
+  bool parallel = false;
 #endif
   auto order = 1;
   // options treatment
   mfem::OptionsParser args(argc, argv);
   args.AddOption(&order, "-o", "--order",
                  "Finite element order (polynomial degree).");
-  args.AddOption(&parallel, "-p", "--parallel",
+  args.AddOption(&parallel, "-p", "--parallel", "-no-p", "--no-parallel",
                  "Perform parallel computations.");
   args.Parse();
   if (!args.Good()) {
