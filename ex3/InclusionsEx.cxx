@@ -131,7 +131,7 @@ bool checkSolution(mfem_mgis::NonLinearEvolutionProblem& problem,
 }
 
 struct TestParameters {
-  const char* mesh_file = "cube.mesh";
+  const char* mesh_file = "cube_2mat_per.mesh";
   const char* behaviour = "Elasticity";
   const char* library = "src/libBehaviour.so";
   const char* reference_file = "Elasticity.ref";
@@ -160,8 +160,6 @@ TestParameters parseCommandLineOptions(int argc, char** argv) {
   args.AddOption(
       &p.linearsolver, "-ls", "--linearsolver",
       "identifier of the linear solver: 0 -> GMRES, 1 -> CG, 2 -> UMFPack");
-  //   args.AddOption(&p.parallel, "-p", "--parallel",
-  //                  "if true, perform the computation in parallel");
   args.Parse();
   if (!args.Good()) {
     if (mfem_mgis::getMPIrank() == 0)  args.PrintUsage(std::cout);
