@@ -48,7 +48,7 @@ target_include_directories(InclusionsEx
 # Copy needed file for execution
 file(COPY
   ${PROJECT_SOURCE_DIR}/Elasticity.mfront
-#  ${PROJECT_SOURCE_DIR}/cube.mesh
+  ${PROJECT_SOURCE_DIR}/cube_2mat_per.mesh
   DESTINATION ${PROJECT_BINARY_DIR})
 
 # Use mfront to generate libBehaviour.so
