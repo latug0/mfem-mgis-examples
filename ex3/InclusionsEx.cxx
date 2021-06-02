@@ -1,26 +1,7 @@
 /*!
- * \file   tests/PeriodicTest.cxx
+ * \file   InclusionsEx.cxx
  * \brief
- * This example code solves a simple linear elasticity problem
- * describing a multi-material square.
- * This problem has a 1D analytic solution along x1 dimension,
- * the solution is constant along x2 dimension which is also periodic.
- *
- * The geometry of the domain is assumed to be as
- * follows:
- *
- *             x2=1  +----------+----------+
- *                   | material | material |
- *                   |    1     |    2     |
- *             x2=0  +----------+----------+
- *                 x1=0                   x1=1
- *
- *
- * Specifically, we approximate the weak form of -div(sigma(u))=0
- * where sigma(u)=lambda*div(u)*I+mu*(grad*u+u*grad) is the stress
- * tensor corresponding to displacement field u, and lambda and mu
- * are the material Lame constants. The boundary conditions are
- * periodic.
+ * This example is modelling several inclusion within a periodic cube.
  *
  * Mechanical strain:
  *                 eps = E + grad_s v
@@ -32,11 +13,10 @@
  *
  *           with  U the given displacement associated to E
  *                   E = grad_s U
- *
  * The local microscopic strain is equal, on average, to the macroscopic strain:
  *           <eps> = <E>
  * \author Thomas Helfer, Guillaume Latu
- * \date   14/10/2020
+ * \date   02/06/10/2021
  */
 
 #include <memory>
@@ -151,8 +131,10 @@ bool checkSolution(mfem_mgis::NonLinearEvolutionProblem& problem,
 }
 
 struct TestParameters {
-  const char* mesh_file = nullptr;
-  const char* library = nullptr;
+  const char* mesh_file = "cube.mesh";
+  const char* behaviour = "Elasticity";
+  const char* library = "src/libBehaviour.so";
+  const char* reference_file = "Elasticity.ref";
   int order = 1;
   int tcase = 0;
   int linearsolver = 0;
@@ -163,8 +145,9 @@ struct TestParameters {
 #endif /* DO_USE_MPI */
 };
 
-TestParameters parseCommandLineOptions(int& argc, char* argv[]) {
+TestParameters parseCommandLineOptions(int argc, char** argv) {
   TestParameters p;
+
   // options treatment
   mfem::OptionsParser args(argc, argv);
   args.AddOption(&p.mesh_file, "-m", "--mesh", "Mesh file to use.");
@@ -180,7 +163,14 @@ TestParameters parseCommandLineOptions(int& argc, char* argv[]) {
   //   args.AddOption(&p.parallel, "-p", "--parallel",
   //                  "if true, perform the computation in parallel");
   args.Parse();
-  if ((!args.Good()) || (p.mesh_file == nullptr)) {
+  if (!args.Good()) {
+    if (mfem_mgis::getMPIrank() == 0)  args.PrintUsage(std::cout);
+    mfem_mgis::finalize();
+    exit(0);
+  }
+  if (p.mesh_file == nullptr) {
+    if (mfem_mgis::getMPIrank() == 0)
+      std::cout << "ERROR: Mesh file missing" << std::endl;
     args.PrintUsage(std::cout);
     mfem_mgis::abort(EXIT_FAILURE);
   }
@@ -255,7 +245,7 @@ void executeMFEMMGISTest(const TestParameters& p) {
   }
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char** argv) {
   mfem_mgis::initialize(argc, argv);
   const auto p = parseCommandLineOptions(argc, argv);
   executeMFEMMGISTest(p);
