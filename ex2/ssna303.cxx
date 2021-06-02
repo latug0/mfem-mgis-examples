@@ -18,10 +18,10 @@
 #include "MFEMMGIS/NonLinearEvolutionProblem.hxx"
 
 int main(int argc, char** argv) {
+  constexpr const auto dim = mfem_mgis::size_type{2};
   // Initialize mfem_mgis (it includes a call to MPI_Init)
   mfem_mgis::initialize(argc, argv);
 
-  constexpr const auto dim = mfem_mgis::size_type{2};
   const char* mesh_file = "ssna303.msh";
   const char* behaviour = "Plasticity";
   const char* library = "src/libBehaviour.so";
@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
   // vtk export
   problem.addPostProcessing(
       "ParaviewExportResults",
-      {{"OutputFileName", std::string("ssna303-displacements")}});
+      {{"OutputFileName", "ssna303-displacements"}});
   problem.addPostProcessing("ComputeResultantForceOnBoundary",
                             {{"Boundary", 2}, {"OutputFileName", "force.txt"}});
 
