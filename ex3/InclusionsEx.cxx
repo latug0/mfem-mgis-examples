@@ -123,10 +123,12 @@ bool checkSolution(mfem_mgis::NonLinearEvolutionProblem& problem,
   const auto b = mfem_mgis::compareToAnalyticalSolution(
       problem, getSolution(i), {{"CriterionThreshold", 1e-10}});
   if (!b) {
-    std::cerr << "Error is greater than threshold\n";
+    if (mfem_mgis::getMPIrank() == 0)
+      std::cerr << "Error is greater than threshold\n";
     return false;
   }
-  std::cerr << "Error is lower than threshold\n";
+  if (mfem_mgis::getMPIrank() == 0)
+    std::cerr << "Error is lower than threshold\n";
   return true;
 }
 
@@ -138,11 +140,7 @@ struct TestParameters {
   int order = 1;
   int tcase = 0;
   int linearsolver = 0;
-#ifdef DO_USE_MPI
   bool parallel = true;
-#else  /* DO_USE_MPI */
-  bool parallel = false;
-#endif /* DO_USE_MPI */
 };
 
 TestParameters parseCommandLineOptions(int argc, char** argv) {
@@ -162,7 +160,8 @@ TestParameters parseCommandLineOptions(int argc, char** argv) {
       "identifier of the linear solver: 0 -> GMRES, 1 -> CG, 2 -> UMFPack");
   args.Parse();
   if (!args.Good()) {
-    if (mfem_mgis::getMPIrank() == 0)  args.PrintUsage(std::cout);
+    if (mfem_mgis::getMPIrank() == 0)
+      args.PrintUsage(std::cout);
     mfem_mgis::finalize();
     exit(0);
   }
@@ -172,7 +171,8 @@ TestParameters parseCommandLineOptions(int argc, char** argv) {
     args.PrintUsage(std::cout);
     mfem_mgis::abort(EXIT_FAILURE);
   }
-  args.PrintOptions(std::cout);
+  if (mfem_mgis::getMPIrank() == 0)
+    args.PrintOptions(std::cout);
   if ((p.tcase < 0) || (p.tcase > 5)) {
     std::cerr << "Invalid test case\n";
     mfem_mgis::abort(EXIT_FAILURE);
@@ -193,6 +193,8 @@ void executeMFEMMGISTest(const TestParameters& p) {
                             {"Parallel", p.parallel}});
 
   {
+    if (mfem_mgis::getMPIrank() == 0)
+      std::cout << "Number of processes: " << mfem_mgis::getMPIsize() << std::endl;
     // building the non linear problem
     mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed);
     problem.addBehaviourIntegrator("Mechanics", 1, p.library, "Elasticity");
