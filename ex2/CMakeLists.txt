@@ -40,6 +40,10 @@ endif(NOT TARGET mfem-mgis::MFEMMGIS)
 # Define the executable to build for this example
 add_executable(Ssna303 ssna303.cxx)
 target_link_libraries(Ssna303 mfem-mgis::MFEMMGIS)
+target_include_directories(Ssna303
+    SYSTEM
+    PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
+    PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
 
 # Copy needed file for execution
 file(COPY
