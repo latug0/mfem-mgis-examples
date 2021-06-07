@@ -32,6 +32,60 @@
 #include "MFEMMGIS/PeriodicNonLinearEvolutionProblem.hxx"
 
 
+void (*getSolution(const std::size_t i))(mfem::Vector&, const mfem::Vector&) {
+  constexpr const auto xthr = mfem_mgis::real(1) / 2;
+  std::array<void (*)(mfem::Vector&, const mfem::Vector&), 6u> solutions = {
+      +[](mfem::Vector& u, const mfem::Vector& x) {
+        constexpr const auto gradx = mfem_mgis::real(1) / 3;
+        u = mfem_mgis::real{};
+        if (x(0) < xthr) {
+          u(0) = gradx * x(0);
+        } else {
+          u(0) = gradx * xthr - gradx * (x(0) - xthr);
+        }
+      },
+      +[](mfem::Vector& u, const mfem::Vector& x) {
+        constexpr const auto gradx = mfem_mgis::real(4) / 30;
+        u = mfem_mgis::real{};
+        if (x(0) < xthr) {
+          u(0) = gradx * x(0);
+        } else {
+          u(0) = gradx * xthr - gradx * (x(0) - xthr);
+        }
+      },
+      +[](mfem::Vector& u, const mfem::Vector& x) {
+        constexpr const auto gradx = mfem_mgis::real(4) / 30;
+        u = mfem_mgis::real{};
+        if (x(0) < xthr) {
+          u(0) = gradx * x(0);
+	  std::cout << "point" << x(0) << " - " << x(1) << " b " << u(0)  << std::endl;
+        } else {
+          u(0) = gradx * xthr - gradx * (x(0) - xthr);
+	  std::cout << "point" << x(0) << " - " << x(1) << " h " << u(0)  << std::endl;
+        }
+      },
+      +[](mfem::Vector& u, const mfem::Vector& x) {
+        constexpr const auto gradx = mfem_mgis::real(1) / 3;
+        u = mfem_mgis::real{};
+        if (x(0) < xthr) {
+          u(1) = gradx * x(0);
+        } else {
+          u(1) = gradx * xthr - gradx * (x(0) - xthr);
+        }
+      },
+      +[](mfem::Vector& u, const mfem::Vector& x) {
+        constexpr const auto gradx = mfem_mgis::real(1) / 3;
+        u = mfem_mgis::real{};
+        if (x(0) < xthr) {
+          u(2) = gradx * x(0);
+        } else {
+          u(2) = gradx * xthr - gradx * (x(0) - xthr);
+        }
+      },
+      +[](mfem::Vector& u, const mfem::Vector&) { u = mfem_mgis::real{}; }};
+  return solutions[i];
+}
+
 static void setLinearSolver(mfem_mgis::AbstractNonLinearEvolutionProblem& p,
                             const std::size_t i) {
   if (i == 0) {
@@ -69,7 +123,8 @@ static void setSolverParameters(
 
 bool checkSolution(mfem_mgis::NonLinearEvolutionProblem& problem,
                    const std::size_t i) {
-  const auto b = true;
+  const auto b = mfem_mgis::compareToAnalyticalSolution(
+      problem, getSolution(i), {{"CriterionThreshold", 1e-10}});
   if (!b) {
     if (mfem_mgis::getMPIrank() == 0)
       std::cerr << "Error is greater than threshold\n";
@@ -86,12 +141,12 @@ struct TestParameters {
   const char* library = "src/libBehaviour.so";
   const char* reference_file = "Elasticity.ref";
   int order = 1;
-  int tcase = 0;
-  int linearsolver = 0;
+  int tcase = 1;
+  int linearsolver = 1;
   bool parallel = true;
 };
 
-TestParameters parseCommandLineOptions(int argc, char** argv) {
+TestParameters parseCommandLineOptions(int& argc, char* argv[]) {
   TestParameters p;
 
   // options treatment
@@ -193,7 +248,7 @@ void executeMFEMMGISTest(const TestParameters& p) {
   }
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char* argv[]) {
   mfem_mgis::initialize(argc, argv);
   const auto p = parseCommandLineOptions(argc, argv);
   executeMFEMMGISTest(p);

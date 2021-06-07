@@ -66,7 +66,7 @@ add_dependencies(check InclusionsEx generate-libBehaviour-ex3)
 # Define a test that will be called during the "make check"
 function(add_inclusions_ex)
   set(test "InclusionsEx")
-  add_test(NAME ${test} COMMAND InclusionsEx)
+  add_test(NAME ${test} COMMAND mpirun -n 4 InclusionsEx)
 endfunction(add_inclusions_ex)
 
 add_inclusions_ex()
