@@ -221,6 +221,7 @@ void executeMFEMMGISTest(const TestParameters& p) {
     };
     set_temperature(m1);
     set_temperature(m2);
+
     // macroscopic strain
     std::vector<mfem_mgis::real> e(6, mfem_mgis::real{});
     if (p.tcase < 3) {
@@ -232,6 +233,12 @@ void executeMFEMMGISTest(const TestParameters& p) {
     //
     setLinearSolver(problem, p.linearsolver);
     setSolverParameters(problem);
+    problem.addPostProcessing(
+        "ParaviewExportResults",
+        {{"OutputFileName", "PeriodicTestOutput-" + std::to_string(p.tcase)}}); //GL
+    problem.executePostProcessings(0, 0); //GL
+    return; //GL
+
     // Add postprocessing and outputs
     problem.addPostProcessing(
         "ParaviewExportResults",
