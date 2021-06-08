@@ -58,10 +58,8 @@ void (*getSolution(const std::size_t i))(mfem::Vector&, const mfem::Vector&) {
         u = mfem_mgis::real{};
         if (x(0) < xthr) {
           u(0) = gradx * x(0);
-	  std::cout << "point" << x(0) << " - " << x(1) << " b " << u(0)  << std::endl;
         } else {
           u(0) = gradx * xthr - gradx * (x(0) - xthr);
-	  std::cout << "point" << x(0) << " - " << x(1) << " h " << u(0)  << std::endl;
         }
       },
       +[](mfem::Vector& u, const mfem::Vector& x) {
@@ -192,7 +190,7 @@ void executeMFEMMGISTest(const TestParameters& p) {
                             {"FiniteElementFamily", "H1"},
                             {"FiniteElementOrder", p.order},
                             {"UnknownsSize", dim},
-                            {"NumberOfUniformRefinements", p.parallel ? 2 : 0},
+                            {"NumberOfUniformRefinements", p.parallel ? 0 : 0},
                             {"Parallel", p.parallel}});
 
   {
@@ -200,6 +198,11 @@ void executeMFEMMGISTest(const TestParameters& p) {
       std::cout << "Number of processes: " << mfem_mgis::getMPIsize() << std::endl;
     // building the non linear problem
     mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed);
+
+
+    //    const mfem::Mesh &m = fed->getMesh<true>();
+
+    
     problem.addBehaviourIntegrator("Mechanics", 1, p.library, "Elasticity");
     problem.addBehaviourIntegrator("Mechanics", 2, p.library, "Elasticity");
     // materials
@@ -233,11 +236,6 @@ void executeMFEMMGISTest(const TestParameters& p) {
     //
     setLinearSolver(problem, p.linearsolver);
     setSolverParameters(problem);
-    problem.addPostProcessing(
-        "ParaviewExportResults",
-        {{"OutputFileName", "PeriodicTestOutput-" + std::to_string(p.tcase)}}); //GL
-    problem.executePostProcessings(0, 0); //GL
-    return; //GL
 
     // Add postprocessing and outputs
     problem.addPostProcessing(
