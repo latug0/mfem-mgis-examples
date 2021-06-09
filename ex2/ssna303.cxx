@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
   }
   args.PrintOptions(std::cout);
   // loading the mesh
-  auto smesh = mfem_mgis::FiniteElementDiscretization::loadMeshSequential(mesh_file, 1, 1, false);
+  auto smesh = mfem_mgis::loadMeshSequential(mesh_file, 1, 1, false);
 #ifdef MFEM_USE_MPI
   auto mesh = std::make_shared<mfem::ParMesh>(MPI_COMM_WORLD, *smesh);
 #else
