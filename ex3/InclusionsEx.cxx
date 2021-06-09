@@ -31,9 +31,10 @@
 #include "MFEMMGIS/NonLinearEvolutionProblemImplementation.hxx"
 #include "MFEMMGIS/PeriodicNonLinearEvolutionProblem.hxx"
 
+constexpr double xmax = 1.;
 
 void (*getSolution(const std::size_t i))(mfem::Vector&, const mfem::Vector&) {
-  constexpr const auto xthr = mfem_mgis::real(1) / 2;
+  constexpr const auto xthr = xmax / 2.;
   std::array<void (*)(mfem::Vector&, const mfem::Vector&), 6u> solutions = {
       +[](mfem::Vector& u, const mfem::Vector& x) {
         constexpr const auto gradx = mfem_mgis::real(1) / 3;
@@ -90,12 +91,12 @@ static void setLinearSolver(mfem_mgis::AbstractNonLinearEvolutionProblem& p,
     p.setLinearSolver("GMRESSolver", {{"VerbosityLevel", 1},
                                       {"AbsoluteTolerance", 1e-12},
                                       {"RelativeTolerance", 1e-12},
-                                      {"MaximumNumberOfIterations", 300}});
+                                      {"MaximumNumberOfIterations", 5000}});
   } else if (i == 1) {
     p.setLinearSolver("CGSolver", {{"VerbosityLevel", 1},
                                    {"AbsoluteTolerance", 1e-12},
                                    {"RelativeTolerance", 1e-12},
-                                   {"MaximumNumberOfIterations", 300}});
+                                   {"MaximumNumberOfIterations", 5000}});
 #ifdef MFEM_USE_SUITESPARSE
   } else if (i == 2) {
     p.setLinearSolver("UMFPackSolver", {});
@@ -122,7 +123,7 @@ static void setSolverParameters(
 bool checkSolution(mfem_mgis::NonLinearEvolutionProblem& problem,
                    const std::size_t i) {
   const auto b = mfem_mgis::compareToAnalyticalSolution(
-      problem, getSolution(i), {{"CriterionThreshold", 1e-10}});
+      problem, getSolution(i), {{"CriterionThreshold", 1e-7}});
   if (!b) {
     if (mfem_mgis::getMPIrank() == 0)
       std::cerr << "Error is greater than threshold\n";
@@ -197,7 +198,9 @@ void executeMFEMMGISTest(const TestParameters& p) {
     if (mfem_mgis::getMPIrank() == 0)
       std::cout << "Number of processes: " << mfem_mgis::getMPIsize() << std::endl;
     // building the non linear problem
-    mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed);
+    std::vector<mfem_mgis::real> corner1({0.,0.,0.});
+    std::vector<mfem_mgis::real> corner2({xmax,xmax,xmax});
+    mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed, corner1, corner2);
 
 
     //    const mfem::Mesh &m = fed->getMesh<true>();
@@ -215,8 +218,11 @@ void executeMFEMMGISTest(const TestParameters& p) {
       mgis::behaviour::setMaterialProperty(m.s1, "FirstLameCoefficient", l);
       mgis::behaviour::setMaterialProperty(m.s1, "ShearModulus", mu);
     };
-    set_properties(m1, 100, 75);
-    set_properties(m2, 200, 150);
+
+    std::array<mfem_mgis::real,2> lambda({100, 200});
+    std::array<mfem_mgis::real,2>     mu({75 , 150});
+    set_properties(m1, lambda[0], mu[0]);
+    set_properties(m2, lambda[1], mu[1]);
     //
     auto set_temperature = [](auto& m) {
       mgis::behaviour::setExternalStateVariable(m.s0, "Temperature", 293.15);

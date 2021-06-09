@@ -16,6 +16,7 @@
 #include "MFEMMGIS/Material.hxx"
 #include "MFEMMGIS/UniformDirichletBoundaryCondition.hxx"
 #include "MFEMMGIS/NonLinearEvolutionProblem.hxx"
+#include "MFEMMGIS/FiniteElementDiscretization.hxx"
 
 int main(int argc, char** argv) {
   // Initialize mfem_mgis (it includes a call to MPI_Init)
@@ -37,7 +38,7 @@ int main(int argc, char** argv) {
   }
   args.PrintOptions(std::cout);
   // loading the mesh
-  auto smesh = std::make_shared<mfem::Mesh>(mesh_file, 1, 1);
+  auto smesh = mfem_mgis::FiniteElementDiscretization::loadMeshSequential(mesh_file, 1, 1, false);
 #ifdef MFEM_USE_MPI
   auto mesh = std::make_shared<mfem::ParMesh>(MPI_COMM_WORLD, *smesh);
 #else
