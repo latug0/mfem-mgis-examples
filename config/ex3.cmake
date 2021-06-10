@@ -8,7 +8,7 @@ file(COPY
   DESTINATION ${LOCAL_SOURCE_DIR})
 
 install(FILES
-  ${MFEMMGIS_EXDIR}/ex3/Plasticity.mfront
+  ${MFEMMGIS_EXDIR}/ex3/Elasticity.mfront
   ${MFEMMGIS_EXDIR}/ex3/cube_2mat_per.mesh
   ${MFEMMGIS_EXDIR}/env.sh
   ${LOCAL_SOURCE_DIR}/CMakeLists.txt
