@@ -20,6 +20,7 @@
  */
 
 #include <memory>
+#include <limits>
 #include <cstdlib>
 #include <iostream>
 #include "mfem/general/optparser.hpp"
@@ -125,7 +126,7 @@ static void setSolverParameters(
 bool checkSolution(mfem_mgis::NonLinearEvolutionProblem& problem,
                    const std::size_t i) {
   const auto b = mfem_mgis::compareToAnalyticalSolution(
-      problem, getSolution(i), {{"CriterionThreshold", 1e-7}});
+      problem, getSolution(i), {{"CriterionThreshold", 1e-4}});
   if (!b) {
     if (mfem_mgis::getMPIrank() == 0)
       std::cerr << "Error is greater than threshold\n";
@@ -185,6 +186,64 @@ TestParameters parseCommandLineOptions(int& argc, char* argv[]) {
   return p;
 }
 
+
+template <bool parallel>
+std::vector<double> findMinPoint(mfem_mgis::FiniteElementDiscretization &fed) {
+  const mfem_mgis::FiniteElementSpace<parallel> & fes = fed.getFiniteElementSpace<parallel>();
+  bool bynodes = fes.GetOrdering() == mfem::Ordering::byNODES;
+  const auto* const mesh = fes.GetMesh();
+  mfem::GridFunction nodes(&(fed.getFiniteElementSpace<parallel>()));
+  mesh->GetNodes(nodes);
+  const size_t nbnodes = static_cast<size_t>(nodes.Size());
+  const size_t dim = static_cast<size_t>(mesh->Dimension()); //fes.GetVDim()
+  std::vector<double> minCoord(dim);
+  const size_t tuples = nbnodes /dim;
+  MFEM_VERIFY(3 == dim, "Number of dim is not 3");
+  for (int j = 0; j < dim; ++j) {
+    minCoord[j] = std::numeric_limits<double>::max();
+  }
+  for (int i = 0; i < tuples; ++i) {
+    double coord[dim];  // coordinates of a node
+    for (int j = 0; j < dim; ++j) {
+      if (bynodes)
+	coord[j] = (nodes)[j * tuples + i];
+      else
+	coord[j] = (nodes)[i * dim + j];
+    }
+    bool isInferior = (coord[0] < minCoord[0]);
+    if (coord[0] == minCoord[0]) isInferior = (coord[1] < minCoord[1]);
+    if (coord[0] == minCoord[0] && coord[1] == minCoord[1]) isInferior = (coord[2] < minCoord[2]);
+    if (isInferior) {
+      for (int j = 0; j < dim; ++j) {
+	minCoord[j] = coord[j];
+      }
+    }
+  }
+  return (minCoord);
+}
+
+template <bool parallel>
+void translateMesh(mfem_mgis::FiniteElementDiscretization &fed, std::vector<double> vectorTranslate) {
+  const mfem_mgis::FiniteElementSpace<parallel> & fes = fed.getFiniteElementSpace<parallel>();
+  bool bynodes = fes.GetOrdering() == mfem::Ordering::byNODES;
+  auto* mesh = fes.GetMesh();
+  mfem::GridFunction nodes(&(fed.getFiniteElementSpace<parallel>()));
+  mesh->GetNodes(nodes);
+  const size_t nbnodes = static_cast<size_t>(nodes.Size());
+  const size_t dim = static_cast<size_t>(mesh->Dimension()); //fes.GetVDim()
+  std::vector<double> minCoord(dim);
+  const size_t tuples = nbnodes /dim;
+  MFEM_VERIFY(3 == dim, "Number of dim is not 3");
+  MFEM_VERIFY(bynodes, "This ordering is not supported");
+  mfem::Vector disp(nbnodes);
+  for (int i = 0; i < tuples; ++i) {
+    for (int j = 0; j < dim; ++j) {
+      (disp)[j * tuples + i] = vectorTranslate[j];
+    }
+  }
+  mesh->MoveNodes(disp);
+}
+
 int executeMFEMMGISTest(const TestParameters& p) {
   constexpr const auto dim = mfem_mgis::size_type{3};
   // creating the finite element workspace
@@ -202,11 +261,20 @@ int executeMFEMMGISTest(const TestParameters& p) {
       std::cout << "Number of processes: " << mfem_mgis::getMPIsize() << std::endl;
     // building the non linear problem
 
-    std::vector<mfem_mgis::real> corner2({ -0.133344316185, 0.815400209678, 0.587161226561});
-    std::vector<mfem_mgis::real> corner1 = corner2;
+    std::vector<mfem_mgis::real> minCoord ={ 0., 0., 0.};
+    minCoord = findMinPoint<p.parallel>(*fed.get());
+    for (int d=0; d < dim; d++) minCoord[d] *= -1.;
+    translateMesh<p.parallel>(*fed.get(), minCoord);
+    minCoord = findMinPoint<p.parallel>(*fed.get());
+    std::cout << "minCoord " << minCoord[0] << " " <<
+      minCoord[1] << " " << minCoord[2] << "\n";
+    
+    std::vector<mfem_mgis::real> corner1({0.,0.,0.});
+    std::vector<mfem_mgis::real> corner2({1., 1., 1.});
     mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed, corner1, corner2);
 
     const mfem::ParMesh& mesh = fed->getMesh<p.parallel>();
+
     int nrelem = mesh.GetNE();
     std::array<std::array<double,dim>,nbgrains> barycenter = {};
     std::array<int,nbgrains> barycenter_nb = {};
@@ -238,7 +306,8 @@ int executeMFEMMGISTest(const TestParameters& p) {
 	barycenter[ig][d] = coord[d];
       }
       std::cout << mfem_mgis::getMPIrank() << " " << mesh.GetGlobalElementNum(ig) <<
-	" attr " << ig << " bary " << barycenter[ig][0]<<" " << barycenter[ig][1]<< " " << barycenter[ig][2]<<std::endl;
+	" attr " << ig << " bary " << barycenter[ig][0]<<" " << barycenter[ig][1]<< " " << barycenter[ig][2]<<" bool "<<
+	(barycenter[ig][0] < xthr) <<std::endl;
     }
     
     std::array<mfem_mgis::real,2> lambda({100, 200});
