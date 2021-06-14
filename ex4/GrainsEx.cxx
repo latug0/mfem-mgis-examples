@@ -33,6 +33,8 @@
 
 
 constexpr double xmax = 1.;
+constexpr int nbgrains = 100;
+
 void (*getSolution(const std::size_t i))(mfem::Vector&, const mfem::Vector&) {
   constexpr const auto xthr = xmax / 2.;
   std::array<void (*)(mfem::Vector&, const mfem::Vector&), 6u> solutions = {
@@ -143,7 +145,7 @@ struct TestParameters {
   int order = 1;
   int tcase = 1;
   int linearsolver = 1;
-  bool parallel = true;
+  static constexpr bool parallel = true;
 };
 
 TestParameters parseCommandLineOptions(int& argc, char* argv[]) {
@@ -206,12 +208,27 @@ int executeMFEMMGISTest(const TestParameters& p) {
     std::vector<mfem_mgis::real> corner1 = corner2;
     mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed, corner1, corner2);
 
-
-    //    const mfem::Mesh &m = fed->getMesh<true>();
-
+    const auto& mesh = fed->getMesh<p.parallel>();
+    int nrelem = mesh.GetNE();
+    std::array<double,nbgrains> barycenter;
+    std::array<int,nbgrains> barycenter_nb;
+    for (int iel = 0; iel < nrelem; ++iel) {
+      const mfem::Element *el = mesh.GetElement(iel);
+      int attr = el->GetAttribute();
+      mfem::Array<int> vertices;
+      el->GetVertices(vertices);
+      int nrvert = vertices.Size();
+      for (int iv = 0; iv < nrvert; ++iv)  {
+         int vert_idx = vertices[iv];
+         const double *coords = mesh.GetVertex(vert_idx);
+      }
+      std::cout << mfem_mgis::getMPIrank() << " elt " << iel <<
+	" attr " << attr << std::endl;
+    }
+    
     std::array<mfem_mgis::real,2> lambda({100, 200});
     std::array<mfem_mgis::real,2>     mu({75 , 150});
-    for (int i=1; i<=100; i++) {
+    for (int i=1; i<=nbgrains; i++) {
       problem.addBehaviourIntegrator("Mechanics", i, p.library, "Elasticity");
       // materials
       auto& m1 = problem.getMaterial(i);
