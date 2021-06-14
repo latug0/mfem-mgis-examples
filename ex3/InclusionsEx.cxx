@@ -199,35 +199,38 @@ int executeMFEMMGISTest(const TestParameters& p) {
       std::cout << "Number of processes: " << mfem_mgis::getMPIsize() << std::endl;
     // building the non linear problem
 
-    //  std::vector<mfem_mgis::real> corner1({0.,0.,0.});
-    //    std::vector<mfem_mgis::real> corner2({1., 1., 1.});
-    std::vector<mfem_mgis::real> corner2({ -0.133344316185, 0.815400209678, 0.587161226561});
-    std::vector<mfem_mgis::real> corner1 = corner2;
+    std::vector<mfem_mgis::real> corner1({0.,0.,0.});
+    std::vector<mfem_mgis::real> corner2({1., 1., 1.});
     mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed, corner1, corner2);
 
 
     //    const mfem::Mesh &m = fed->getMesh<true>();
 
+    
+    problem.addBehaviourIntegrator("Mechanics", 1, p.library, "Elasticity");
+    problem.addBehaviourIntegrator("Mechanics", 2, p.library, "Elasticity");
+    // materials
+    auto& m1 = problem.getMaterial(1);
+    auto& m2 = problem.getMaterial(2);
+    // setting the material properties
+    auto set_properties = [](auto& m, const double l, const double mu) {
+      mgis::behaviour::setMaterialProperty(m.s0, "FirstLameCoefficient", l);
+      mgis::behaviour::setMaterialProperty(m.s0, "ShearModulus", mu);
+      mgis::behaviour::setMaterialProperty(m.s1, "FirstLameCoefficient", l);
+      mgis::behaviour::setMaterialProperty(m.s1, "ShearModulus", mu);
+    };
+
     std::array<mfem_mgis::real,2> lambda({100, 200});
     std::array<mfem_mgis::real,2>     mu({75 , 150});
-    for (int i=1; i<=100; i++) {
-      problem.addBehaviourIntegrator("Mechanics", i, p.library, "Elasticity");
-      // materials
-      auto& m1 = problem.getMaterial(i);
-      // setting the material properties
-      auto set_properties = [](auto& m, const double l, const double mu) {
-	mgis::behaviour::setMaterialProperty(m.s0, "FirstLameCoefficient", l);
-	mgis::behaviour::setMaterialProperty(m.s0, "ShearModulus", mu);
-	mgis::behaviour::setMaterialProperty(m.s1, "FirstLameCoefficient", l);
-	mgis::behaviour::setMaterialProperty(m.s1, "ShearModulus", mu);
-      };
-      set_properties(m1, lambda[i%2], mu[i%2]);
-      auto set_temperature = [](auto& m) {
-	mgis::behaviour::setExternalStateVariable(m.s0, "Temperature", 293.15);
-	mgis::behaviour::setExternalStateVariable(m.s1, "Temperature", 293.15);
-      };
-      set_temperature(m1);
-    }
+    set_properties(m1, lambda[0], mu[0]);
+    set_properties(m2, lambda[1], mu[1]);
+    //
+    auto set_temperature = [](auto& m) {
+      mgis::behaviour::setExternalStateVariable(m.s0, "Temperature", 293.15);
+      mgis::behaviour::setExternalStateVariable(m.s1, "Temperature", 293.15);
+    };
+    set_temperature(m1);
+    set_temperature(m2);
 
     // macroscopic strain
     std::vector<mfem_mgis::real> e(6, mfem_mgis::real{});

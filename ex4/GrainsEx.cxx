@@ -31,6 +31,60 @@
 #include "MFEMMGIS/NonLinearEvolutionProblemImplementation.hxx"
 #include "MFEMMGIS/PeriodicNonLinearEvolutionProblem.hxx"
 
+
+constexpr double xmax = 1.;
+void (*getSolution(const std::size_t i))(mfem::Vector&, const mfem::Vector&) {
+  constexpr const auto xthr = xmax / 2.;
+  std::array<void (*)(mfem::Vector&, const mfem::Vector&), 6u> solutions = {
+      +[](mfem::Vector& u, const mfem::Vector& x) {
+        constexpr const auto gradx = mfem_mgis::real(1) / 3;
+        u = mfem_mgis::real{};
+        if (x(0) < xthr) {
+          u(0) = gradx * x(0);
+        } else {
+          u(0) = gradx * xthr - gradx * (x(0) - xthr);
+        }
+      },
+      +[](mfem::Vector& u, const mfem::Vector& x) {
+        constexpr const auto gradx = mfem_mgis::real(4) / 30;
+        u = mfem_mgis::real{};
+        if (x(0) < xthr) {
+          u(0) = gradx * x(0);
+        } else {
+          u(0) = gradx * xthr - gradx * (x(0) - xthr);
+        }
+      },
+      +[](mfem::Vector& u, const mfem::Vector& x) {
+        constexpr const auto gradx = mfem_mgis::real(4) / 30;
+        u = mfem_mgis::real{};
+        if (x(0) < xthr) {
+          u(0) = gradx * x(0);
+        } else {
+          u(0) = gradx * xthr - gradx * (x(0) - xthr);
+        }
+      },
+      +[](mfem::Vector& u, const mfem::Vector& x) {
+        constexpr const auto gradx = mfem_mgis::real(1) / 3;
+        u = mfem_mgis::real{};
+        if (x(0) < xthr) {
+          u(1) = gradx * x(0);
+        } else {
+          u(1) = gradx * xthr - gradx * (x(0) - xthr);
+        }
+      },
+      +[](mfem::Vector& u, const mfem::Vector& x) {
+        constexpr const auto gradx = mfem_mgis::real(1) / 3;
+        u = mfem_mgis::real{};
+        if (x(0) < xthr) {
+          u(2) = gradx * x(0);
+        } else {
+          u(2) = gradx * xthr - gradx * (x(0) - xthr);
+        }
+      },
+      +[](mfem::Vector& u, const mfem::Vector&) { u = mfem_mgis::real{}; }};
+  return solutions[i];
+}
+
 static void setLinearSolver(mfem_mgis::AbstractNonLinearEvolutionProblem& p,
                             const std::size_t i) {
   if (i == 0) {
@@ -65,6 +119,21 @@ static void setSolverParameters(
                                {"AbsoluteTolerance", 1e-12},
                                {"MaximumNumberOfIterations", 10}});
 }  // end of setSolverParmeters
+
+bool checkSolution(mfem_mgis::NonLinearEvolutionProblem& problem,
+                   const std::size_t i) {
+  const auto b = mfem_mgis::compareToAnalyticalSolution(
+      problem, getSolution(i), {{"CriterionThreshold", 1e-7}});
+  if (!b) {
+    if (mfem_mgis::getMPIrank() == 0)
+      std::cerr << "Error is greater than threshold\n";
+    return false;
+  }
+  if (mfem_mgis::getMPIrank() == 0)
+    std::cerr << "Error is lower than threshold\n";
+  return true;
+}
+
 
 struct TestParameters {
   const char* mesh_file = "n100-id1.msh";
@@ -183,6 +252,9 @@ int executeMFEMMGISTest(const TestParameters& p) {
     }
     problem.executePostProcessings(0, 1);
     //
+    if (!checkSolution(problem, p.tcase)) {
+      return(EXIT_FAILURE);
+    }
     return(EXIT_SUCCESS);
   }
 }
