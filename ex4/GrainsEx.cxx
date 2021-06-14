@@ -32,11 +32,11 @@
 #include "MFEMMGIS/PeriodicNonLinearEvolutionProblem.hxx"
 
 
-constexpr double xmax = 1.;
+constexpr const double xmax = 1.;
+constexpr const double xthr = xmax / 2.;
 constexpr int nbgrains = 100;
 
 void (*getSolution(const std::size_t i))(mfem::Vector&, const mfem::Vector&) {
-  constexpr const auto xthr = xmax / 2.;
   std::array<void (*)(mfem::Vector&, const mfem::Vector&), 6u> solutions = {
       +[](mfem::Vector& u, const mfem::Vector& x) {
         constexpr const auto gradx = mfem_mgis::real(1) / 3;
@@ -202,28 +202,43 @@ int executeMFEMMGISTest(const TestParameters& p) {
       std::cout << "Number of processes: " << mfem_mgis::getMPIsize() << std::endl;
     // building the non linear problem
 
-    //  std::vector<mfem_mgis::real> corner1({0.,0.,0.});
-    //    std::vector<mfem_mgis::real> corner2({1., 1., 1.});
     std::vector<mfem_mgis::real> corner2({ -0.133344316185, 0.815400209678, 0.587161226561});
     std::vector<mfem_mgis::real> corner1 = corner2;
     mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed, corner1, corner2);
 
-    const auto& mesh = fed->getMesh<p.parallel>();
+    const mfem::ParMesh& mesh = fed->getMesh<p.parallel>();
     int nrelem = mesh.GetNE();
-    std::array<double,nbgrains> barycenter;
-    std::array<int,nbgrains> barycenter_nb;
+    std::array<std::array<double,dim>,nbgrains> barycenter = {};
+    std::array<int,nbgrains> barycenter_nb = {};
     for (int iel = 0; iel < nrelem; ++iel) {
       const mfem::Element *el = mesh.GetElement(iel);
-      int attr = el->GetAttribute();
+      double sum_coords[dim] ={};
+      int attr = el->GetAttribute()-1;
+      MFEM_VERIFY(attr < nbgrains, "Some elements of the mesh has a number exceeding the number of grains");
       mfem::Array<int> vertices;
       el->GetVertices(vertices);
       int nrvert = vertices.Size();
       for (int iv = 0; iv < nrvert; ++iv)  {
          int vert_idx = vertices[iv];
          const double *coords = mesh.GetVertex(vert_idx);
+	 for (int  d=0; d<dim; d++)
+	   sum_coords[d] += coords[d];
+	 barycenter_nb[attr] += 1;
       }
-      std::cout << mfem_mgis::getMPIrank() << " elt " << iel <<
-	" attr " << attr << std::endl;
+      for (int  d=0; d<dim; d++) {
+	barycenter[attr][d] += sum_coords[d];
+	
+      }
+    }
+    // TODO: add mpi_allreduce
+    for (int ig = 0; ig < nbgrains; ++ig)  {
+      double coord[dim];
+      for (int  d=0; d<dim; d++) {
+	coord[d] =  std::fmod(barycenter[ig][d] / barycenter_nb[ig], xmax);
+	barycenter[ig][d] = coord[d];
+      }
+      std::cout << mfem_mgis::getMPIrank() << " " << mesh.GetGlobalElementNum(ig) <<
+	" attr " << ig << " bary " << barycenter[ig][0]<<" " << barycenter[ig][1]<< " " << barycenter[ig][2]<<std::endl;
     }
     
     std::array<mfem_mgis::real,2> lambda({100, 200});
@@ -239,7 +254,10 @@ int executeMFEMMGISTest(const TestParameters& p) {
 	mgis::behaviour::setMaterialProperty(m.s1, "FirstLameCoefficient", l);
 	mgis::behaviour::setMaterialProperty(m.s1, "ShearModulus", mu);
       };
-      set_properties(m1, lambda[i%2], mu[i%2]);
+      if (barycenter[i-1][0] < xthr)
+	set_properties(m1, lambda[0], mu[0]);
+      else
+	set_properties(m1, lambda[1], mu[1]);
       auto set_temperature = [](auto& m) {
 	mgis::behaviour::setExternalStateVariable(m.s0, "Temperature", 293.15);
 	mgis::behaviour::setExternalStateVariable(m.s1, "Temperature", 293.15);
