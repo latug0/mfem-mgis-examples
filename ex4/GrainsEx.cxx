@@ -253,7 +253,7 @@ int executeMFEMMGISTest(const TestParameters& p) {
                             {"UnknownsSize", dim},
                             {"NumberOfUniformRefinements", p.parallel ? 0 : 0},
                             {"Parallel", p.parallel},
-			    {"GeneralVerbosityLevel", 2}};
+			    {"GeneralVerbosityLevel", 1}};
   // creating the finite element workspace
   auto fed = std::make_shared<mfem_mgis::FiniteElementDiscretization>(params);
   {
@@ -360,11 +360,13 @@ int executeMFEMMGISTest(const TestParameters& p) {
       mfem_mgis::abort(EXIT_FAILURE);
     }
     problem.executePostProcessings(0, 1);
-    //
-//TODO: get correct results    if (!checkSolution(problem, p.tcase,
-//TODO: get correct results		       mfem_mgis::Parameters(params).insert("CriterionThreshold", 1e-4))) {
-//TODO: get correct results      return(EXIT_FAILURE);
-//TODO: get correct results    }
+#define POSTCHECK
+#ifdef POSTCHECK
+    if (!checkSolution(problem, p.tcase,
+		       mfem_mgis::Parameters(params).insert("CriterionThreshold", 1e-4))) {
+      return(EXIT_FAILURE);
+    }
+#endif
     return(EXIT_SUCCESS);
   }
 }
