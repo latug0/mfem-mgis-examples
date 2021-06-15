@@ -28,6 +28,7 @@
 #include "mfem/fem/datacollection.hpp"
 #include "MFEMMGIS/MFEMForward.hxx"
 #include "MFEMMGIS/Material.hxx"
+#include "MFEMMGIS/Parameter.hxx"
 #include "MFEMMGIS/AnalyticalTests.hxx"
 #include "MFEMMGIS/NonLinearEvolutionProblemImplementation.hxx"
 #include "MFEMMGIS/PeriodicNonLinearEvolutionProblem.hxx"
@@ -35,7 +36,6 @@
 
 constexpr const double xmax = 1.;
 constexpr const double xthr = xmax / 2.;
-constexpr int nbgrains = 100;
 
 void (*getSolution(const std::size_t i))(mfem::Vector&, const mfem::Vector&) {
   std::array<void (*)(mfem::Vector&, const mfem::Vector&), 6u> solutions = {
@@ -124,11 +124,10 @@ static void setSolverParameters(
 }  // end of setSolverParmeters
 
 bool checkSolution(mfem_mgis::NonLinearEvolutionProblem& problem,
-                   const std::size_t i) {
+                   const std::size_t i, const mfem_mgis::Parameters &params) {
   const auto b = mfem_mgis::compareToAnalyticalSolution(
       problem, getSolution(i),
-      {{"CriterionThreshold", 1e-4},
-       {"VerbosityLevel", 2 }});
+      params);
   if (!b) {
     if (mfem_mgis::getMPIrank() == 0)
       std::cerr << "Error is greater than threshold\n";
@@ -248,19 +247,20 @@ void translateMesh(mfem_mgis::FiniteElementDiscretization &fed, std::vector<doub
 
 int executeMFEMMGISTest(const TestParameters& p) {
   constexpr const auto dim = mfem_mgis::size_type{3};
-  // creating the finite element workspace
-
-  auto fed = std::make_shared<mfem_mgis::FiniteElementDiscretization>(
-      mfem_mgis::Parameters{{"MeshFileName", p.mesh_file},
+  const auto params = mfem_mgis::Parameters {{"MeshFileName", p.mesh_file},
                             {"FiniteElementFamily", "H1"},
                             {"FiniteElementOrder", p.order},
                             {"UnknownsSize", dim},
                             {"NumberOfUniformRefinements", p.parallel ? 0 : 0},
-			    {"Parallel", p.parallel}});
-
+                            {"Parallel", p.parallel},
+			    {"GeneralVerbosityLevel", 2}};
+  // creating the finite element workspace
+  auto fed = std::make_shared<mfem_mgis::FiniteElementDiscretization>(params);
   {
     if (mfem_mgis::getMPIrank() == 0)
       std::cout << "Number of processes: " << mfem_mgis::getMPIsize() << std::endl;
+
+    const auto verbosity = mfem_mgis::get_if<int>(params, "GeneralVerbosityLevel", 0);
     // building the non linear problem
 
     std::vector<mfem_mgis::real> minCoord ={ 0., 0., 0.};
@@ -278,8 +278,11 @@ int executeMFEMMGISTest(const TestParameters& p) {
     const mfem::ParMesh& mesh = fed->getMesh<p.parallel>();
 
     int nrelem = mesh.GetNE();
-    std::array<std::array<double,dim>,nbgrains> barycenter = {};
-    std::array<int,nbgrains> barycenter_nb = {};
+    const int nbgrains = mesh.attributes.Size();
+    if (verbosity > 1) std::cout << "nbgrains " << nbgrains << "\n";
+    std::vector<std::array<double,dim>> barycenter(nbgrains, {0., 0., 0.});
+    std::vector<int> barycenter_nb(nbgrains, 0);
+    
     for (int iel = 0; iel < nrelem; ++iel) {
       const mfem::Element *el = mesh.GetElement(iel);
       double sum_coords[dim] ={};
@@ -358,9 +361,10 @@ int executeMFEMMGISTest(const TestParameters& p) {
     }
     problem.executePostProcessings(0, 1);
     //
-//TODO:Check    if (!checkSolution(problem, p.tcase)) {
-//TODO:Check      return(EXIT_FAILURE);
-//TODO:Check    }
+//TODO: get correct results    if (!checkSolution(problem, p.tcase,
+//TODO: get correct results		       mfem_mgis::Parameters(params).insert("CriterionThreshold", 1e-4))) {
+//TODO: get correct results      return(EXIT_FAILURE);
+//TODO: get correct results    }
     return(EXIT_SUCCESS);
   }
 }
