@@ -58,10 +58,9 @@ add_custom_target(generate-libBehaviour-ex5 ALL
 function(add_ssna303_3d_test_ex solver)
  set(test "Ssna303_3d_${solver}")
  add_test(NAME ${test} COMMAND ${test})
-endfunction(add_ssna303_test_ex)
+endfunction(add_ssna303_3d_test_ex)
 
 foreach(tg IN ITEMS mumps hypre petsc)
-  message(INFO "tg=${tg}")
   # Define the executable to build for this example
   add_executable("Ssna303_3d_${tg}" ssna303_${tg}.cxx)
   target_link_libraries(Ssna303_3d_${tg} mfem-mgis::MFEMMGIS)
