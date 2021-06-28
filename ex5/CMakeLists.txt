@@ -37,13 +37,6 @@ if (NOT TARGET mfem-mgis::MFEMMGIS)
   find_package(MFEMMGIS REQUIRED)
 endif(NOT TARGET mfem-mgis::MFEMMGIS)
 
-# Define the executable to build for this example
-add_executable(Ssna303_3d ssna303_3d.cxx)
-target_link_libraries(Ssna303_3d mfem-mgis::MFEMMGIS)
-target_include_directories(Ssna303_3d
-    SYSTEM
-    PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
-    PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
 
 # Copy needed file for execution
 file(COPY
@@ -61,18 +54,25 @@ add_custom_command(
 add_custom_target(generate-libBehaviour-ex5 ALL
   DEPENDS "src/libBehaviour.so")
 
-add_dependencies(check Ssna303_3d generate-libBehaviour-ex5)
-
 # Define a test that will be called during the "make check"
-function(add_ssna303_3d_test_ex)
-  set(test "Ssna303_3d")
-  add_test(NAME ${test} COMMAND Ssna303_3d)
-endfunction(add_ssna303_3d_test_ex)
+function(add_ssna303_3d_test_ex solver)
+ set(test "Ssna303_3d_${solver}")
+ add_test(NAME ${test} COMMAND ${test})
+endfunction(add_ssna303_test_ex)
 
-add_ssna303_3d_test_ex()
+foreach(tg IN ITEMS mumps hypre)
+  message(INFO "tg=${tg}")
+  # Define the executable to build for this example
+  add_executable("Ssna303_3d_${tg}" ssna303_${tg}.cxx)
+  target_link_libraries(Ssna303_3d_${tg} mfem-mgis::MFEMMGIS)
+  target_include_directories(Ssna303_3d_${tg}
+    SYSTEM
+    PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
+    PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
 
-
-
+  add_dependencies(check Ssna303_3d_${tg} generate-libBehaviour-ex5)
+  add_ssna303_3d_test_ex(${tg})
+endforeach()
 
 
 

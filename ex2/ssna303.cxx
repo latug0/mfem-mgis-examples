@@ -98,6 +98,7 @@ int main(int argc, char** argv) {
 
     // selection of the linear solver
 #if defined(MFEM_USE_MUMPS) && defined(MFEM_USE_MPI)
+    std::cout << "Config MUMPS\n";
     problem.setLinearSolver("MUMPSSolver", {});
 #elif defined (MFEM_USE_SUITESPARSE)
     problem.setLinearSolver("UMFPackSolver", {});
