@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
   const char* mesh_file = "ssna303_3d.msh";
   const char* behaviour = "Plasticity";
   const char* library = "src/libBehaviour.so";
-  const char* petscrc_file = "";
+  const char* petscrc_file = "rc_ex2p";
   auto parallel = int{1};
   auto order = 1;
   auto refinement =0;
@@ -50,6 +50,8 @@ int main(int argc, char** argv) {
   // options treatment
   mfem::OptionsParser args(argc, argv);
   mfem_mgis::declareDefaultOptions(args);// PETSc Initialize 
+  if (!mfem_mgis::usePETSc())  
+    mfem_mgis::setPETSc(petscrc_file);
   args.AddOption(&parallel, "-p", "--parallel",
                  "Perform parallel computations.");
   args.AddOption(&order, "-o", "--order",
@@ -141,8 +143,10 @@ int main(int argc, char** argv) {
                             {{"Boundary", 2}, {"OutputFileName", "force.txt"}});
   
   // loop over time step
-  const auto nsteps = mfem_mgis::size_type{100};
-  const auto dt = mfem_mgis::real{1} / nsteps;
+//  const auto nsteps = mfem_mgis::size_type{100};
+//  const auto dt = mfem_mgis::real{1} / nsteps;
+  const auto nsteps = mfem_mgis::size_type{2};
+  const auto dt = mfem_mgis::real{0.0005};
   auto t = mfem_mgis::real{0};
   auto iteration = mfem_mgis::size_type{};
   for (mfem_mgis::size_type i = 0; i != nsteps; ++i) {
