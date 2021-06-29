@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
   const char* behaviour = "Plasticity";
   const char* library = "src/libBehaviour.so";
   auto solver = "HypreFGMRES";
-  auto preconditioner = "";//"HypreBoomerAMG";
+  auto preconditioner = "HypreBoomerAMG"; //"";//
   auto ref_para = 0;
   auto ref_seq = 0;
   auto order = 1;
