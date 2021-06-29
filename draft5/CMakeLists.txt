@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
-project(Ssna303_3dExample)
+project(GrainsExample)
 
 
 set(CMAKE_CXX_STANDARD 17)
@@ -37,41 +37,40 @@ if (NOT TARGET mfem-mgis::MFEMMGIS)
   find_package(MFEMMGIS REQUIRED)
 endif(NOT TARGET mfem-mgis::MFEMMGIS)
 
+# Define the executable to build for this example
+add_executable(GrainsEx GrainsEx.cxx)
+target_link_libraries(GrainsEx mfem-mgis::MFEMMGIS)
+target_include_directories(GrainsEx
+    SYSTEM
+    PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
+    PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
 
 # Copy needed file for execution
 file(COPY
-  ${PROJECT_SOURCE_DIR}/Plasticity.mfront
-  ${PROJECT_SOURCE_DIR}/ssna303_3d.msh
+  ${PROJECT_SOURCE_DIR}/Elasticity.mfront
+  ${PROJECT_SOURCE_DIR}/neper.sh
   DESTINATION ${PROJECT_BINARY_DIR})
 
 # Use mfront to generate libBehaviour.so
 add_custom_command(
   OUTPUT "src/libBehaviour.so"
-  COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/Plasticity.mfront
-  DEPENDS ${PROJECT_BINARY_DIR}/Plasticity.mfront
+  COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/Elasticity.mfront
+  DEPENDS ${PROJECT_BINARY_DIR}/Elasticity.mfront
   COMMENT "Performing mfront code generation")
 
-add_custom_target(generate-libBehaviour-ex5 ALL
+add_custom_target(generate-libBehaviour-ex4 ALL
   DEPENDS "src/libBehaviour.so")
 
+add_dependencies(check GrainsEx generate-libBehaviour-ex4)
+
 # Define a test that will be called during the "make check"
-function(add_ssna303_3d_test_ex solver)
- set(test "Ssna303_3d_${solver}")
- add_test(NAME ${test} COMMAND ${test})
-endfunction(add_ssna303_3d_test_ex)
+function(add_grains_ex)
+  set(test "GrainsEx")
+  add_test(NAME ${test} COMMAND mpirun -n 4 GrainsEx)
+endfunction(add_grains_ex)
 
-foreach(tg IN ITEMS mumps hypre petsc)
-  # Define the executable to build for this example
-  add_executable("Ssna303_3d_${tg}" ssna303_${tg}.cxx)
-  target_link_libraries(Ssna303_3d_${tg} mfem-mgis::MFEMMGIS)
-  target_include_directories(Ssna303_3d_${tg}
-    SYSTEM
-    PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
-    PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
+add_grains_ex()
 
-  add_dependencies(check Ssna303_3d_${tg} generate-libBehaviour-ex5)
-  add_ssna303_3d_test_ex(${tg})
-endforeach()
 
 
 

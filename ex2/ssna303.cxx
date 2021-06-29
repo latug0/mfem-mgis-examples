@@ -116,8 +116,8 @@ int main(int argc, char** argv) {
 //                              {{"Boundary", 2}, {"OutputFileName", "force.txt"}});
 
     // loop over time step
-    const auto nsteps = mfem_mgis::size_type{50};
-    const auto dt = mfem_mgis::real{1} / nsteps;
+    const auto nsteps = mfem_mgis::size_type{2}; //50
+    const auto dt = mfem_mgis::real{0.01};
     auto t = mfem_mgis::real{0};
     auto iteration = mfem_mgis::size_type{};
     for (mfem_mgis::size_type i = 0; i != nsteps; ++i) {

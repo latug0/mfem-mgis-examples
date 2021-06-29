@@ -11,7 +11,15 @@
 #include "mfem/general/optparser.hpp"
 #include "mfem/linalg/solvers.hpp"
 #include "mfem/linalg/hypre.hpp"
+
+#ifdef MFEM_USE_PETSC
 #include "mfem/linalg/petsc.hpp"
+#endif /* MFEM_USE_PETSC */
+
+#ifdef MFEM_USE_MUMPS
+#include "mfem/linalg/mumps.hpp"
+#endif /* MFEM_USE_MUMPS */
+
 #include "mfem/fem/datacollection.hpp"
 #include "MGIS/Raise.hxx"
 #include "MFEMMGIS/Material.hxx"
@@ -24,36 +32,32 @@
 #define PRINT_DEBUG (std::cout <<  __FILE__ << ":" <<  __LINE__ << std::endl)
 
 int main(int argc, char** argv) {
-	
+
   mfem_mgis::initialize(argc, argv);
-  bool parallel = true;
   constexpr const auto dim = mfem_mgis::size_type{3};
   const char* mesh_file = "ssna303_3d.msh";
   const char* behaviour = "Plasticity";
   const char* library = "src/libBehaviour.so";
-  auto solver = "HypreFGMRES";
-  auto preconditioner = "";//"HypreBoomerAMG";
-  auto ref_para = 0;
-  auto ref_seq = 0;
+  const char* petscrc_file = "rc_ex10p";
+  auto parallel = int{1};
   auto order = 1;
-
-
+  auto refinement =0;
+  
   //file creation 
-  std::string const myFile("test.txt");
+  std::string const myFile("./data.txt");
   std::ofstream out(myFile.c_str());
 
   // options treatment
   mfem::OptionsParser args(argc, argv);
+  mfem_mgis::declareDefaultOptions(args);// PETSc Initialize 
+  if (!mfem_mgis::usePETSc())  
+    mfem_mgis::setPETSc(petscrc_file);
+  args.AddOption(&parallel, "-p", "--parallel",
+                 "Perform parallel computations.");
   args.AddOption(&order, "-o", "--order",
                  "Finite element order (polynomial degree).");
-  args.AddOption(&solver,"-s", "--solver",
-                 "Solver of the Problem.");
-  args.AddOption(&preconditioner,"-p", "--preconditioner",
-                 "Preconditioner for the Problem.");
-  args.AddOption(&ref_para,"-rp", "--refinement_parallel",
-                 "Number of Refinement for parallel call.");
-  args.AddOption(&ref_seq,"-rs", "--refinement_sequential",
-                 "Number of Refinement for sequential call.");
+  args.AddOption(&refinement,"-r", "--refinement",
+                 "Number of Refinement.");
   args.Parse();
   if (!args.Good()) {
     args.PrintUsage(std::cout);
@@ -61,15 +65,14 @@ int main(int argc, char** argv) {
   }
   args.PrintOptions(std::cout);
 
-  // loading the mesh
   {
+  // loading the mesh and timer
   const auto main_timer = mfem_mgis::getTimer("main_timer");
   mfem_mgis::NonLinearEvolutionProblem problem(
       {{"MeshFileName", mesh_file},
        {"FiniteElementFamily", "H1"},
        {"FiniteElementOrder", order},
        {"UnknownsSize", dim},
-       {"NumberOfUniformRefinements", parallel ? ref_para : ref_seq},
        {"Hypothesis", "Tridimensional"},
        {"Parallel", true}});
 
@@ -110,61 +113,40 @@ int main(int argc, char** argv) {
             return u;
           }));
 
-  // solving the problem
-  problem.setSolverParameters({{"VerbosityLevel", 0},
-                               {"RelativeTolerance", 1e-6},
-                               {"AbsoluteTolerance", 0.},
-                               {"MaximumNumberOfIterations", 20}});
+  // solving the problem without petsc
+  if (!mfem_mgis::usePETSc()) {
+    problem.setSolverParameters({{"VerbosityLevel", 0},
+                                 {"RelativeTolerance", 1e-8},
+                                 {"AbsoluteTolerance", 0.},
+                                 {"MaximumNumberOfIterations", 20}});
+    if (parallel) {
+      std::cout << "MUMPS" << std::endl;
+      problem.setLinearSolver("MUMPSSolver", {});
+    } else {
+        std::cout << "UMFSolver" << std::endl;
+        problem.setLinearSolver("UMFPackSolver", {});
+    }
+  }
 
-  // selection of the linear solver without preconditioner
-  if (solver == ""){
-    return EXIT_FAILURE;
-  }
-  if ( preconditioner == ""){
-  problem.setLinearSolver(solver,  {{"VerbosityLevel", 0},
-                                   //{"AbsoluteTolerance", 1e-12},
-                                   //{"KDim", 3},
-                                   {"Tolerance", 1e-12},
-                                   {"MaximumNumberOfIterations",300}});
-  }
-  else{
-  // with the HypreBoomerAMG preconditioner
-//  auto prec_none = mfem_mgis::Parameters{{"Name", "None"}};
-  auto prec_boomer =
-      mfem_mgis::Parameters{{"Name", preconditioner},  //
-                           {"Options", mfem_mgis::Parameters{
-//                           {"Strategy", "Elasticity"},
-                           {"VerbosityLevel", 0}}}};
-
-   problem.setLinearSolver(solver, {{"VerbosityLevel", 0},
-                                          //{"AbsoluteTolerance", 1e-12},
-                                          //{"RelativeTolerance", 1e-12},
-	  				  //{"Tolerance", 1e-12},
-                                          {"MaximumNumberOfIterations", 300},
-                                          {"Preconditioner", prec_boomer}});
-  }
-	// print on file
-  out << " SetLinearSolver" << std::endl;
-  out << " VerbosityLevel = " << 0 << std::endl;
-  out << " RelativeTolerance = " << 1e-12 << std::endl;
-  out << " MaximumNumberOfIterations = " << 300 << std::endl;
-  out << " Preconditioner = " << preconditioner << std::endl;
+  // print on file
+  out << " USE_PETSc = " << mfem_mgis::usePETSc() << std::endl;
   out << " taille_maille = " << h << std::endl;
   out << " 1/h = " << 1/h << std::endl;
-  out << " nbr_ref_parallel = " << ref_para << std::endl;
-  out << " nbr_ref_sequential = " << ref_seq << std::endl;
+  out << " nbr_refinement = " << refinement << std::endl;
   out << " numbers_of_vertices = " << numbers_of_vertices << std::endl;
   out << " numbers_of_elements = " << numbers_of_elements << std::endl;
 
   // vtk export
   problem.addPostProcessing("ParaviewExportResults",
-                            {{"OutputFileName", std::string("ssna303-displacements-HFGMRES_WS_1")}});
+                            {{"OutputFileName", std::string("ssna303-displacements")}});
   problem.addPostProcessing("ComputeResultantForceOnBoundary",
-                            {{"Boundary", 2}, {"OutputFileName", "force_HFGMRES_WS_1.txt"}});
+                            {{"Boundary", 2}, {"OutputFileName", "force.txt"}});
   
   // loop over time step
+//  const auto nsteps = mfem_mgis::size_type{100};
+//  const auto dt = mfem_mgis::real{1} / nsteps;
   const auto nsteps = mfem_mgis::size_type{2};
-  const auto dt = mfem_mgis::real{0.001};
+  const auto dt = mfem_mgis::real{0.0005};
   auto t = mfem_mgis::real{0};
   auto iteration = mfem_mgis::size_type{};
   for (mfem_mgis::size_type i = 0; i != nsteps; ++i) {
@@ -176,12 +158,7 @@ int main(int argc, char** argv) {
     auto nsteps = mfem_mgis::size_type{1};
     auto niter  = mfem_mgis::size_type{0};
     while (nsteps != 0) {
-      bool converged = true;
-      try {
-        problem.solve(ct, dt2);
-      } catch (std::runtime_error&) {
-        converged = false;
-      }
+      bool converged = problem.solve(ct, dt2);
       if (converged) {
         --nsteps;
         ct += dt2;
@@ -204,5 +181,6 @@ int main(int argc, char** argv) {
   }
   }
   mfem_mgis::Profiler::getProfiler().print(out);
+  mfem_mgis::finalize();
   return EXIT_SUCCESS;
 }
