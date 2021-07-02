@@ -146,7 +146,7 @@ int main(int argc, char** argv) {
 //  const auto nsteps = mfem_mgis::size_type{100};
 //  const auto dt = mfem_mgis::real{1} / nsteps;
   const auto nsteps = mfem_mgis::size_type{2};
-  const auto dt = mfem_mgis::real{0.0005};
+  const auto dt = mfem_mgis::real{0.001};
   auto t = mfem_mgis::real{0};
   auto iteration = mfem_mgis::size_type{};
   for (mfem_mgis::size_type i = 0; i != nsteps; ++i) {
