@@ -142,6 +142,9 @@ struct TestParameters {
   int order = 1;
   int tcase = 1;
   int linearsolver = 1;
+  double xmax = 1.;
+  double ymax = 1.;
+  double zmax = 1.;
   bool parallel = true;
 };
 
@@ -154,6 +157,12 @@ TestParameters parseCommandLineOptions(int& argc, char* argv[]) {
   args.AddOption(&p.library, "-l", "--library", "Material library.");
   args.AddOption(&p.order, "-o", "--order",
                  "Finite element order (polynomial degree).");
+  args.AddOption(&p.xmax, "-xm", "--xmax",
+                 "Corner, coordinate x direction.");
+  args.AddOption(&p.ymax, "-ym", "--ymax",
+                 "Corner coordinate y direction.");
+  args.AddOption(&p.zmax, "-zm", "--zmax",
+                 "Corner coordinate z direction.");
   args.AddOption(&p.tcase, "-t", "--test-case",
                  "identifier of the case : Exx->0, Eyy->1, Ezz->2, Exy->3, "
                  "Exz->4, Eyz->5");
@@ -200,7 +209,7 @@ int executeMFEMMGISTest(const TestParameters& p) {
     // building the non linear problem
 
     std::vector<mfem_mgis::real> corner1({0.,0.,0.});
-    std::vector<mfem_mgis::real> corner2({1., 1., 1.});
+    std::vector<mfem_mgis::real> corner2({p.xmax, p.ymax, p.zmax});
     mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed, corner1, corner2);
 
 
