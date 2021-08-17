@@ -36,8 +36,57 @@
 
 constexpr const double xmax = 1.;
 constexpr const double xthr = xmax / 2.;
-constexpr const auto cdim = mfem_mgis::size_type{3};
 
+void (*getSolution(const std::size_t i))(mfem::Vector&, const mfem::Vector&) {
+  std::array<void (*)(mfem::Vector&, const mfem::Vector&), 6u> solutions = {
+      +[](mfem::Vector& u, const mfem::Vector& x) {
+        constexpr const auto gradx = mfem_mgis::real(1) / 3;
+        u = mfem_mgis::real{};
+        if (x(0) < xthr) {
+          u(0) = gradx * x(0);
+        } else {
+          u(0) = gradx * xthr - gradx * (x(0) - xthr);
+        }
+      },
+      +[](mfem::Vector& u, const mfem::Vector& x) {
+        constexpr const auto gradx = mfem_mgis::real(4) / 30;
+        u = mfem_mgis::real{};
+        if (x(0) < xthr) {
+          u(0) = gradx * x(0);
+        } else {
+          u(0) = gradx * xthr - gradx * (x(0) - xthr);
+        }
+      },
+      +[](mfem::Vector& u, const mfem::Vector& x) {
+        constexpr const auto gradx = mfem_mgis::real(4) / 30;
+        u = mfem_mgis::real{};
+        if (x(0) < xthr) {
+          u(0) = gradx * x(0);
+        } else {
+          u(0) = gradx * xthr - gradx * (x(0) - xthr);
+        }
+      },
+      +[](mfem::Vector& u, const mfem::Vector& x) {
+        constexpr const auto gradx = mfem_mgis::real(1) / 3;
+        u = mfem_mgis::real{};
+        if (x(0) < xthr) {
+          u(1) = gradx * x(0);
+        } else {
+          u(1) = gradx * xthr - gradx * (x(0) - xthr);
+        }
+      },
+      +[](mfem::Vector& u, const mfem::Vector& x) {
+        constexpr const auto gradx = mfem_mgis::real(1) / 3;
+        u = mfem_mgis::real{};
+        if (x(0) < xthr) {
+          u(2) = gradx * x(0);
+        } else {
+          u(2) = gradx * xthr - gradx * (x(0) - xthr);
+        }
+      },
+      +[](mfem::Vector& u, const mfem::Vector&) { u = mfem_mgis::real{}; }};
+  return solutions[i];
+}
 
 static void setLinearSolver(mfem_mgis::AbstractNonLinearEvolutionProblem& p,
                             const std::size_t i) {
@@ -76,14 +125,16 @@ static void setSolverParameters(
 
 bool checkSolution(mfem_mgis::NonLinearEvolutionProblem& problem,
                    const std::size_t i, const mfem_mgis::Parameters &params) {
-  const auto b = true;
+  const auto b = mfem_mgis::compareToAnalyticalSolution(
+      problem, getSolution(i),
+      params);
   if (!b) {
     if (mfem_mgis::getMPIrank() == 0)
-      std::cerr << "Error, check failed\n";
+      std::cerr << "Error is greater than threshold\n";
     return false;
   }
   if (mfem_mgis::getMPIrank() == 0)
-    std::cerr << "OK, no error detected\n";
+    std::cerr << "Error is lower than threshold\n";
   return true;
 }
 
@@ -93,8 +144,6 @@ struct TestParameters {
   const char* behaviour = "Elasticity";
   const char* library = "src/libBehaviour.so";
   const char* reference_file = "Elasticity.ref";
-  const char* x_orientation[3] = {"X1.or", "X2.or", "X3.or"};
-  const char* y_orientation[3] = {"Y1.or", "Y2.or", "Y3.or"};
   int order = 1;
   int tcase = 1;
   int linearsolver = 1;
@@ -150,7 +199,7 @@ std::vector<double> findMinPoint(mfem_mgis::FiniteElementDiscretization &fed) {
   const size_t dim = static_cast<size_t>(mesh->Dimension()); //fes.GetVDim()
   std::vector<double> minCoord(dim);
   const size_t tuples = nbnodes /dim;
-  MFEM_VERIFY(cdim == dim, "Number of dimension is invalid (not 3D)");
+  MFEM_VERIFY(3 == dim, "Number of dim is not 3");
   for (int j = 0; j < dim; ++j) {
     minCoord[j] = std::numeric_limits<double>::max();
   }
@@ -185,7 +234,7 @@ void translateMesh(mfem_mgis::FiniteElementDiscretization &fed, std::vector<doub
   const size_t dim = static_cast<size_t>(mesh->Dimension()); //fes.GetVDim()
   std::vector<double> minCoord(dim);
   const size_t tuples = nbnodes /dim;
-  MFEM_VERIFY(cdim == dim, "Number of dimension is invalid (not 3D)");
+  MFEM_VERIFY(3 == dim, "Number of dim is not 3");
   MFEM_VERIFY(bynodes, "This ordering is not supported");
   mfem::Vector disp(nbnodes);
   for (int i = 0; i < tuples; ++i) {
@@ -197,11 +246,6 @@ void translateMesh(mfem_mgis::FiniteElementDiscretization &fed, std::vector<doub
 }
 
 
-bool readOrientations(const TestParameters& p) {
-  for (int d=0; d < cdim; d++) {
-    std::string filename = "X"+std::to_string(d);
-    std::cout << "fname "<< filename << std::endl;
-  }
 // std::ifstream is("numbers.txt");
 //  std::istream_iterator<double> start(is), end;
 //  std::vector<double> numbers(start, end);
@@ -212,14 +256,14 @@ bool readOrientations(const TestParameters& p) {
 //  std::copy(numbers.begin(), numbers.end(), 
 //            std::ostream_iterator<double>(std::cout, " "));
 //  std::cout << std::endl;
-  return true;
-}
+
 
 int executeMFEMMGISTest(const TestParameters& p) {
+  constexpr const auto dim = mfem_mgis::size_type{3};
   const auto params = mfem_mgis::Parameters {{"MeshFileName", p.mesh_file},
                             {"FiniteElementFamily", "H1"},
                             {"FiniteElementOrder", p.order},
-                            {"UnknownsSize", cdim},
+                            {"UnknownsSize", dim},
                             {"NumberOfUniformRefinements", p.parallel ? 0 : 0},
                             {"Parallel", p.parallel},
 			    {"GeneralVerbosityLevel", 1}};
@@ -234,7 +278,7 @@ int executeMFEMMGISTest(const TestParameters& p) {
 
     std::vector<mfem_mgis::real> minCoord ={ 0., 0., 0.};
     minCoord = findMinPoint<p.parallel>(*fed.get());
-    for (int d=0; d < cdim; d++) minCoord[d] *= -1.;
+    for (int d=0; d < dim; d++) minCoord[d] *= -1.;
     translateMesh<p.parallel>(*fed.get(), minCoord);
     minCoord = findMinPoint<p.parallel>(*fed.get());
     std::cout << "minCoord " << minCoord[0] << " " <<
@@ -249,16 +293,12 @@ int executeMFEMMGISTest(const TestParameters& p) {
     int nrelem = mesh.GetNE();
     const int nbgrains = mesh.attributes.Size();
     if (verbosity > 1) std::cout << "nbgrains " << nbgrains << "\n";
-
-    auto check_orientation = readOrientations(p);
-    MFEM_VERIFY(check_orientation, "Orientation read failed");
-    
-    std::vector<std::array<double,cdim>> barycenter(nbgrains, {0., 0., 0.});
+    std::vector<std::array<double,dim>> barycenter(nbgrains, {0., 0., 0.});
     std::vector<int> barycenter_nb(nbgrains, 0);
     
     for (int iel = 0; iel < nrelem; ++iel) {
       const mfem::Element *el = mesh.GetElement(iel);
-      double sum_coords[cdim] ={};
+      double sum_coords[dim] ={};
       int attr = el->GetAttribute()-1;
       MFEM_VERIFY(attr < nbgrains, "Some elements of the mesh has a number exceeding the number of grains");
       mfem::Array<int> vertices;
@@ -267,19 +307,19 @@ int executeMFEMMGISTest(const TestParameters& p) {
       for (int iv = 0; iv < nrvert; ++iv)  {
          int vert_idx = vertices[iv];
          const double *coords = mesh.GetVertex(vert_idx);
-	 for (int  d=0; d<cdim; d++)
+	 for (int  d=0; d<dim; d++)
 	   sum_coords[d] += coords[d];
 	 barycenter_nb[attr] += 1;
       }
-      for (int  d=0; d<cdim; d++) {
+      for (int  d=0; d<dim; d++) {
 	barycenter[attr][d] += sum_coords[d];
 	
       }
     }
     // TODO: add mpi_allreduce for parallel execution
     for (int ig = 0; ig < nbgrains; ++ig)  {
-      double coord[cdim];
-      for (int  d=0; d<cdim; d++) {
+      double coord[dim];
+      for (int  d=0; d<dim; d++) {
 	coord[d] =  std::fmod(barycenter[ig][d] / barycenter_nb[ig], xmax);
 	barycenter[ig][d] = coord[d];
       }
