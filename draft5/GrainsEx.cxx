@@ -37,6 +37,7 @@
 constexpr const double xmax = 1.;
 constexpr const double xthr = xmax / 2.;
 constexpr const auto cdim = mfem_mgis::size_type{3};
+using Orientation3D = std::array<double,9u>;
 
 
 static void setLinearSolver(mfem_mgis::AbstractNonLinearEvolutionProblem& p,
@@ -197,21 +198,54 @@ void translateMesh(mfem_mgis::FiniteElementDiscretization &fed, std::vector<doub
 }
 
 
-bool readOrientations(const TestParameters& p) {
+int readFileOneArray(std::string &filename, std::vector<double> &out) {
+  std::ifstream is(filename);
+  MFEM_VERIFY(is.good(), "Fail opening the file "+filename);
+  std::istream_iterator<double> start(is), end{};
+  std::vector<double> numbers(start, end);
+  out.clear();
+  copy(numbers.begin(), numbers.end(), back_inserter(out));
+  return numbers.size();
+}
+
+void crossProduct (const double *a, const double *b, double *c) 
+{ 
+  c[0] = a[1] * b[2] - a[2] * b[1]; 
+  c[1] = a[2] * b[0] - a[0] * b[2];
+  c[2] = a[0] * b[1] - a[1] * b[0]; 
+}
+ 
+
+bool readOrientations(const TestParameters& p, std::vector<Orientation3D>& orientations) {
+  std::string filename;
+  int vector_size = -1;
   for (int d=0; d < cdim; d++) {
-    std::string filename = "X"+std::to_string(d);
-    std::cout << "fname "<< filename << std::endl;
+    std::vector<double> v;
+    filename = "X"+std::to_string(d+1)+".or";
+    readFileOneArray(filename,  v);
+    if (vector_size == -1) {
+      vector_size = v.size();
+      orientations.resize(vector_size);
+    }
+    MFEM_VERIFY(vector_size == v.size(), "Vector read is not of expected size, filename: "+filename);
+    for (std::size_t i = 0; i < vector_size; ++i) {
+      orientations[i][d] = v[i];
+    }
+    filename = "Y"+std::to_string(d+1)+".or";
+    readFileOneArray(filename,  v);
+    MFEM_VERIFY(vector_size == v.size(), "Vector read is not of expected size, filename: "+filename);
+    for (std::size_t i = 0; i < vector_size; ++i) {
+      orientations[i][3+d] = v[i];
+    }
   }
-// std::ifstream is("numbers.txt");
-//  std::istream_iterator<double> start(is), end;
-//  std::vector<double> numbers(start, end);
-//  std::cout << "Read " << numbers.size() << " numbers" << std::endl;
-//
-//  // print the numbers to stdout
-//  std::cout << "numbers read in:\n";
-//  std::copy(numbers.begin(), numbers.end(), 
-//            std::ostream_iterator<double>(std::cout, " "));
-//  std::cout << std::endl;
+  for (std::size_t i = 0; i < vector_size; ++i) {
+    double *data = orientations[i].data();
+    // Cross product of X (data) and Y (data+3) vectors that gives Z vector stored at data+6
+    crossProduct(data, data+3, data+6);
+//DEBUG    std::cout << "vector " << i << std::endl;
+//DEBUG    for (std::size_t d=0; d<9; ++d) std::cout << " " << data[d];
+//DEBUG    std::cout << std::endl;
+  }
   return true;
 }
 
@@ -249,67 +283,27 @@ int executeMFEMMGISTest(const TestParameters& p) {
     int nrelem = mesh.GetNE();
     const int nbgrains = mesh.attributes.Size();
     if (verbosity > 1) std::cout << "nbgrains " << nbgrains << "\n";
-
-    auto check_orientation = readOrientations(p);
+    std::vector<Orientation3D> orientations;
+    auto check_orientation = readOrientations(p, orientations);
     MFEM_VERIFY(check_orientation, "Orientation read failed");
     
-    std::vector<std::array<double,cdim>> barycenter(nbgrains, {0., 0., 0.});
-    std::vector<int> barycenter_nb(nbgrains, 0);
-    
-    for (int iel = 0; iel < nrelem; ++iel) {
-      const mfem::Element *el = mesh.GetElement(iel);
-      double sum_coords[cdim] ={};
-      int attr = el->GetAttribute()-1;
-      MFEM_VERIFY(attr < nbgrains, "Some elements of the mesh has a number exceeding the number of grains");
-      mfem::Array<int> vertices;
-      el->GetVertices(vertices);
-      int nrvert = vertices.Size();
-      for (int iv = 0; iv < nrvert; ++iv)  {
-         int vert_idx = vertices[iv];
-         const double *coords = mesh.GetVertex(vert_idx);
-	 for (int  d=0; d<cdim; d++)
-	   sum_coords[d] += coords[d];
-	 barycenter_nb[attr] += 1;
-      }
-      for (int  d=0; d<cdim; d++) {
-	barycenter[attr][d] += sum_coords[d];
-	
-      }
-    }
-    // TODO: add mpi_allreduce for parallel execution
-    for (int ig = 0; ig < nbgrains; ++ig)  {
-      double coord[cdim];
-      for (int  d=0; d<cdim; d++) {
-	coord[d] =  std::fmod(barycenter[ig][d] / barycenter_nb[ig], xmax);
-	barycenter[ig][d] = coord[d];
-      }
-//      std::cout << mfem_mgis::getMPIrank() << " " << mesh.GetGlobalElementNum(ig) <<
-//	" attr " << ig << " bary " << barycenter[ig][0]<<" " << barycenter[ig][1]<< " " << barycenter[ig][2]<<" bool "<<
-//	(barycenter[ig][0] < xthr) <<std::endl;
-    }
-    
-    std::array<mfem_mgis::real,2> lambda({100, 200});
-    std::array<mfem_mgis::real,2>     mu({75 , 150});
-    for (int i=1; i<=nbgrains; i++) {
-      problem.addBehaviourIntegrator("Mechanics", i, p.library, "Elasticity");
-      // materials
-      auto& m1 = problem.getMaterial(i);
-      // setting the material properties
-      auto set_properties = [](auto& m, const double l, const double mu) {
-	mgis::behaviour::setMaterialProperty(m.s0, "FirstLameCoefficient", l);
-	mgis::behaviour::setMaterialProperty(m.s0, "ShearModulus", mu);
-	mgis::behaviour::setMaterialProperty(m.s1, "FirstLameCoefficient", l);
-	mgis::behaviour::setMaterialProperty(m.s1, "ShearModulus", mu);
-      };
-      if (barycenter[i-1][0] < xthr)
-	set_properties(m1, lambda[0], mu[0]);
-      else
-	set_properties(m1, lambda[1], mu[1]);
-      auto set_temperature = [](auto& m) {
-	mgis::behaviour::setExternalStateVariable(m.s0, "Temperature", 293.15);
-	mgis::behaviour::setExternalStateVariable(m.s1, "Temperature", 293.15);
-      };
-      set_temperature(m1);
+    for (int i=1; i<= nbgrains; i++) {
+//TODO      problem.addBehaviourIntegrator("Mechanics", i, p.library, "Elasticity");
+//TODO      // materials
+//TODO      auto& m1 = problem.getMaterial(i);
+//TODO      // setting the material properties
+//TODO      auto set_properties = [](auto& m, const double l, const double mu) {
+//TODO	mgis::behaviour::setMaterialProperty(m.s0, "FirstLameCoefficient", l);
+//TODO	mgis::behaviour::setMaterialProperty(m.s0, "ShearModulus", mu);
+//TODO	mgis::behaviour::setMaterialProperty(m.s1, "FirstLameCoefficient", l);
+//TODO	mgis::behaviour::setMaterialProperty(m.s1, "ShearModulus", mu);
+//TODO      };
+//TODO      set_properties(m1, lambda[0], mu[0]);
+//TODO      auto set_temperature = [](auto& m) {
+//TODO	mgis::behaviour::setExternalStateVariable(m.s0, "Temperature", 293.15);
+//TODO	mgis::behaviour::setExternalStateVariable(m.s1, "Temperature", 293.15);
+//TODO      };
+//TODO      set_temperature(m1);
     }
 
     // macroscopic strain
@@ -320,19 +314,20 @@ int executeMFEMMGISTest(const TestParameters& p) {
       e[p.tcase] = 1.41421356237309504880 / 2;
     }
     problem.setMacroscopicGradientsEvolution([e](const double) { return e; });
-    //
+
     setLinearSolver(problem, p.linearsolver);
     setSolverParameters(problem);
 
-    // Add postprocessing and outputs
-    problem.addPostProcessing(
-        "ParaviewExportResults",
-        {{"OutputFileName", "PeriodicTestOutput-" + std::to_string(p.tcase)}});
-    // solving the problem
-    if (!problem.solve(0, 1)) {
-      mfem_mgis::abort(EXIT_FAILURE);
-    }
-    problem.executePostProcessings(0, 1);
+//TODO    // Add postprocessing and outputs
+//TODO    problem.addPostProcessing(
+//TODO        "ParaviewExportResults",
+//TODO        {{"OutputFileName", "PeriodicTestOutput-" + std::to_string(p.tcase)}});
+//TODO    // solving the problem
+//TODO    if (!problem.solve(0, 1)) {
+//TODO      mfem_mgis::abort(EXIT_FAILURE);
+//TODO    }
+//TODO    problem.executePostProcessings(0, 1);
+
 #define POSTCHECK
 #ifdef POSTCHECK
     if (!checkSolution(problem, p.tcase,
