@@ -47,21 +47,21 @@ target_include_directories(GrainsEx
 
 # Copy needed file for execution
 file(COPY
-  ${PROJECT_SOURCE_DIR}/Elasticity.mfront
+  ${PROJECT_SOURCE_DIR}/OrthotropicElasticity.mfront
   ${PROJECT_SOURCE_DIR}/neper.sh
   DESTINATION ${PROJECT_BINARY_DIR})
 
 # Use mfront to generate libBehaviour.so
 add_custom_command(
   OUTPUT "src/libBehaviour.so"
-  COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/Elasticity.mfront
-  DEPENDS ${PROJECT_BINARY_DIR}/Elasticity.mfront
+  COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/OrthotropicElasticity.mfront
+  DEPENDS ${PROJECT_BINARY_DIR}/OrthotropicElasticity.mfront
   COMMENT "Performing mfront code generation")
 
-add_custom_target(generate-libBehaviour-ex4 ALL
+add_custom_target(generate-libBehaviour-ex5 ALL
   DEPENDS "src/libBehaviour.so")
 
-add_dependencies(check GrainsEx generate-libBehaviour-ex4)
+add_dependencies(check GrainsEx generate-libBehaviour-ex5)
 
 # Define a test that will be called during the "make check"
 function(add_grains_ex)

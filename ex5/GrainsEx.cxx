@@ -1,7 +1,9 @@
 /*!
- * \file   InclusionsEx.cxx
+ * \file   GrainsEx.cxx
  * \brief
- * This example is modelling several inclusion within a periodic cube.
+ * This example is modelling polycristals confguration with periodic domain.
+ * Prerequisites : 
+ *   - Please install Neper software 
  *
  * Mechanical strain:
  *                 eps = E + grad_s v
@@ -15,8 +17,8 @@
  *                   E = grad_s U
  * The local microscopic strain is equal, on average, to the macroscopic strain:
  *           <eps> = <E>
- * \author Thomas Helfer, Guillaume Latu
- * \date   02/06/10/2021
+ * \author Guillaume Latu
+ * \date   02/08/2021
  */
 
 #include <memory>
@@ -34,10 +36,10 @@
 #include "MFEMMGIS/PeriodicNonLinearEvolutionProblem.hxx"
 
 
-constexpr const double xmax = 1.;
-constexpr const double xthr = xmax / 2.;
-constexpr const auto cdim = mfem_mgis::size_type{3};
 using Orientation3D = std::array<double,9u>;
+
+
+constexpr const auto cdim = mfem_mgis::size_type{3};
 
 
 static void setLinearSolver(mfem_mgis::AbstractNonLinearEvolutionProblem& p,
@@ -91,7 +93,7 @@ bool checkSolution(mfem_mgis::NonLinearEvolutionProblem& problem,
 
 struct TestParameters {
   const char* mesh_file = "n8-id1.msh";
-  const char* behaviour = "Elasticity";
+  const char* behaviour = "OrthotropicElasticity";
   const char* library = "src/libBehaviour.so";
   const char* reference_file = "Elasticity.ref";
   const char* x_orientation[3] = {"X1.or", "X2.or", "X3.or"};
@@ -214,14 +216,31 @@ void crossProduct (const double *a, const double *b, double *c)
   c[1] = a[2] * b[0] - a[0] * b[2];
   c[2] = a[0] * b[1] - a[1] * b[0]; 
 }
- 
+
+bool checkNorm (const Orientation3D &ori, const double threshold) 
+{
+  double c[3] = {};
+  for (uint i=0; i < 3; i++) {
+    c[0] += ori[0+i]*ori[0+i]; 
+    c[1] += ori[3+i]*ori[3+i];
+    c[2] += ori[6+i]*ori[6+i];
+  }
+  for (uint i=0; i < 3; i++) {
+    if (fabs(sqrt(c[i]) - 1.) > threshold) {
+      std::cout << std::setprecision(16) <<  "failure " << i << " " << sqrt(c[i]) << std::endl;
+      return false;
+    }
+  }
+  return true;
+}
+
 
 bool readOrientations(const TestParameters& p, std::vector<Orientation3D>& orientations) {
   std::string filename;
   int vector_size = -1;
   for (int d=0; d < cdim; d++) {
     std::vector<double> v;
-    filename = "X"+std::to_string(d+1)+".or";
+    filename = p.x_orientation[d];
     readFileOneArray(filename,  v);
     if (vector_size == -1) {
       vector_size = v.size();
@@ -231,7 +250,7 @@ bool readOrientations(const TestParameters& p, std::vector<Orientation3D>& orien
     for (std::size_t i = 0; i < vector_size; ++i) {
       orientations[i][d] = v[i];
     }
-    filename = "Y"+std::to_string(d+1)+".or";
+    filename = p.y_orientation[d];
     readFileOneArray(filename,  v);
     MFEM_VERIFY(vector_size == v.size(), "Vector read is not of expected size, filename: "+filename);
     for (std::size_t i = 0; i < vector_size; ++i) {
@@ -242,9 +261,10 @@ bool readOrientations(const TestParameters& p, std::vector<Orientation3D>& orien
     double *data = orientations[i].data();
     // Cross product of X (data) and Y (data+3) vectors that gives Z vector stored at data+6
     crossProduct(data, data+3, data+6);
-//DEBUG    std::cout << "vector " << i << std::endl;
-//DEBUG    for (std::size_t d=0; d<9; ++d) std::cout << " " << data[d];
-//DEBUG    std::cout << std::endl;
+    std::cout << "vector " << i << std::endl;
+    for (std::size_t d=0; d<9; ++d) std::cout << " " << data[d];
+    std::cout << std::endl;
+    MFEM_VERIFY(checkNorm(orientations[i], 5e-6), "Rotation matrix is invalid");
   }
   return true;
 }
@@ -256,7 +276,8 @@ int executeMFEMMGISTest(const TestParameters& p) {
                             {"UnknownsSize", cdim},
                             {"NumberOfUniformRefinements", p.parallel ? 0 : 0},
                             {"Parallel", p.parallel},
-			    {"GeneralVerbosityLevel", 1}};
+                            {"GeneralVerbosityLevel", 1}};
+
   // creating the finite element workspace
   auto fed = std::make_shared<mfem_mgis::FiniteElementDiscretization>(params);
   {
@@ -266,7 +287,7 @@ int executeMFEMMGISTest(const TestParameters& p) {
     const auto verbosity = mfem_mgis::get_if<int>(params, "GeneralVerbosityLevel", 0);
     // building the non linear problem
 
-    std::vector<mfem_mgis::real> minCoord ={ 0., 0., 0.};
+    std::vector<mfem_mgis::real> minCoord(3);
     minCoord = findMinPoint<p.parallel>(*fed.get());
     for (int d=0; d < cdim; d++) minCoord[d] *= -1.;
     translateMesh<p.parallel>(*fed.get(), minCoord);
@@ -288,22 +309,28 @@ int executeMFEMMGISTest(const TestParameters& p) {
     MFEM_VERIFY(check_orientation, "Orientation read failed");
     
     for (int i=1; i<= nbgrains; i++) {
-//TODO      problem.addBehaviourIntegrator("Mechanics", i, p.library, "Elasticity");
-//TODO      // materials
-//TODO      auto& m1 = problem.getMaterial(i);
-//TODO      // setting the material properties
-//TODO      auto set_properties = [](auto& m, const double l, const double mu) {
-//TODO	mgis::behaviour::setMaterialProperty(m.s0, "FirstLameCoefficient", l);
-//TODO	mgis::behaviour::setMaterialProperty(m.s0, "ShearModulus", mu);
-//TODO	mgis::behaviour::setMaterialProperty(m.s1, "FirstLameCoefficient", l);
-//TODO	mgis::behaviour::setMaterialProperty(m.s1, "ShearModulus", mu);
-//TODO      };
-//TODO      set_properties(m1, lambda[0], mu[0]);
-//TODO      auto set_temperature = [](auto& m) {
-//TODO	mgis::behaviour::setExternalStateVariable(m.s0, "Temperature", 293.15);
-//TODO	mgis::behaviour::setExternalStateVariable(m.s1, "Temperature", 293.15);
-//TODO      };
-//TODO      set_temperature(m1);
+      problem.addBehaviourIntegrator("Mechanics", i, p.library, p.behaviour);
+      
+      // materials
+      auto& m1 = problem.getMaterial(i);
+      // setting the material properties
+      auto set_properties = [](auto& m, const Orientation3D r) {
+	MFEM_VERIFY(m.b.symmetry == mgis::behaviour::Behaviour::ORTHOTROPIC, "Test cas defined for orthotropic behaviour only");
+	{
+//	  std::array<mfem_mgis::real, 9u> r = {0, 1, 0,  //
+//					       1, 0, 0,  //
+//					       0, 0, 1};
+	  m.setRotationMatrix(mfem_mgis::RotationMatrix3D{r});
+	}
+      };
+      set_properties(m1, orientations[i]);
+      
+      //TODO modifiy temperature
+      auto set_temperature = [](auto& m) {
+	mgis::behaviour::setExternalStateVariable(m.s0, "Temperature", 293.15);
+	mgis::behaviour::setExternalStateVariable(m.s1, "Temperature", 293.15);
+      };
+      set_temperature(m1);
     }
 
     // macroscopic strain
