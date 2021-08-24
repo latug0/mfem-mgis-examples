@@ -21,6 +21,8 @@
  * \date   02/08/2021
  */
 
+#include <algorithm>
+#include <numeric>
 #include <memory>
 #include <limits>
 #include <cstdlib>
@@ -210,11 +212,23 @@ int readFileOneArray(std::string &filename, std::vector<double> &out) {
   return numbers.size();
 }
 
-void crossProduct (const double *a, const double *b, double *c) 
+void crossProduct (const double a[3], const double b[3], double c[3]) 
 { 
   c[0] = a[1] * b[2] - a[2] * b[1]; 
   c[1] = a[2] * b[0] - a[0] * b[2];
   c[2] = a[0] * b[1] - a[1] * b[0]; 
+}
+
+bool normalize (double a[3], double threshold) 
+{
+  double norm = std::sqrt(std::inner_product(a, a + 3, a, 0.l));
+  if (norm < threshold) return false;
+  // Multiply all components of vector a by the inverse of norm
+  norm = 1./norm;
+  for (uint i=0; i < 3; i++) {
+    a[i] *= norm;
+  }
+  return true;
 }
 
 bool checkNorm (const Orientation3D &ori, const double threshold) 
@@ -235,7 +249,7 @@ bool checkNorm (const Orientation3D &ori, const double threshold)
 }
 
 
-bool readOrientations(const TestParameters& p, std::vector<Orientation3D>& orientations) {
+bool readOrientations(const TestParameters& p, std::vector<Orientation3D>& orientations, const double threshold) {
   std::string filename;
   int vector_size = -1;
   for (int d=0; d < cdim; d++) {
@@ -259,12 +273,15 @@ bool readOrientations(const TestParameters& p, std::vector<Orientation3D>& orien
   }
   for (std::size_t i = 0; i < vector_size; ++i) {
     double *data = orientations[i].data();
+    // Normalizing input vectors
+    MFEM_VERIFY(normalize(data, .5), "Orientation vector is wrong, normalization fails");
+    MFEM_VERIFY(normalize(data+3, .5), "Orientation vector is wrong, normalization fails");
     // Cross product of X (data) and Y (data+3) vectors that gives Z vector stored at data+6
     crossProduct(data, data+3, data+6);
-    std::cout << "vector " << i << std::endl;
-    for (std::size_t d=0; d<9; ++d) std::cout << " " << data[d];
-    std::cout << std::endl;
-    MFEM_VERIFY(checkNorm(orientations[i], 5e-6), "Rotation matrix is invalid");
+    //    std::cout << "vector " << i << std::endl;
+    //    for (std::size_t d=0; d<9; ++d) std::cout << " " << data[d];
+    //    std::cout << std::endl;
+    MFEM_VERIFY(checkNorm(orientations[i], threshold), "Rotation matrix is invalid");
   }
   return true;
 }
@@ -305,10 +322,11 @@ int executeMFEMMGISTest(const TestParameters& p) {
     const int nbgrains = mesh.attributes.Size();
     if (verbosity > 1) std::cout << "nbgrains " << nbgrains << "\n";
     std::vector<Orientation3D> orientations;
-    auto check_orientation = readOrientations(p, orientations);
+    auto check_orientation = readOrientations(p, orientations, 1e-12);
     MFEM_VERIFY(check_orientation, "Orientation read failed");
     
     for (int i=1; i<= nbgrains; i++) {
+      std::cout  << "coucou " << i << std::endl;
       problem.addBehaviourIntegrator("Mechanics", i, p.library, p.behaviour);
       
       // materials
