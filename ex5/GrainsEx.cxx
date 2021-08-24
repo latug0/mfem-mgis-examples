@@ -306,17 +306,20 @@ int executeMFEMMGISTest(const TestParameters& p) {
 
     std::vector<mfem_mgis::real> minCoord(3);
     minCoord = findMinPoint<p.parallel>(*fed.get());
-    for (int d=0; d < cdim; d++) minCoord[d] *= -1.;
-    translateMesh<p.parallel>(*fed.get(), minCoord);
-    minCoord = findMinPoint<p.parallel>(*fed.get());
     std::cout << "minCoord " << minCoord[0] << " " <<
       minCoord[1] << " " << minCoord[2] << "\n";
     
-    std::vector<mfem_mgis::real> corner1({0.,0.,0.});
-    std::vector<mfem_mgis::real> corner2({1., 1., 1.});
-    mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed, corner1, corner2);
-
+//    for (int d=0; d < cdim; d++) minCoord[d] *= -1.;
+//    translateMesh<p.parallel>(*fed.get(), minCoord);
+//    minCoord = findMinPoint<p.parallel>(*fed.get());
+//    std::cout << "minCoord " << minCoord[0] << " " <<
+//      minCoord[1] << " " << minCoord[2] << "\n";
+    
+//    std::vector<mfem_mgis::real> corner1({0.,0.,0.});
+//    std::vector<mfem_mgis::real> corner2({1., 1., 1.});
+    mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed, mfem_mgis::FIX_XMIN);
     const mfem::ParMesh& mesh = fed->getMesh<p.parallel>();
+    //    const mfem::Mesh& mesh = fed->getMesh<p.parallel>();
 
     int nrelem = mesh.GetNE();
     const int nbgrains = mesh.attributes.Size();
@@ -363,15 +366,27 @@ int executeMFEMMGISTest(const TestParameters& p) {
     setLinearSolver(problem, p.linearsolver);
     setSolverParameters(problem);
 
-//TODO    // Add postprocessing and outputs
-//TODO    problem.addPostProcessing(
-//TODO        "ParaviewExportResults",
-//TODO        {{"OutputFileName", "PeriodicTestOutput-" + std::to_string(p.tcase)}});
-//TODO    // solving the problem
-//TODO    if (!problem.solve(0, 1)) {
-//TODO      mfem_mgis::abort(EXIT_FAILURE);
-//TODO    }
-//TODO    problem.executePostProcessings(0, 1);
+    // Add postprocessing and outputs
+    problem.addPostProcessing(
+        "ParaviewExportResults",
+        {{"OutputFileName", "PeriodicTestOutput-" + std::to_string(p.tcase)}});
+    std::vector<mfem_mgis::Parameter> materials_out{1,2};
+    problem.addPostProcessing(
+        "ParaviewExportIntegrationPointResultsAtNodes",
+        {{"OutputFileName", "PeriodicTestOutput-Strain-" 
+	      + std::to_string(p.tcase)},
+	    {"Materials", {materials_out}},
+	    {"Results", "Strain"}});
+    problem.addPostProcessing(
+        "ParaviewExportIntegrationPointResultsAtNodes",
+        {{"OutputFileName", "PeriodicTestOutput-Stress-" 
+	      + std::to_string(p.tcase)},
+	    {"Materials", {materials_out}},
+	    {"Results", "Stress"}});
+    if (!problem.solve(0, 1)) {
+      mfem_mgis::abort(EXIT_FAILURE);
+    }
+    problem.executePostProcessings(0, 1);
 
 #define POSTCHECK
 #ifdef POSTCHECK
