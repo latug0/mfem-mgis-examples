@@ -9,14 +9,8 @@
 #include <cstdlib>
 #include <iostream>
 #include "mfem/general/optparser.hpp"
-#include "mfem/linalg/solvers.hpp"
-#include "mfem/fem/datacollection.hpp"
-#include "MFEMMGIS/MFEMForward.hxx"
-#include "MGIS/Raise.hxx"
 #include "MFEMMGIS/Material.hxx"
-#include "MFEMMGIS/UniformDirichletBoundaryCondition.hxx"
 #include "MFEMMGIS/NonLinearEvolutionProblem.hxx"
-#include "MFEMMGIS/FiniteElementDiscretization.hxx"
 
 int main(int argc, char** argv) {
   constexpr const auto dim = mfem_mgis::size_type{2};
@@ -34,6 +28,7 @@ int main(int argc, char** argv) {
   auto order = 1;
   // options treatment
   mfem::OptionsParser args(argc, argv);
+  mfem_mgis::declareDefaultOptions(args);
   args.AddOption(&order, "-o", "--order",
                  "Finite element order (polynomial degree).");
   args.AddOption(&parallel, "-p", "--parallel", "-no-p", "--no-parallel",
@@ -51,42 +46,53 @@ int main(int argc, char** argv) {
                                                 {"UnknownsSize", dim},
                                                 {"Hypothesis", "PlaneStrain"},
                                                 {"Parallel", parallel}});
-  // defining the material
-  problem.addBehaviourIntegrator("Mechanics", 1, library, behaviour);
-  auto& m1 = problem.getMaterial(1);
+  problem.setMaterialsNames({{1, "NotchedBeam"}});
+  problem.setBoundariesNames(
+      {{3, "LowerBoundary"}, {4, "SymmetryAxis"}, {2, "UpperBoundary"}});
+  problem.addBehaviourIntegrator("Mechanics", "NotchedBeam", library,
+                                 behaviour);
+  // materials
+  auto& m1 = problem.getMaterial("NotchedBeam");
   mgis::behaviour::setExternalStateVariable(m1.s0, "Temperature", 293.15);
   mgis::behaviour::setExternalStateVariable(m1.s1, "Temperature", 293.15);
   // boundary conditions
-  problem.addBoundaryCondition(
-      std::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
-          problem.getFiniteElementDiscretizationPointer(), 3, 1));
-  problem.addBoundaryCondition(
-      std::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
-          problem.getFiniteElementDiscretizationPointer(), 4, 0));
-  problem.addBoundaryCondition(
-      std::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
-          problem.getFiniteElementDiscretizationPointer(), 2, 1,
-          [](const auto t) {
+  problem.addUniformDirichletBoundaryCondition(
+      {{"Boundary", "LowerBoundary"}, {"Component", 1}});
+  problem.addUniformDirichletBoundaryCondition(
+      {{"Boundary", "SymmetryAxis"}, {"Component", 0}});
+  problem.addUniformDirichletBoundaryCondition(
+      {{"Boundary", "UpperBoundary"},
+       {"Component", 1},
+       {"LoadingEvolution", [](const auto t) {
             const auto u = 6e-3 * t;
             return u;
-          }));
+        }}});
   // solving the problem
-  problem.setSolverParameters({{"VerbosityLevel", 0},
-                               {"RelativeTolerance", 1e-6},
-                               {"AbsoluteTolerance", 0.},
-                               {"MaximumNumberOfIterations", 10}});
-  if (parallel) {
-    problem.setLinearSolver("MUMPSSolver", {});
-  } else {
-    problem.setLinearSolver("UMFPackSolver", {});
+  if (!mfem_mgis::usePETSc()) {
+    problem.setSolverParameters({{"VerbosityLevel", 0},
+                                 {"RelativeTolerance", 1e-6},
+                                 {"AbsoluteTolerance", 0.},
+                                 {"MaximumNumberOfIterations", 10}});
+  // selection of the linear solver
+    if (parallel) {
+      problem.setLinearSolver("MUMPSSolver", {});
+    } else {
+      problem.setLinearSolver("UMFPackSolver", {});
+    }
   }
-  // vtk export
-  problem.addPostProcessing(
-      "ParaviewExportResults",
-      {{"OutputFileName", "ssna303-displacements"}});
+  // post-processings
   problem.addPostProcessing("ComputeResultantForceOnBoundary",
                             {{"Boundary", 2}, {"OutputFileName", "force.txt"}});
 
+  problem.addPostProcessing("ParaviewExportResults",
+                            {{"OutputFileName", "ssna303-displacements"}});
+  problem.addPostProcessing("ParaviewExportIntegrationPointResultsAtNodes",
+                            {{{"Results", "FirstPiolaKirchhoffStress"},
+                              {"OutputFileName", "ssna303-stress"}}});
+  problem.addPostProcessing(
+      "ParaviewExportIntegrationPointResultsAtNodes",
+      {{{"Results", "EquivalentPlasticStrain"},
+        {"OutputFileName", "ssna303-equivalent-plastic-strain"}}});
   // loop over time step
   const auto nsteps = mfem_mgis::size_type{50};
   const auto dt = mfem_mgis::real{1} / nsteps;
@@ -112,7 +118,7 @@ int main(int argc, char** argv) {
         ++nsubsteps;
         problem.revert();
         if (nsubsteps == 10) {
-          mgis::raise("maximum number of substeps");
+          mfem_mgis::raise("maximum number of substeps");
         }
       }
     }
