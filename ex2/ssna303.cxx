@@ -111,6 +111,7 @@ int main(int argc, char** argv) {
       if (converged) {
         --nsteps;
         ct += dt2;
+        problem.update();
       } else {
         std::cout << "\nsubstep: " << nsubsteps << '\n';
         nsteps *= 2;
@@ -123,7 +124,6 @@ int main(int argc, char** argv) {
       }
     }
     problem.executePostProcessings(t, dt);
-    problem.update();
     t += dt;
     ++iteration;
     std::cout << '\n';
