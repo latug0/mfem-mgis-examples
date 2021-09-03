@@ -140,7 +140,7 @@ bool checkSolution(mfem_mgis::NonLinearEvolutionProblem& problem,
 
 
 struct TestParameters {
-  const char* mesh_file = "n100-id1.msh";
+  const char* mesh_file = "n8-id1.msh";
   const char* behaviour = "Elasticity";
   const char* library = "src/libBehaviour.so";
   const char* reference_file = "Elasticity.ref";
@@ -244,6 +244,19 @@ void translateMesh(mfem_mgis::FiniteElementDiscretization &fed, std::vector<doub
   }
   mesh->MoveNodes(disp);
 }
+
+
+// std::ifstream is("numbers.txt");
+//  std::istream_iterator<double> start(is), end;
+//  std::vector<double> numbers(start, end);
+//  std::cout << "Read " << numbers.size() << " numbers" << std::endl;
+//
+//  // print the numbers to stdout
+//  std::cout << "numbers read in:\n";
+//  std::copy(numbers.begin(), numbers.end(), 
+//            std::ostream_iterator<double>(std::cout, " "));
+//  std::cout << std::endl;
+
 
 int executeMFEMMGISTest(const TestParameters& p) {
   constexpr const auto dim = mfem_mgis::size_type{3};

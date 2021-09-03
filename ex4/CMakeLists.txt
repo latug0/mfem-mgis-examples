@@ -52,7 +52,7 @@ add_custom_command(
   DEPENDS ${PROJECT_BINARY_DIR}/Plasticity.mfront
   COMMENT "Performing mfront code generation")
 
-add_custom_target(generate-libBehaviour-ex5 ALL
+add_custom_target(generate-libBehaviour-ex4 ALL
   DEPENDS "src/libBehaviour.so")
 
 # Define a test that will be called during the "make check"
@@ -70,7 +70,7 @@ foreach(tg IN ITEMS mumps hypre petsc)
     PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
     PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
 
-  add_dependencies(check Ssna303_3d_${tg} generate-libBehaviour-ex5)
+  add_dependencies(check Ssna303_3d_${tg} generate-libBehaviour-ex4)
   add_ssna303_3d_test_ex(${tg})
 endforeach()
 
