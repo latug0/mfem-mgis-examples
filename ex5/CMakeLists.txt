@@ -48,6 +48,13 @@ target_include_directories(GrainsEx
 # Copy needed file for execution
 file(COPY
   ${PROJECT_SOURCE_DIR}/OrthotropicElasticity.mfront
+  ${PROJECT_SOURCE_DIR}/n8-id1.msh
+  ${PROJECT_SOURCE_DIR}/X1.or
+  ${PROJECT_SOURCE_DIR}/X2.or
+  ${PROJECT_SOURCE_DIR}/X3.or
+  ${PROJECT_SOURCE_DIR}/Y1.or
+  ${PROJECT_SOURCE_DIR}/Y2.or
+  ${PROJECT_SOURCE_DIR}/Y3.or
   ${PROJECT_SOURCE_DIR}/neper.sh
   DESTINATION ${PROJECT_BINARY_DIR})
 
