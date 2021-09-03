@@ -18,8 +18,8 @@ endif
 MFEM_ISYSTEM := $(shell echo $(MFEM_INCFLAGS) | sed "s%-I%-isystem %g;s%-isystem\ \ */usr/include%-I/usr/include%g") 
 
 INCFLAGS = $(MFEM_ISYSTEM) \
-          -isystem $(MFEMMGIS_DIR)/../../../include      \
-          -isystem $(MFrontGenericInterface_DIR)/../../../include
+          -I $(MFEMMGIS_DIR)/../../../include      \
+          -I $(MFrontGenericInterface_DIR)/../../../include
 
 CXXFLAGS =  -O2 -std=c++17 # $(MFEM_CXXFLAGS)
 

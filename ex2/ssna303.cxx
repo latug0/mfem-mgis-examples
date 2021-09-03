@@ -18,10 +18,11 @@
 #include "MFEMMGIS/NonLinearEvolutionProblem.hxx"
 #include "MFEMMGIS/FiniteElementDiscretization.hxx"
 
+
 int main(int argc, char** argv) {
   // Initialize mfem_mgis (it includes a call to MPI_Init)
   mfem_mgis::initialize(argc, argv);
-
+  constexpr bool parallel = true;
   constexpr const auto dim = mfem_mgis::size_type{2};
   const char* mesh_file = "ssna303.msh";
   const char* behaviour = "Plasticity";
@@ -38,12 +39,14 @@ int main(int argc, char** argv) {
   }
   args.PrintOptions(std::cout);
   // loading the mesh
-  auto smesh = mfem_mgis::loadMeshSequential(mesh_file, 1, 1, false);
-#ifdef MFEM_USE_MPI
-  auto mesh = std::make_shared<mfem::ParMesh>(MPI_COMM_WORLD, *smesh);
-#else
-  auto mesh = smesh;
-#endif  
+  mfem_mgis::FiniteElementDiscretization fed(
+      {{"MeshFileName", mesh_file},
+       {"FiniteElementFamily", "H1"},
+       {"FiniteElementOrder", order},
+       {"UnknownsSize", dim},
+       {"Parallel", parallel}});
+  
+  const auto mesh = std::make_shared<mfem::ParMesh>(fed.getMesh<parallel>());
 
   if (mesh->Dimension() != dim) {
     std::cerr << "Invalid mesh dimension\n";

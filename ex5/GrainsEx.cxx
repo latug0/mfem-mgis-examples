@@ -48,13 +48,13 @@ static void setLinearSolver(mfem_mgis::AbstractNonLinearEvolutionProblem& p,
                             const std::size_t i) {
   if (i == 0) {
     p.setLinearSolver("GMRESSolver", {{"VerbosityLevel", 1},
-                                      {"AbsoluteTolerance", 1e-12},
-                                      {"RelativeTolerance", 1e-12},
+                                      {"AbsoluteTolerance", 1e-20},
+                                      {"RelativeTolerance", 1e-20},
                                       {"MaximumNumberOfIterations", 5000}});
   } else if (i == 1) {
     p.setLinearSolver("CGSolver", {{"VerbosityLevel", 1},
-                                   {"AbsoluteTolerance", 1e-12},
-                                   {"RelativeTolerance", 1e-12},
+                                   {"AbsoluteTolerance", 1e-20},
+                                   {"RelativeTolerance", 1e-20},
                                    {"MaximumNumberOfIterations", 5000}});
 #ifdef MFEM_USE_SUITESPARSE
   } else if (i == 2) {
@@ -101,7 +101,7 @@ struct TestParameters {
   const char* x_orientation[3] = {"X1.or", "X2.or", "X3.or"};
   const char* y_orientation[3] = {"Y1.or", "Y2.or", "Y3.or"};
   int order = 1;
-  int tcase = 1;
+  int tcase = 0;
   int linearsolver = 1;
   static constexpr bool parallel = true;
 };
