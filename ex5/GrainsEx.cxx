@@ -2,8 +2,8 @@
  * \file   GrainsEx.cxx
  * \brief
  * This example is modelling polycristals confguration with periodic domain.
- * Prerequisites : 
- *   - Please install Neper software 
+ * Optional prerequisites : 
+ *   - Install Neper and Gmsh software to generate a new mesh
  *
  * Mechanical strain:
  *                 eps = E + grad_s v
@@ -48,25 +48,18 @@ static void setLinearSolver(mfem_mgis::AbstractNonLinearEvolutionProblem& p,
                             const std::size_t i) {
   if (i == 0) {
     auto solver = "HypreFGMRES";
-    auto preconditioner = "HypreBoomerAMG"; //"";//
+    auto preconditioner = "HypreBoomerAMG";
     auto prec_boomer =
-      mfem_mgis::Parameters{{"Name", preconditioner},  //
+      mfem_mgis::Parameters{{"Name", preconditioner},  
 			    {"Options", mfem_mgis::Parameters{
 				{"VerbosityLevel", 0}}}};
     
     p.setLinearSolver(solver, {{"VerbosityLevel", 0},
-	  //{"AbsoluteTolerance", 1e-12},
-	  //{"RelativeTolerance", 1e-12},
-	  //{"Tolerance", 1e-12},
 	  {"MaximumNumberOfIterations", 300},
 	    {"Preconditioner", prec_boomer}});
     ;
-#ifdef MFEM_USE_SUITESPARSE
-  } else if (i == 2) {
-    p.setLinearSolver("UMFPackSolver", {});
-#endif
 #ifdef MFEM_USE_MUMPS
-  } else if (i == 3) {
+  } else if (i == 1) {
     p.setLinearSolver("MUMPSSolver",
                       {{"Symmetric", true}, {"PositiveDefinite", true}});
 #endif
@@ -125,22 +118,22 @@ TestParameters parseCommandLineOptions(int& argc, char* argv[]) {
                  "Exz->4, Eyz->5");
   args.AddOption(
       &p.linearsolver, "-ls", "--linearsolver",
-      "identifier of the linear solver: 0 -> GMRES, 1 -> CG, 2 -> UMFPack");
+      "identifier of the linear solver: 0 -> Hypre+BoomerAMG preconditioning, 1 -> MUMPS");
   args.Parse();
   if (!args.Good()) {
     if (mfem_mgis::getMPIrank() == 0)
-      args.PrintUsage(std::cout);
+      args.PrintUsage(mfem_mgis::getOutputStream());
     mfem_mgis::finalize();
     exit(0);
   }
   if (p.mesh_file == nullptr) {
     if (mfem_mgis::getMPIrank() == 0)
-      std::cout << "ERROR: Mesh file missing" << std::endl;
-    args.PrintUsage(std::cout);
+      mfem_mgis::getOutputStream() << "ERROR: Mesh file missing" << std::endl;
+    args.PrintUsage(mfem_mgis::getOutputStream());
     mfem_mgis::abort(EXIT_FAILURE);
   }
   if (mfem_mgis::getMPIrank() == 0)
-    args.PrintOptions(std::cout);
+    args.PrintOptions(mfem_mgis::getOutputStream());
   if ((p.tcase < 0) || (p.tcase > 5)) {
     std::cerr << "Invalid test case\n";
     mfem_mgis::abort(EXIT_FAILURE);
@@ -184,27 +177,27 @@ std::vector<double> findMinPoint(mfem_mgis::FiniteElementDiscretization &fed) {
   return (minCoord);
 }
 
-template <bool parallel>
-void translateMesh(mfem_mgis::FiniteElementDiscretization &fed, std::vector<double> vectorTranslate) {
-  const mfem_mgis::FiniteElementSpace<parallel> & fes = fed.getFiniteElementSpace<parallel>();
-  bool bynodes = fes.GetOrdering() == mfem::Ordering::byNODES;
-  auto* mesh = fes.GetMesh();
-  mfem::GridFunction nodes(&(fed.getFiniteElementSpace<parallel>()));
-  mesh->GetNodes(nodes);
-  const size_t nbnodes = static_cast<size_t>(nodes.Size());
-  const size_t dim = static_cast<size_t>(mesh->Dimension()); //fes.GetVDim()
-  std::vector<double> minCoord(dim);
-  const size_t tuples = nbnodes /dim;
-  MFEM_VERIFY(cdim == dim, "Number of dimension is invalid (not 3D)");
-  MFEM_VERIFY(bynodes, "This ordering is not supported");
-  mfem::Vector disp(nbnodes);
-  for (int i = 0; i < tuples; ++i) {
-    for (int j = 0; j < dim; ++j) {
-      (disp)[j * tuples + i] = vectorTranslate[j];
-    }
-  }
-  mesh->MoveNodes(disp);
-}
+// template <bool parallel>
+// void translateMesh(mfem_mgis::FiniteElementDiscretization &fed, std::vector<double> vectorTranslate) {
+//   const mfem_mgis::FiniteElementSpace<parallel> & fes = fed.getFiniteElementSpace<parallel>();
+//   bool bynodes = fes.GetOrdering() == mfem::Ordering::byNODES;
+//   auto* mesh = fes.GetMesh();
+//   mfem::GridFunction nodes(&(fed.getFiniteElementSpace<parallel>()));
+//   mesh->GetNodes(nodes);
+//   const size_t nbnodes = static_cast<size_t>(nodes.Size());
+//   const size_t dim = static_cast<size_t>(mesh->Dimension()); //fes.GetVDim()
+//   std::vector<double> minCoord(dim);
+//   const size_t tuples = nbnodes /dim;
+//   MFEM_VERIFY(cdim == dim, "Number of dimension is invalid (not 3D)");
+//   MFEM_VERIFY(bynodes, "This ordering is not supported");
+//   mfem::Vector disp(nbnodes);
+//   for (int i = 0; i < tuples; ++i) {
+//     for (int j = 0; j < dim; ++j) {
+//       (disp)[j * tuples + i] = vectorTranslate[j];
+//     }
+//   }
+//   mesh->MoveNodes(disp);
+// }
 
 
 int readFileOneArray(std::string &filename, std::vector<double> &out) {
@@ -246,7 +239,7 @@ bool checkNorm (const Orientation3D &ori, const double threshold)
   }
   for (uint i=0; i < 3; i++) {
     if (fabs(sqrt(c[i]) - 1.) > threshold) {
-      std::cout << std::setprecision(16) <<  "failure " << i << " " << sqrt(c[i]) << std::endl;
+      mfem_mgis::getOutputStream() << std::setprecision(16) <<  "failure " << i << " " << sqrt(c[i]) << std::endl;
       return false;
     }
   }
@@ -283,9 +276,6 @@ bool readOrientations(const TestParameters& p, std::vector<Orientation3D>& orien
     MFEM_VERIFY(normalize(data+3, .5), "Orientation vector is wrong, normalization fails");
     // Cross product of X (data) and Y (data+3) vectors that gives Z vector stored at data+6
     crossProduct(data, data+3, data+6);
-    //    std::cout << "vector " << i << std::endl;
-    //    for (std::size_t d=0; d<9; ++d) std::cout << " " << data[d];
-    //    std::cout << std::endl;
     MFEM_VERIFY(checkNorm(orientations[i], threshold), "Rotation matrix is invalid");
   }
   return true;
@@ -298,60 +288,49 @@ int executeMFEMMGISTest(const TestParameters& p) {
                             {"UnknownsSize", cdim},
                             {"NumberOfUniformRefinements", p.parallel ? 0 : 0},
                             {"Parallel", p.parallel},
-                            {"GeneralVerbosityLevel", 1}};
+                            {"GeneralVerbosityLevel", 0}};
 
   // creating the finite element workspace
   auto fed = std::make_shared<mfem_mgis::FiniteElementDiscretization>(params);
   {
-    if (mfem_mgis::getMPIrank() == 0)
-      std::cout << "Number of processes: " << mfem_mgis::getMPIsize() << std::endl;
-
     const auto verbosity = mfem_mgis::get_if<int>(params, "GeneralVerbosityLevel", 0);
     // building the non linear problem
 
+    if (verbosity > 1) 
+      mfem_mgis::getOutputStream() << "Number of processes: " << mfem_mgis::getMPIsize() << std::endl;
+
     std::vector<mfem_mgis::real> minCoord(3);
     minCoord = findMinPoint<p.parallel>(*fed.get());
-    std::cout << "minCoord " << minCoord[0] << " " <<
-      minCoord[1] << " " << minCoord[2] << "\n";
+    if (verbosity > 1)
+      mfem_mgis::getOutputStream() << "minCoord " << minCoord[0] << " " <<
+	minCoord[1] << " " << minCoord[2] << "\n";
     
-//    for (int d=0; d < cdim; d++) minCoord[d] *= -1.;
-//    translateMesh<p.parallel>(*fed.get(), minCoord);
-//    minCoord = findMinPoint<p.parallel>(*fed.get());
-//    std::cout << "minCoord " << minCoord[0] << " " <<
-//      minCoord[1] << " " << minCoord[2] << "\n";
-    
-//    std::vector<mfem_mgis::real> corner1({0.,0.,0.});
-//    std::vector<mfem_mgis::real> corner2({1., 1., 1.});
     mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed, mfem_mgis::FIX_XMIN);
-    const mfem::ParMesh& mesh = fed->getMesh<p.parallel>();
-    //    const mfem::Mesh& mesh = fed->getMesh<p.parallel>();
+    const mfem_mgis::Mesh<p.parallel>& mesh = fed->getMesh<p.parallel>();
 
     int nrelem = mesh.GetNE();
     const int nbgrains = mesh.attributes.Size();
-    if (verbosity > 1) std::cout << "nbgrains " << nbgrains << "\n";
+    if (verbosity > 1) mfem_mgis::getOutputStream() << "nb grains " << nbgrains << ", nb elements " << nrelem << "\n";
     std::vector<Orientation3D> orientations;
     auto check_orientation = readOrientations(p, orientations, 1e-12);
     MFEM_VERIFY(check_orientation, "Orientation read failed");
-    
+
+    // Loop on each grain
     for (int i=1; i<= nbgrains; i++) {
-      std::cout  << "coucou " << i << std::endl;
       problem.addBehaviourIntegrator("Mechanics", i, p.library, p.behaviour);
-      
-      // materials
+      // Get a reference on material
       auto& m1 = problem.getMaterial(i);
-      // setting the material properties
-      auto set_properties = [](auto& m, const Orientation3D r) {
-	MFEM_VERIFY(m.b.symmetry == mgis::behaviour::Behaviour::ORTHOTROPIC, "Test cas defined for orthotropic behaviour only");
+      // Set the material properties
+      auto set_properties = [](auto& mat, const Orientation3D rot) {
+	MFEM_VERIFY(mat.b.symmetry == mgis::behaviour::Behaviour::ORTHOTROPIC,
+		    "Test cas defined for orthotropic behaviour only");
 	{
-//	  std::array<mfem_mgis::real, 9u> r = {0, 1, 0,  //
-//					       1, 0, 0,  //
-//					       0, 0, 1};
-	  m.setRotationMatrix(mfem_mgis::RotationMatrix3D{r});
+	  mat.setRotationMatrix(mfem_mgis::RotationMatrix3D{rot});
 	}
       };
       set_properties(m1, orientations[i]);
       
-      //TODO modifiy temperature
+      // Set temperature
       auto set_temperature = [](auto& m) {
 	mgis::behaviour::setExternalStateVariable(m.s0, "Temperature", 293.15);
 	mgis::behaviour::setExternalStateVariable(m.s1, "Temperature", 293.15);
@@ -359,7 +338,7 @@ int executeMFEMMGISTest(const TestParameters& p) {
       set_temperature(m1);
     }
 
-    // macroscopic strain
+    // Imposed macroscopic strain
     std::vector<mfem_mgis::real> e(6, mfem_mgis::real{});
     if (p.tcase < 3) {
       e[p.tcase] = 1;
@@ -368,10 +347,11 @@ int executeMFEMMGISTest(const TestParameters& p) {
     }
     problem.setMacroscopicGradientsEvolution([e](const double) { return e; });
 
+    // Set the linear solver depending on input parameters
     setLinearSolver(problem, p.linearsolver);
     setSolverParameters(problem);
 
-    // Add postprocessing and outputs
+    // Perform postprocessing and outputs
     problem.addPostProcessing(
         "ParaviewExportResults",
         {{"OutputFileName", "PeriodicTestOutput-" + std::to_string(p.tcase)}});
@@ -395,6 +375,7 @@ int executeMFEMMGISTest(const TestParameters& p) {
 
 #define POSTCHECK
 #ifdef POSTCHECK
+    // Nothing is checked for the moment
     if (!checkSolution(problem, p.tcase,
 		       mfem_mgis::Parameters(params).insert("CriterionThreshold", 1e-4))) {
       return(EXIT_FAILURE);
