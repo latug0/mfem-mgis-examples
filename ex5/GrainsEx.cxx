@@ -40,6 +40,7 @@
 
 using Orientation3D = std::array<double,9u>;
 
+constexpr auto myout = mfem_mgis::getOutputStream;
 
 constexpr const auto cdim = mfem_mgis::size_type{3};
 
@@ -55,6 +56,7 @@ static void setLinearSolver(mfem_mgis::AbstractNonLinearEvolutionProblem& p,
 				{"VerbosityLevel", 0}}}};
     
     p.setLinearSolver(solver, {{"VerbosityLevel", 0},
+	  {"Tolerance", 1e-12},
 	  {"MaximumNumberOfIterations", 300},
 	    {"Preconditioner", prec_boomer}});
     ;
@@ -122,18 +124,18 @@ TestParameters parseCommandLineOptions(int& argc, char* argv[]) {
   args.Parse();
   if (!args.Good()) {
     if (mfem_mgis::getMPIrank() == 0)
-      args.PrintUsage(mfem_mgis::getOutputStream());
+      args.PrintUsage(myout());
     mfem_mgis::finalize();
     exit(0);
   }
   if (p.mesh_file == nullptr) {
     if (mfem_mgis::getMPIrank() == 0)
-      mfem_mgis::getOutputStream() << "ERROR: Mesh file missing" << std::endl;
-    args.PrintUsage(mfem_mgis::getOutputStream());
+      myout() << "ERROR: Mesh file missing" << std::endl;
+    args.PrintUsage(myout());
     mfem_mgis::abort(EXIT_FAILURE);
   }
   if (mfem_mgis::getMPIrank() == 0)
-    args.PrintOptions(mfem_mgis::getOutputStream());
+    args.PrintOptions(myout());
   if ((p.tcase < 0) || (p.tcase > 5)) {
     std::cerr << "Invalid test case\n";
     mfem_mgis::abort(EXIT_FAILURE);
@@ -239,10 +241,11 @@ bool checkNorm (const Orientation3D &ori, const double threshold)
   }
   for (uint i=0; i < 3; i++) {
     if (fabs(sqrt(c[i]) - 1.) > threshold) {
-      mfem_mgis::getOutputStream() << std::setprecision(16) <<  "failure " << i << " " << sqrt(c[i]) << std::endl;
+      myout() << std::setprecision(16) <<  "failure " << i << " " << sqrt(c[i]) << std::endl;
       return false;
     }
   }
+  
   return true;
 }
 
@@ -297,12 +300,12 @@ int executeMFEMMGISTest(const TestParameters& p) {
     // building the non linear problem
 
     if (verbosity > 1) 
-      mfem_mgis::getOutputStream() << "Number of processes: " << mfem_mgis::getMPIsize() << std::endl;
+      myout() << "Number of processes: " << mfem_mgis::getMPIsize() << std::endl;
 
     std::vector<mfem_mgis::real> minCoord(3);
     minCoord = findMinPoint<p.parallel>(*fed.get());
     if (verbosity > 1)
-      mfem_mgis::getOutputStream() << "minCoord " << minCoord[0] << " " <<
+      myout() << "minCoord " << minCoord[0] << " " <<
 	minCoord[1] << " " << minCoord[2] << "\n";
     
     mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed, mfem_mgis::FIX_XMIN);
@@ -310,7 +313,7 @@ int executeMFEMMGISTest(const TestParameters& p) {
 
     int nrelem = mesh.GetNE();
     const int nbgrains = mesh.attributes.Size();
-    if (verbosity > 1) mfem_mgis::getOutputStream() << "nb grains " << nbgrains << ", nb elements " << nrelem << "\n";
+    if (verbosity > 1) myout() << "nb grains " << nbgrains << ", nb elements " << nrelem << "\n";
     std::vector<Orientation3D> orientations;
     auto check_orientation = readOrientations(p, orientations, 1e-12);
     MFEM_VERIFY(check_orientation, "Orientation read failed");
@@ -323,12 +326,13 @@ int executeMFEMMGISTest(const TestParameters& p) {
       // Set the material properties
       auto set_properties = [](auto& mat, const Orientation3D rot) {
 	MFEM_VERIFY(mat.b.symmetry == mgis::behaviour::Behaviour::ORTHOTROPIC,
-		    "Test cas defined for orthotropic behaviour only");
+		    "Test case defined for orthotropic behaviour only");
 	{
 	  mat.setRotationMatrix(mfem_mgis::RotationMatrix3D{rot});
+	  for (std::size_t d=0; d<9; ++d) myout() << " " << rot[d]; myout() << std::endl;
 	}
       };
-      set_properties(m1, orientations[i]);
+      set_properties(m1, orientations[i-1]);
       
       // Set temperature
       auto set_temperature = [](auto& m) {
@@ -355,7 +359,7 @@ int executeMFEMMGISTest(const TestParameters& p) {
     problem.addPostProcessing(
         "ParaviewExportResults",
         {{"OutputFileName", "PeriodicTestOutput-" + std::to_string(p.tcase)}});
-    std::vector<mfem_mgis::Parameter> materials_out{1,2};
+    std::vector<mfem_mgis::Parameter> materials_out{1,2,3,4,5,6,7,8};
     problem.addPostProcessing(
         "ParaviewExportIntegrationPointResultsAtNodes",
         {{"OutputFileName", "PeriodicTestOutput-Strain-" 
