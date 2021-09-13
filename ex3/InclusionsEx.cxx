@@ -252,11 +252,18 @@ int executeMFEMMGISTest(const TestParameters& p) {
     //
     setLinearSolver(problem, p.linearsolver);
     setSolverParameters(problem);
+    std::vector<mfem_mgis::Parameter> materials_out{".*"};
 
     // Add postprocessing and outputs
     problem.addPostProcessing(
         "ParaviewExportResults",
         {{"OutputFileName", "PeriodicTestOutput-" + std::to_string(p.tcase)}});
+    problem.addPostProcessing(
+        "ParaviewExportIntegrationPointResultsAtNodes",
+        {{"OutputFileName", "PeriodicTestOutput-Strain-" 
+	      + std::to_string(p.tcase)},
+	    {"Materials", materials_out},
+	    {"Results", "Strain"}});
     // solving the problem
     if (!problem.solve(0, 1)) {
       mfem_mgis::abort(EXIT_FAILURE);
