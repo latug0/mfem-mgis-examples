@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(CTest)
 # testing
 set(CTEST_CONFIGURATION_TYPE "${JOB_BUILD_CONFIGURATION}")
-# (must be placed *before* any add_subdirectory, cmake bug ?)
+# (must be placed *before* any add_subdirectory)
 enable_testing()
 if(CMAKE_CONFIGURATION_TYPES)
    if (NOT TARGET check)
@@ -25,6 +25,8 @@ endif(CMAKE_CONFIGURATION_TYPES)
 add_subdirectory(config)
 add_subdirectory(ex1)
 add_subdirectory(ex2)
+add_subdirectory(ex3)
+add_subdirectory(ex4)
 
 
 #include(FetchContent)

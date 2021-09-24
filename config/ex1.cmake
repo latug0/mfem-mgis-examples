@@ -7,7 +7,7 @@ file(COPY
   ${MFEMMGIS_EXDIR}/ex1/UniaxialTensileTest.cxx
   ${MFEMMGIS_EXDIR}/ex1/UnitTestingUtilities.hxx
   ${MFEMMGIS_EXDIR}/env.sh
-  DESTINATION ${CMAKE_SOURCE_DIR}/ex1)
+  DESTINATION ${LOCAL_SOURCE_DIR})
 
 install(FILES
   ${MFEMMGIS_EXDIR}/ex1/Plasticity.mfront
