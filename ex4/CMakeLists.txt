@@ -63,15 +63,19 @@ endfunction(add_ssna303_3d_test_ex)
 
 foreach(tg IN ITEMS mumps hypre petsc)
   # Define the executable to build for this example
-  add_executable("Ssna303_3d_${tg}" ssna303_${tg}.cxx)
-  target_link_libraries(Ssna303_3d_${tg} mfem-mgis::MFEMMGIS)
-  target_include_directories(Ssna303_3d_${tg}
-    SYSTEM
-    PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
-    PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
-
-  add_dependencies(check Ssna303_3d_${tg} generate-libBehaviour-ex5)
-  add_ssna303_3d_test_ex(${tg})
+  if(((NOT MFEM_USE_PETSC) AND (${tg} STREQUAL "petsc")) OR
+      ((NOT MFEM_USE_MUMPS) AND (${tg} STREQUAL "mumps")))
+  else()
+    add_executable("Ssna303_3d_${tg}" ssna303_${tg}.cxx)
+    target_link_libraries(Ssna303_3d_${tg} mfem-mgis::MFEMMGIS)
+    target_include_directories(Ssna303_3d_${tg}
+      SYSTEM
+      PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
+      PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
+    
+    add_dependencies(check Ssna303_3d_${tg} generate-libBehaviour-ex5)
+    add_ssna303_3d_test_ex(${tg})
+  endif()
 endforeach()
 
 
