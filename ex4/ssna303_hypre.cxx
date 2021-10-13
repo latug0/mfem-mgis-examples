@@ -23,9 +23,24 @@
 
 #define PRINT_DEBUG (std::cout <<  __FILE__ << ":" <<  __LINE__ << std::endl)
 
+#define USE_PROFILER 1
+#if USE_PROFILER == 1
+#define LIB_PROFILER_IMPLEMENTATION
+#define LIB_PROFILER_PRINTF MpiPrintf
+#include "libProfiler.h"
+#else
+#define LogProfiler()
+#define PROFILER_ENABLE
+#define PROFILER_DISABLE
+#define PROFILER_START(x)
+#define PROFILER_END()
+#endif
+
 int main(int argc, char** argv) {
-	
+  PROFILER_ENABLE;
   mfem_mgis::initialize(argc, argv);
+  PROFILER_START(0_total);
+  PROFILER_START(1_initialize);
   bool parallel = true;
   constexpr const auto dim = mfem_mgis::size_type{3};
   const char* mesh_file = "ssna303_3d.msh";
@@ -80,6 +95,7 @@ int main(int argc, char** argv) {
   int numbers_of_elements = mesh->GetNE();
   //get the element size
   double h = mesh->GetElementSize(0);
+  PROFILER_END(); PROFILER_START(2_mfem_mgis_settings);
 
   // 2 1 "Volume"
   problem.addBehaviourIntegrator("Mechanics", 1, library, behaviour);
@@ -157,52 +173,58 @@ int main(int argc, char** argv) {
   out << " numbers_of_elements = " << numbers_of_elements << std::endl;
 
   // vtk export
-  problem.addPostProcessing("ParaviewExportResults",
-                            {{"OutputFileName", std::string("ssna303-displacements-HFGMRES_WS_1")}});
+//  problem.addPostProcessing("ParaviewExportResults",
+//                            {{"OutputFileName", std::string("ssna303-displacements-HFGMRES_WS_1")}});
   problem.addPostProcessing("ComputeResultantForceOnBoundary",
                             {{"Boundary", 2}, {"OutputFileName", "force_HFGMRES_WS_1.txt"}});
   
+  PROFILER_END(); PROFILER_START(3_time_loop);
   // loop over time step
-  const auto nsteps = mfem_mgis::size_type{2};
-  const auto dt = mfem_mgis::real{0.001};
+//  const auto nsteps = mfem_mgis::size_type{50};
+//  const auto dt = mfem_mgis::real{1} / nsteps;
+  const auto nsteps = 8;
+  const auto dt = mfem_mgis::real{4} / 50;
   auto t = mfem_mgis::real{0};
   auto iteration = mfem_mgis::size_type{};
   for (mfem_mgis::size_type i = 0; i != nsteps; ++i) {
-    std::cout << "iteration " << iteration << " from " << t << " to " << t + dt
+    mfem::out << "iteration " << iteration << " from " << t << " to " << t + dt
               << '\n';
     // resolution
+    PROFILER_START(3.1_solve);
     auto ct = t;
     auto dt2 = dt;
     auto nsteps = mfem_mgis::size_type{1};
-    auto niter  = mfem_mgis::size_type{0};
+    auto nsubsteps = mfem_mgis::size_type{0};
     while (nsteps != 0) {
-      bool converged = true;
-      try {
-        problem.solve(ct, dt2);
-      } catch (std::runtime_error&) {
-        converged = false;
-      }
+      const auto converged = problem.solve(ct, dt2);
       if (converged) {
         --nsteps;
         ct += dt2;
         problem.update();
       } else {
-        std::cout << "\nsubstep: " << niter << '\n';
+        mfem::out << "\nsubstep: " << nsubsteps << '\n';
         nsteps *= 2;
         dt2 /= 2;
-        ++niter;
+        ++nsubsteps;
         problem.revert();
-        if (niter == 10) {
-          mgis::raise("maximum number of substeps");
+        if (nsubsteps == 10) {
+          mfem_mgis::raise("maximum number of substeps");
         }
       }
     }
+    PROFILER_END(); PROFILER_START(3.2_postproc);
     problem.executePostProcessings(t, dt);
+    PROFILER_END(); 
     t += dt;
     ++iteration;
-    std::cout << '\n';
+    mfem::out << '\n';
   }
+  PROFILER_END(); 
+  PROFILER_END(); 
+  if (mfem_mgis::getMPIrank() == 0) 
+    LogProfiler();
+  PROFILER_DISABLE;
   }
-  mfem_mgis::Profiler::getProfiler().print(out);
+  //  mfem_mgis::Profiler::getProfiler().print(out);
   return EXIT_SUCCESS;
 }

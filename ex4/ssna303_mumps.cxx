@@ -113,14 +113,14 @@ int main(int argc, char** argv) {
   }
 
   // vtk export
-  problem.addPostProcessing("ParaviewExportResults",
-                            {{"OutputFileName", std::string("ssna303-displacements")}});
+//  problem.addPostProcessing("ParaviewExportResults",
+//                            {{"OutputFileName", std::string("ssna303-displacements")}});
   problem.addPostProcessing("ComputeResultantForceOnBoundary",
                             {{"Boundary", 2}, {"OutputFileName", "force.txt"}});
   
   // loop over time step
-  const auto nsteps = mfem_mgis::size_type{2};
-  const auto dt = mfem_mgis::real{0.001};
+  const auto nsteps = mfem_mgis::size_type{50};
+  const auto dt = mfem_mgis::real{1} / nsteps;
   auto t = mfem_mgis::real{0};
   auto iteration = mfem_mgis::size_type{};
   for (mfem_mgis::size_type i = 0; i != nsteps; ++i) {

@@ -39,6 +39,9 @@ endif(NOT TARGET mfem-mgis::MFEMMGIS)
 
 # Define the executable to build for this example
 add_executable(UniaxialTensileTestEx UniaxialTensileTest.cxx)
+if (MFEM_USE_MPI)
+  set_target_properties(UniaxialTensileTestEx PROPERTIES COMPILE_FLAGS "-DDO_USE_MPI" )
+endif(MFEM_USE_MPI)
 target_link_libraries(UniaxialTensileTestEx mfem-mgis::MFEMMGIS)
 target_include_directories(UniaxialTensileTestEx
     SYSTEM
@@ -66,6 +69,7 @@ add_dependencies(check UniaxialTensileTestEx generate-libBehaviour-ex1)
 # Define a test that will be called during the "make check"
 function(add_uniaxial_tensile_test_ex)
   set(test "UniaxialTensileTestEx")
+  
   add_test(NAME ${test} COMMAND UniaxialTensileTestEx)
 endfunction(add_uniaxial_tensile_test_ex)
 
