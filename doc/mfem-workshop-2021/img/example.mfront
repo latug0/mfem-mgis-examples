@@ -1,0 +1,25 @@
+@DSL Implicit;
+@Behaviour FirstExample;
+
+@ModellingHypotheses {".+"};
+@Epsilon 1.e-16;
+@IterMax 100;
+@Theta 1;
+
+@Brick "StandardElastoViscoPlasticity" {
+  stress_potential : "Hooke" {
+    young_modulus : ...,
+    poisson_ratio : ...,
+    thermal_expansion : ...,
+    thermal_expansion_reference_temperature : 293.15
+  },
+  inelastic_flow : "Norton" {
+    criterion : "Mises",
+    kinematic_hardening : "Armstrong-Frederick" {
+      C : ...,
+      D : ...
+    },
+    K : ...,
+    n : ...
+  }
+};

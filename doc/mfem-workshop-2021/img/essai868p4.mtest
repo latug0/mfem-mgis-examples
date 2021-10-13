@@ -1,0 +1,25 @@
+@Author th202608@pleiades098.intra.cea.fr;
+@Date   28 fevr. 2017;
+@Description{
+};
+
+@AccelerationAlgorithm 'UAnderson';
+@PredictionPolicy 'LinearPrediction';
+@MaximumNumberOfSubSteps 10;
+
+@ModellingHypothesis 'AxisymmetricalGeneralisedPlaneStrain';
+@Behaviour<castem> 'src/libUmatBehaviour.so' 'umatisotropicviscoplasticityamstrongfrederickinematichardening';
+@MaterialProperty<constant> 'YoungModulus' 150e9;
+@MaterialProperty<constant> 'PoissonRatio'  0.3;
+
+// Calculation of test 868_P4
+@Real 'alpha' '20.882*1.e-6/60.'; //alpha is the constant displacement rate
+@Real 'h0' '16.520*1e-3'; //h0 is the height of the pellet at the beginning of test
+@Real 'timemax' 8000.; //timemax is the duration of test
+
+@ExternalStateVariable 'Temperature' 1773.15;
+@ExternalStateVariable 'Porosity' 0.02;
+
+@ImposedDeformationGradient<data> 'FRR' 'charg_868_P4.prn' using '$1*60.':'1.-$3*1.e-6/h0';
+
+@Times<data> 'charg_868_P4.prn' using '$1*60';

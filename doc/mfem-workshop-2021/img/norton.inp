@@ -1,0 +1,17 @@
+***parameter temperature
+   0. uniform 293.15
+   2. uniform 293.15
+
+***behavior Norton
+  **model_coef
+       YoungModulus 150.e9
+       PoissonRatio 0.3
+       NortonCoefficient 8.e-67
+       NortonExponent 8.2
+***return
+
+***output
+   **value_at_integration
+   **curve
+      *gauss_var 
+         1,1 sig22 eto22 EquivalentViscoplasticStrain
