@@ -1,0 +1,24 @@
+...
+@StateVariable real H;
+H.setEntryName("Enthalpy");
+@AdditionalTangentOperatorBlock dH_ddT;
+...
+
+@Integrator {
+  k = (T + dT < Tm) ? ks : kl;
+  j = -k*(gT+dgT);
+  // enthalpy
+  if(T_<Tm){
+    Ce = Cs;
+    H = Cs*T_;
+  } else {
+    Ce = Cl;
+    H = Cl*(T_-Tm)+dHsl+Cs*Tm;
+  }
+}  // end of @Integrator
+
+@TangentOperator {
+  dj_ddgT = -k * tmatrix<N, N, real>::Id();
+  dj_ddT = tvector<N, real>(real(0));
+  dH_ddT = Ce;
+}  // end of @TangentOperator

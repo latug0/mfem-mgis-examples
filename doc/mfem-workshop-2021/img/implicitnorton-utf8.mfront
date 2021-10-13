@@ -1,0 +1,14 @@
+@Integrator{
+  const auto σᵉ = sigmaeq(σ);
+  const auto iσᵉ = 1 / (max(σᵉ, real(1.e-12) ⋅ E));
+  const auto vᵖ = A ⋅ pow(σᵉ, nn);
+  const auto ∂vᵖ∕∂σᵉ = nn ⋅ vᵖ ⋅ iσᵉ;
+  const auto n = 3 ⋅ deviator(σ) ⋅ (iσᵉ / 2);
+  // Implicit system
+  fεᵉˡ += Δp ⋅ n;
+  fp -= vᵖ ⋅ Δt;
+  // jacobian
+  ∂fεᵉˡ∕∂Δεᵉˡ += 2 ⋅ μ ⋅ θ ⋅ dp ⋅ iσᵉ ⋅ (Mᵉ - (n ⊗ n));
+  ∂fεᵉˡ∕∂Δp = n;
+  ∂fp∕∂Δεᵉˡ = -2 ⋅ μ ⋅ θ ⋅ ∂vᵖ∕∂σᵉ ⋅ Δt ⋅ n;
+} // end of @Integrator

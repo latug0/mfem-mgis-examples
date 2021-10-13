@@ -1,0 +1,27 @@
+@DSL Implicit;
+@Behaviour MohrCoulomAbboSloan3;
+
+@Epsilon 1.e-14;
+@Theta 1;
+
+@Brick StandardElastoViscoPlasticity{
+  stress_potential : "Hooke" {
+    young_modulus : 150.e3,
+    poisson_ratio : 0.3
+  },
+  inelastic_flow : "Plastic" {
+    criterion : "MohrCoulomb" {
+      c : 3.e1,      // cohesion
+      phi : 0.523598775598299,    // friction angle or dilatancy angle
+      lodeT : 0.506145483078356,  // transition angle as defined by Abbo and Sloan
+      a : 1e1       // tension cuff-off parameter
+    },
+    flow_criterion : "MohrCoulomb" {
+      c : 3.e1,      // cohesion
+      phi : 0.174532925199433,    // friction angle or dilatancy angle
+      lodeT : 0.506145483078356,  // transition angle as defined by Abbo and Sloan
+      a : 3e1       // tension cuff-off parameter
+    },
+    isotropic_hardening : "Linear" {R0 : "0"}
+  }
+};

@@ -1,0 +1,363 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{beamerthemecea2019}[250919]
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+% Modele beamer pour les presentation du cea (charte graphique 2012)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
+%\RequirePackage{carlito}
+\RequirePackage{xifthen}
+\RequirePackage{epstopdf}
+\RequirePackage{textcase}
+\RequirePackage{fancybox}
+\RequirePackage[T1]{fontenc}
+
+\usepackage[default,scale=0.9]{opensans} 
+\usepackage{appendixnumberbeamer}
+
+\definecolor{cea_rouge}{RGB}{184,20,32}
+\definecolor{cea_vert}{RGB}{115,190,75}
+\definecolor{cea_vertfonce}{RGB}{84,130,53}
+\definecolor{cea_texte}{RGB}{118,113,113}
+\definecolor{cea_grisfonce}{RGB}{135,135,135}
+\definecolor{cea_gris}{RGB}{128,128,128}
+\definecolor{cea_grisclair}{RGB}{217,217,217}
+\definecolor{cea_grisauteur}{RGB}{63,63,63}
+
+% couelurs du theme ppt
+\definecolor{cea1}{RGB}{63,63,63} %gris fonce
+\definecolor{cea2}{RGB}{68,84,106} % bleu gris
+\definecolor{cea3}{RGB}{0,139,188} % bleu
+\definecolor{cea4}{RGB}{255,192,0} % jaune
+\definecolor{cea5}{RGB}{33,101,128} % vert bleu
+\definecolor{cea6}{RGB}{143,45,86} % rouge fonce
+\definecolor{cea7}{RGB}{112 44 106} % violet
+\definecolor{cea8}{RGB}{255 111 32} % orange
+
+% option de la classe beamer : latin 
+\newboolean{latin}
+\newboolean{english}
+
+\DeclareOptionBeamer{latin}{\setboolean{latin}{true}}
+\DeclareOptionBeamer{english}{\setboolean{english}{true}}
+\ProcessOptionsBeamer
+
+% latin9 ou utf8
+\RequirePackage[T1]{fontenc}
+\ifthenelse{\boolean{latin}}{
+  \RequirePackage[latin9]{inputenc}
+}{
+  \RequirePackage[utf8]{inputenc}
+}
+
+% babel french
+\ifthenelse{\boolean{english}}{
+  \RequirePackage[english]{babel}
+}{
+  \RequirePackage[frenchb]{babel}
+}
+
+\mode<presentation>
+
+% Barre de navigation
+\setbeamertemplate{navigation symbols}{} 
+
+% Dimensions
+\newlength{\taillebarregauche}
+\setlength{\taillebarregauche}{0.cm}
+\newlength{\margegauche}
+\setlength{\margegauche}{0.3cm}
+\newlength{\margedroite}
+\setlength{\margedroite}{0.3cm}
+
+\setbeamersize{sidebar width left=\taillebarregauche}
+\setbeamersize{text margin left=\margegauche}
+\setbeamersize{text margin right=\margedroite}
+
+% Parametres de la presentation (isthenelse pour assurer compatibilite avec ancienne presentation)
+% \auteurs
+\ifthenelse{\isundefined{\auteurs}}{\newcommand{\auteurs}[1]{\def\Proauteurs{#1}}}{}
+%\newcommand{\auteurs}[1]{\def\Proauteurs{#1}}
+% mais aussi \auteurprincipal (pour le bandeau du bas)
+\newcommand{\auteurprincipal}[1]{\def\Proauteurprincipal{#1}}
+% \titre
+\ifthenelse{\isundefined{\titre}}{\newcommand{\titre}[1]{\def\Protitre{#1}}}{}
+%\newcommand{\titre}[1]{\def\Protitre{#1}}
+% evenement
+\ifthenelse{\isundefined{\evenement}}{\newcommand{\evenement}[1]{\def\Proevenement{#1}}}{}
+%\newcommand{\evenement}[1]{\def\Proevenement{#1}}
+% \datedocumet
+\ifthenelse{\isundefined{\date}}{
+  \newcommand{\date}[1]{\def\Prodate{#1}}
+}{
+  \renewcommand{\date}[1]{\def\Prodate{#1}}
+}
+\ifthenelse{\isundefined{\datedocument}}{\newcommand{\datedocument}[1]{\def\Prodate{#1}}}{}
+%\newcommand{\datedocument}[1]{\def\Prodate{#1}}
+
+
+% on charge les definitions du modele de note
+
+% 
+% Masque
+\setbeamercolor{normal text}{fg=cea_texte}
+\setbeamerfont{normal text}{size=\large}
+%\AtBeginDocument{\usebeamerfont{normal text}}
+\setbeamertemplate{background canvas}{
+}%[vertical shading][bottom=red!10,top=blue!10]
+
+\defbeamertemplate*{background canvas}{annexe}
+{
+\includegraphics[width=\paperwidth,height=0.88\paperheight,keepaspectratio=false]{Annexe}
+}
+
+\setbeamercolor{text in foot}{fg=cea_gris, bg=cea_grisclair}
+\setbeamercolor{text in head}{fg=cea_texte, bg=cea_grisclair}
+\setbeamercolor{page in foot}{fg=white, bg=cea_rouge}
+
+\setbeamerfont{headline}{size=\normalsize}
+
+\defbeamertemplate{headline}{cea}{% 
+  \vbox to 1.cm{}
+% utilise pour la commande \Titre
+}
+
+%\defbeamertemplate{footline}{cea}{% 
+%  \vbox to 1.2cm{}
+%}
+
+\setbeamertemplate{headline}[cea]
+%\setbeamertemplate{footline}[cea]
+
+%debut footline
+\newcommand{\dft}{  
+\newboolean{app}
+  \ifthenelse{\isundefined{\Proauteurprincipal}}{\setboolean{app}{false}}{\setboolean{app}{true}}
+\leavevmode% ***quitter le mode vertical, important !***
+%  \hbox{%
+  \begin{beamercolorbox}[wd=.9\paperwidth,ht=0.34cm,dp=0.15cm,
+    left]{text in foot}%
+     \hspace*{0.1cm}Commissariat à l'énergie atomique et aux
+    énergies alternatives\hfill
+    \textcolor{cea_grisauteur}{\ifthenelse{\boolean{app}}{\Proauteurprincipal}{\Proauteurs}}\hfill
+    \Prodate 
+  \end{beamercolorbox}%
+%}
+}
+
+\defbeamertemplate{footline}{page}{%  
+  \dft
+  \begin{beamercolorbox}[wd=.1\paperwidth,ht=0.34cm,dp=0.15cm,center]{page
+      in foot}%
+    \insertframenumber{} / \inserttotalframenumber\hspace*{2ex} 
+  \end{beamercolorbox}
+  \vskip0pt%
+}
+
+\defbeamertemplate{footline}{annexe}{%  
+  \dft
+  \begin{beamercolorbox}[wd=.1\paperwidth,ht=0.34cm,dp=0.15cm,center]{page
+      in foot}%
+  \hspace*{0.2cm} 
+  \end{beamercolorbox}
+%
+  \vskip0pt%
+}
+
+
+\defbeamertemplate{footline}{partie}{% 
+\begin{beamercolorbox}[wd=\paperwidth,ht=1.2cm,dp=0.15cm,
+    left]{text in foot}%
+    \fontsize{8pt}{5pt}\selectfont
+    \hspace*{1.5cm}Commissariat à l'énergie atomique et aux
+    énergies alternatives - 
+    \textcolor{cea_rouge}{www.cea.fr}\hfill \vspace*{.4cm}
+    \normalfont
+  \end{beamercolorbox}%
+}
+
+
+\setbeamertemplate{footline}[page]
+
+\setbeamercolor{frametitle}{fg=cea_texte}
+\setbeamerfont{frametitle}{size=\normalfont}
+\setbeamertemplate{frametitle}
+{%
+\setbeamertemplate{headline}{}
+\vspace*{-\headheight}
+\FTitle{\insertframetitle}{-0.3cm}
+\vspace*{-0.6cm}
+}
+
+
+%\setbeamertemplate{frametitle}[page]
+
+% Apparence
+
+\setbeamertemplate{blocks}[rounded][shadow=true]
+\setbeamercolor{block title}{fg=cea_rouge}
+
+\setbeamercolor{block title example}{fg=black,bg=cea8!80}
+\setbeamercolor{block body example}{fg=black,bg=cea8!10}
+\setbeamercolor{block title example2}{fg=black,bg=cea5!40}
+\setbeamercolor{block body example2}{fg=black,bg=cea5!10}
+% 
+\setbeamercolor{block title alerted}{fg=white,bg=cea_rouge}
+\setbeamercolor{block body alerted}{fg=black,bg=cea_rouge!10}
+
+\newenvironment{ceablock}[1]
+{%
+  \begin{beamercolorbox}[ht=2.5ex,dp=1ex]{block title}
+    #1
+  \end{beamercolorbox}
+  \begin{beamercolorbox}{block body}
+  }
+  {\end{beamercolorbox}}
+
+\newenvironment{ceaexampleblock}[1]
+{\begin{beamerboxesrounded}%
+    [lower=block body example, %
+    upper=block title example,%
+    shadow=true,width=\linewidth]{#1}%
+  }
+  {\end{beamerboxesrounded}}
+
+\newenvironment{ceaexample2block}[2][\textwidth]
+{\begin{beamerboxesrounded}%
+    [lower=block body example2, %
+    upper=block title example2,%
+    shadow=true,width=#1]{#2}%
+  }
+  {\end{beamerboxesrounded}}
+
+\newenvironment{ceaalertblock}[1]
+{\begin{beamerboxesrounded}%
+    [lower=block body alerted, %
+    upper=block title alerted,%
+    shadow=true]{#1}%
+  }
+  {\end{beamerboxesrounded}}
+
+\setbeamertemplate{itemize item}{\textcolor{cea_vertfonce}{$\blacktriangleright$}}
+\setbeamertemplate{itemize subitem}{\textcolor{cea_vertfonce}{\rule[0.2ex]{1.2ex}{0.3ex}}}
+\setbeamertemplate{itemize subsubitem}{\textcolor{cea_vertfonce}{\scalebox{0.5}{{$\blacksquare$}}}}
+%
+\setbeamercolor{enumerate item}{fg=cea_vertfonce}
+\setbeamercolor{enumerate subitem}{fg=cea_vertfonce}
+\setbeamercolor{enumerate subsubitem}{fg=cea_vertfonce}
+%
+\setbeamerfont{section in toc}{series=\bfseries,size=\large}
+\setbeamercolor{section in toc}{fg=cea_texte}
+\setbeamercolor{subsection in toc}{fg=cea_texte}
+\setbeamertemplate{section in toc}{\hspace*{0.5em}
+  {\textcolor{cea_vertfonce}{$\blacktriangleright$}}\hspace*{.5em}\inserttocsection 
+%\vspace*{0.2em}
+}
+\setbeamertemplate{subsection in toc}{\hspace*{2.em}
+  {\textcolor{cea_vertfonce}{\rule[0.5ex]{1.2ex}{0.3ex}}}\hspace*{.5em}\inserttocsubsection
+  \\}
+
+\newcommand{\PageTitre}{
+  \usebackgroundtemplate{\includegraphics[width=\paperwidth,height=0.87\paperheight,keepaspectratio=false]{Haut_Page_Titre}}
+  \setbeamertemplate{headline}[cea]
+  \setbeamertemplate{footline}[partie]
+  \beamer@calculateheadfoot
+  \begin{frame}
+    \vspace*{0.3cm}
+    \hspace{0.45\linewidth}
+    \parbox[c][0.4\paperheight][t]{0.5\linewidth}{
+      \vfill
+      \ifthenelse{\isundefined{\Protitre}}{}{\textcolor{white}{\begin{center}\LARGE
+          {\bf\Protitre}\end{center}}}
+      \vfill
+      \vfill
+    }
+   \noindent\hspace*{1.1cm} \parbox[t][0.5\paperheight][t]{0.8\paperwidth} {\textcolor{white}{\tiny{DE LA RECHERCHE \`A L'INDUSTRIE}}\\[0.5cm]
+   \textcolor{white}{\ifthenelse{\isundefined{\Proevenement}}{}{\Large{\Proevenement}}}\\[0.2cm]
+   \textcolor{white}{\ifthenelse{\isundefined{\Prodate}}{}{\scriptsize{\Prodate}}}\\[0.2cm]
+   \textcolor{white}{\ifthenelse{\isundefined{\Proauteurs}}{}{\normalsize{\Proauteurs}}}}
+   
+    \label{pagetitre}
+  \end{frame}
+  \addtocounter{framenumber}{-1}
+  \setbeamertemplate{footline}[page]
+  \beamer@calculateheadfoot
+  \usebackgroundtemplate{}
+}
+
+\newcommand{\FTitle}[2]{
+\nointerlineskip
+\noindent
+\hspace*{#2}
+\fboxsep0pt
+\hspace*{-2mm}
+{\setlength{\tabcolsep}{0.pt}
+\begin{tabular}[t]{ll}
+\includegraphics[height=1.cm]{Digital-CEA-logo-rvb-fond-rouge-2}&
+\colorbox{cea_grisclair}{\hspace*{3mm}\parbox[b][1.cm][c]{0.87\paperwidth}{{\bf\Large
+      #1}}\hspace*{2mm}}\\
+\end{tabular}}
+}
+
+\newcommand{\Titre}[1]{ 
+\setbeamertemplate{headline}{
+\FTitle{#1}{0.cm}
+}
+\setbeamertemplate{footline}[page]
+\beamer@calculateheadfoot
+}
+
+\newcommand{\Intercalaire}[1]{
+  \usebackgroundtemplate{\includegraphics[width=\paperwidth,height=0.88\paperheight,keepaspectratio=false]{Intercalaire}}
+  \setbeamertemplate{headline}[cea]
+  \setbeamertemplate{footline}[partie]
+  \beamer@calculateheadfoot
+  \begin{frame}
+    \vspace*{4.8cm}
+    \hspace*{1.cm} \parbox[c][0.3\paperheight][c]{0.8\paperwidth}{\textbf{\Large #1}}
+    \label{intercalaire\theframenumber}
+  \end{frame}
+  \addtocounter{framenumber}{-1}
+  \setbeamertemplate{footline}[page]
+  \beamer@calculateheadfoot
+  \usebackgroundtemplate{}
+}
+
+\newcommand{\DernierePage}[1]{
+  \usebackgroundtemplate{\includegraphics[width=\paperwidth,height=0.88\paperheight,keepaspectratio=false]{Haut_Page_Fin}}
+  \setbeamertemplate{headline}[cea]
+  \setbeamertemplate{footline}[partie]
+  \beamer@calculateheadfoot
+  \begin{frame}
+%    \vspace*{3.cm}
+    \hspace*{5.cm} \parbox[c][0.5\paperheight][c]{0.5\paperwidth}{\textcolor{white}{\textbf{\Large #1}}}
+    \label{dernierepage}
+  \end{frame}
+  \addtocounter{framenumber}{-1}
+  \setbeamertemplate{footline}[page]
+  \beamer@calculateheadfoot
+  \usebackgroundtemplate{}
+}
+
+\newcommand{\Annexes}{
+\appendix
+\setbeamertemplate{background canvas}[annexe]
+\setbeamertemplate{footline}[annexe]
+\beamer@calculateheadfoot
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+% pour imprimer 2 transparents sur une page A4 en mode handout
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+\mode<handout>
+\usepackage{pgfpages}
+\pgfpagesuselayout{2 on 1}[a4paper, border shrink=2cm]
+\pgfpageslogicalpageoptions{1}{border code=\pgfsetstrokecolor{black}\pgfsetlinewidth{0.5pt}\pgfusepath{stroke}}
+\pgfpageslogicalpageoptions{2}{border code=\pgfsetstrokecolor{black}\pgfsetlinewidth{0.5pt}\pgfusepath{stroke}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
+\mode
+<all>
+%% 
+%% Fin de beamerthemecea2012.sty

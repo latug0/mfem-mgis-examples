@@ -1,0 +1,23 @@
+@Author th202608@pleiades098.intra.cea.fr;
+@Date   28 fevr. 2017;
+@Description{
+
+};
+
+@AccelerationAlgorithm 'UAnderson';
+@PredictionPolicy 'LinearPrediction';
+@ModellingHypothesis 'AxisymmetricalGeneralisedPlaneStrain';
+@Behaviour<castem> 'src/libUmatBehaviour.so' 'umatgarcia';
+@MaterialProperty<constant> 'YoungModulus' 150e9;
+@MaterialProperty<constant> 'PoissonRatio'  0.3;
+
+@ExternalStateVariable 'Temperature' 1773.15;
+@ExternalStateVariable 'Porosity' 0.02;
+
+@Real 'S0' '3.1415*4e-3**2';
+@Evolution<data> 'F' 'charg_868_P4.prn' using '$1*60.':'-$2';
+@NonLinearConstraint<Stress> 'SRR*FTT*FZZ-F/S0';
+@NonLinearConstraint<Stress> 'SZZ';
+@NonLinearConstraint<Stress> 'STT';
+
+@Times<data> 'charg_868_P4.prn' using '$1*60';

@@ -1,0 +1,23 @@
+@DSL DefaultGenericBehaviour;
+@Behaviour StationaryNonLinearHeatTransfer;
+
+@Gradient TemperatureGradient gT;
+gT.setGlossaryName("TemperatureGradient");
+@Flux HeatFlux j;
+j.setGlossaryName("HeatFlux");
+@AdditionalTangentOperatorBlock dj_ddT;
+
+@LocalVariable thermalconductivity k;
+
+@Integrator{
+  constexpr const auto A = 0.0375;
+  constexpr const auto B = 2.165e-4;
+  const auto T_ = T + dT;
+  k = 1 / (A + B * T_);
+  j = -k * (gT + dgT);
+} // end of @Integrator
+
+@TangentOperator {
+  dj_ddgT = -k * tmatrix<N, N, real>::Id();
+  dj_ddT  =  B * k * k * (gT + dgT);
+} // end of @TangentOperator 
