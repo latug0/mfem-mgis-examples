@@ -514,25 +514,24 @@ Example of end-user API}
   \begin{itemize}
     \item Behaviour integrators are meant to:
     \begin{itemize}
-      \item Compute the gradients from unknowns (using the
-      \(B\) matrix).
+      \item Compute the gradients from unknowns.
       \item Handle the state variables.
       \item Call the behaviour integration.
       \item Compute the inner forces from the thermodynamic
       forces.
-      \item Compute the stiffness matrix from the consistent
+      \item Get the stiffness matrix from the consistent
       tangent operator blocks.
     \end{itemize}
   \end{itemize}
   \begin{itemize}
     \item All those steps depends on:
     \begin{itemize}
-      \item The type of problem described (mechanics, heat
+      \item Kind of problem described (mechanics, heat
       transfer).
-      \item The symmetry of the material (isotropic or
+      \item Symmetry of the material (isotropic or
       orthotropic).
-      \item The modelling hypotheses (\(3D\), plane strain,
-      plane stress, axisymmetry, etc\ldots).
+      \item Modelling hypotheses: \(3D\), plane strain,
+      plane stress, axisymmetry \ldots
     \end{itemize}
   \end{itemize}
   \begin{itemize}
@@ -547,15 +546,17 @@ Example of end-user API}
 \end{frame}
 
 \begin{frame}[fragile]{The
-    \texttt{behaviour-integrator} code
+    \texttt{behaviour-integrator}\\\hspace*{1cm}code
     generator}
   \begin{itemize}
-    \item Aim of this code-generator
+    \item Aim of the \texttt{behaviour-integrator} code
+    generator
     \begin{itemize}
       \item Generate behaviour integrators from definition of the gradients.
-      \item Code factorisation and optimisation (no sparse matrix multiplication).
+      \item Automated code factorisation/optimisation (no sparse matrix multiply).
       \item Avoid coding errors due to tedious formula.
     \end{itemize}
+    \medskip
     \item Machinery
     \begin{itemize}
       \item Based on the \texttt{GiNaC} for symbolic
@@ -564,7 +565,8 @@ Example of end-user API}
       and finite strain behaviours in plane strain, plane stress and
       tridimensional hypotheses.
     \end{itemize}
-    \item Extensions (to come)
+     \medskip
+     \item Extensions (to come)
     \begin{itemize}
       \item Support of axisymmetry
       \item Non linear heat transfer, non linear diffusion.
@@ -574,10 +576,10 @@ Example of end-user API}
   \end{itemize}
 \end{frame}
 
-\section{Feed-backs on some limitations of {\tt MFEM}}
-\Intercalaire{Feed-backs on some limitations of {\tt MFEM}}
+\section{Feed-backs on some issues using {\tt MFEM}}
+\Intercalaire{Feed-backs on some issues using {\tt MFEM}}
 
-\Titre{Issues related to the behaviour integration step} \frame{
+\Titre{Issues related to \\\hspace*{1cm}the behaviour integration step} \frame{
   \begin{itemize}
     \item The integration of the mechanical behaviour is a {\bf
       complex} kernel solving a system of ordinary differential
@@ -591,7 +593,7 @@ Example of end-user API}
       a significant extra memory consumption.
     \end{itemize}
     \item<3-> When using partial assembly (untested) to
-    sole the linear system computing the Newton correction, it does not
+    solve the linear system computing the Newton correction, it does not
     seem relevant to not call repeatedly the behaviour integration.
     \item<4-> The {\tt
       NonlinearFormIntegrator::AssembleElementVector} and {\tt
@@ -609,26 +611,28 @@ Example of end-user API}
 }
 
 \Titre{Dirichlet boundary conditions} \frame{
-  \begin{center}
-    \includegraphics[width=0.65\textwidth]{img/DirichletBoundaryConditionIssue.pdf}
-  \end{center}
-  \begin{itemize}
+\begin{textblock}{.70}(0.2,0.04)
+    \includegraphics[width=\textwidth]{img/DirichletBoundaryConditionIssue.pdf}
+\end{textblock}
+\begin{textblock}{.99}(0.01,0.47)
+ \begin{itemize}
     \item Imposing the boundary Dirichlet in {\tt MFEM} leads
-    to unphysically strain increments on elements near the boundary at
+    to unphysically strain increments on the element near the boundary at
     the first iteration:
     \begin{itemize}
-      \item The problem becomes more and more import as the
-      mesh is refined.
+      \item The problem is critical for very fine 
+      meshes.
       \item In finite strain, this leads to severe divergence
       of the Newton algorithm du to the geometric stiffness matrix.
     \end{itemize}
-    \item<2-> In most finite element solvers, a prediction of the
-    solution based on the tangent problem is made.
+    \item<2-> In most \textbf{mechanical} solvers, a \textbf{prediction} of the
+    solution based on the tangent problem is provided (through a simpler/intermediate model).
     \begin{itemize}
       \item We were not able to implement this prediction so far.
       \item \url{https://github.com/mfem/mfem/issues/2174}
     \end{itemize}
   \end{itemize}
+\end{textblock}
 }
 
 \section{Examples}
