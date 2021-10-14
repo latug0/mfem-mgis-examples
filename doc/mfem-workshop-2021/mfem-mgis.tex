@@ -399,16 +399,20 @@ Example of end-user API}
 %  \end{itemize}
 %\end{frame}
 %
-\begin{frame}{The role of behaviour integrators}
+\begin{frame}{The
+    role of behaviour integrators}
   \begin{center}
     \includegraphics[width=0.6\textwidth]{img/behaviour-integrators.pdf}
   \end{center}
   \begin{itemize}
+    \item Behaviour integrators are associated with a material
+    identifier (element attribute).
     \item Behaviour integrators are called in the assembly loop
     over the elements for:
     \begin{itemize}
-      \item the residual (contribution of the inner forces) 
-      \item the jacobian matrix (i.e.~the tangent stiffness matrix)
+      \item the residual (contribution of the inner forces)
+      \item the jacobian matrix (i.e.~the tangent stiffness
+      matrix)
     \end{itemize}
   \end{itemize}
 \end{frame}
@@ -571,34 +575,30 @@ Example of end-user API}
 \section{Feed-backs on some limitations of {\tt MFEM}}
 \Intercalaire{Feed-backs on some limitations of {\tt MFEM}}
 
-\Titre{Issues related to the behaviour integration step} \frame{
+\Titre{Issues related to the behaviour integration step}
+\frame{
   \begin{itemize}
     \item The integration of the mechanical behaviour is a {\bf
       complex} kernel solving a system of ordinary differential
     equations which can {\bf fail}.
-    \item<2-> In most cases, the computation of the
-    consistent tangent operator can't be separated efficiently from the
-    computation of the stress:
-    \begin{itemize}
-      \item In {\tt MFEM-MGIS}, the consistent tangent
-      operator of every integration point is stored in memory leading to
-      a significant extra memory consumption.
-    \end{itemize}
-    \item<3-> When using partial assembly (untested) to
-    sole the linear system computing the Newton correction, it does not
-    seem relevant to not call repeatedly the behaviour integration.
-    \item<4-> The {\tt
+    \item<2-> Problem: the {\tt
       NonlinearFormIntegrator::AssembleElementVector} and {\tt
       NonlinearFormIntegrator::AssembleElementGrad} does not handle
     failures.
-    \item<5-> As a work-around to the two previous points,
-    we derived our own Newton algorithm which separates the behaviour
-    integration step.
+    \item<3-> As a work-around, we derived our own Newton
+    algorithm which separates the behaviour integration step from
+    residual and stiffness assemblies.
     \begin{itemize}
-      \item However, this work-around does not work with {\tt
-        PETSc}.
+      \item<4-> This solution seems compatible with
+      partial assembly (untested).
+      \item<4-> {\bf This work-around does not work with {\tt
+        PETSc}}.
     \end{itemize}
-    \item<6-> \url{https://github.com/mfem/mfem/issues/2139}
+    \item<5-> More generally, we started a discussion on
+    how to improve the robustness of operators in {\tt MFEM}:
+    \begin{itemize}
+      \item \url{https://github.com/mfem/mfem/issues/2139}
+    \end{itemize}
   \end{itemize}
 }
 
@@ -627,6 +627,14 @@ Example of end-user API}
 
 \section{Examples}
 \Intercalaire{Examples}
+
+\begin{frame}{Tensile test on an elasto-plastic notched beam at finite strain}
+
+\end{frame}
+
+\begin{frame}{Periodic computations}
+
+\end{frame}
 
 \section{Conclusions and perspectives}
 \Intercalaire{Conclusions and perspectives}
