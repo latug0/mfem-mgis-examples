@@ -628,9 +628,9 @@ Example of end-user API}
 \section{Examples}
 \Intercalaire{Examples}
 
-%\begin{frame}{Tensile test on an elasto-plastic notched beam at finite strain}
-%
-%\end{frame}
+\begin{frame}{Tensile test on an elasto-plastic notched beam at finite strain}
+
+\end{frame}
 
 \begin{frame}{Periodic
     Representative Volume Element (RVE)\\\hspace*{1cm}
@@ -704,10 +704,6 @@ Example of end-user API}
     \begin{itemize}
       \item Using MFEM-MGIS non-linear solve
       \item Strong scaling from 32 to 256 cores
-      \begin{itemize}
-        \item \emph{Quite easy to go for a larger nb of
-          cores \(\rightarrow\) need a larger machine}
-      \end{itemize}
       \item Scalable parallelism observed
     \end{itemize}
   \end{block}
@@ -716,6 +712,24 @@ Example of end-user API}
     \includegraphics[width=0.4\textwidth]{img/bench_4.png}
   \end{block}
 \end{frame}
+
+\begin{frame}{Periodic
+    REV - Modelling inclusions}
+  \begin{block}{MFEM contributions \& coupling}
+    \begin{itemize}
+      \item using as input : 3D periodic \texttt{gmsh} meshes (public MFEM contrib)
+      \item read/write MED files (private development)
+      \item in progress : using \texttt{netgen} to get REV meshes (\texttt{gmsh} format)
+    \end{itemize}
+  \end{block}
+  \begin{block}{Large runs}
+    \hspace*{2cm}\includegraphics[width=0.6\textwidth]{img/REV_2000inc.png}
+  \end{block}
+\begin{textblock}{.2}(0.78,0.68)
+\includegraphics[width=\textwidth]{img/polydisperse.png}
+\end{textblock}
+\end{frame}
+
 
 \section{Conclusions and perspectives}
 \Intercalaire{Conclusions and perspectives}
