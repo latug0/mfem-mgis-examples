@@ -642,38 +642,42 @@ Example of end-user API}
 \Intercalaire{Conclusions and perspectives}
 
 \Titre{Conclusions and perspectives} \frame{
+  \scalebox{0.9}{
+    \begin{minipage}[h]{1.1\textwidth}
   \begin{itemize}
-    \item What was done:
+    \item What was done ?
     \begin{itemize}
       \item High level declarative API suitable for engineering
-      studies and integration in the {\tt PLEIADES} platform.
+      studies\\ and upcoming integration in the {\tt PLEIADES} platform.
       \begin{itemize}
-        \item {\tt MFEM}' API still accessible user a lower
+        \item However {\tt MFEM}' API still accessible - low
         level API (not shown here)
       \end{itemize}
       \item Multi-material support
       \item Ability to handle arbitrary complex small and finite
       strain behaviours:
       \begin{itemize}
-        \item All behaviours are loaded dynamically at runtime.
+        \item All behaviours are set at runtime (dynamically loaded libraries).
       \end{itemize}
-      \item Easy extension to other physical phenomea (non linear
-      heat-transfer, diffusion, non local mechanics) with basic code
-      generation of behaviour integrators (loadable at runtime).
+      \item Basic postprocessing for mechanical modelling (not shown here)
     \end{itemize}
-    \item<2-> What is to be improved:
+    \medskip
+    \item<2-> What comes next ? 
     \begin{itemize}
       \item Overall robustness of the code (critical).
       \item Prediction and handling of the Dirichlet boundary conditions (critical).
-    \end{itemize}
-    \item<3-> What is to be done:
-    \begin{itemize}
+      \item Provide more examples (urgent).
+      \item Extension to other physical phenomea (non linear
+      heat-transfer, diffusion, non local mechanics)  basic code
+      generation of behaviour integrators \textit{should be easy}.
       \item Adaptative mesh refinements (requires new data structures in MGIS).
-      \item Add new boundary conditions and post-processings
+      \item Additionnal boundary conditions and post-processings.
+      \item Modeling mechanical systems - contacts and friction (specific problems).
       \item Port to GPUs (requires tremendous work on the MFront and MGIS side).
-      \item Support for partial assembly, save/restore, etc...
+      \item Support for partial assembly (if possible ...), chekpoint/restart.
     \end{itemize}
   \end{itemize}
+  \end{minipage}}
 }
 
 
