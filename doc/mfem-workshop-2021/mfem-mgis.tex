@@ -11,6 +11,9 @@
 %\usepackage{mecanique}
 \usepackage{pifont}% http://ctan.org/pkg/pifont
 \usepackage{animate,subcaption}
+\usepackage[absolute,overlay]{textpos}
+\setlength{\TPHorizModule}{\paperwidth}
+\setlength{\TPVertModule}{\paperheight}
 
 \newcommand{\dx}{\text{ dx}}
 \newcommand{\dS}{\text{ dS}}
@@ -175,19 +178,37 @@
 \section{Context and goals}
 \Intercalaire{Context and goals}
 
-\Titre{The Pleiades platform}
+\Titre{Fuel modelling\\\hspace*{10mm}The Pleiades platform}
 \begin{frame}[fragile]
+  \begin{itemize}
+    \item French Atomic Energy Commission (CEA), public institution
+    \item Our department: modelling and simulation of nuclear fuel
+  \end{itemize}
   \begin{center}
-    \includegraphics[width=0.70\linewidth]{img/PLEIADES_2019_en.png}
+    \includegraphics[trim = .2cm .2cm .2cm .6cm,clip,width=0.50\linewidth]{img/PLEIADES_2019_en.png}
   \end{center}
   \begin{itemize}
-    \item A wide range of materials (ceramics, metals, composites).
-    \item A wide range of mechanical phenomena and behaviours.
+    \item A wide range of materials (ceramics, metals, composites)
+    \item A wide range of mechanical phenomena and behaviours
     \begin{itemize}
       \item Creep, swelling, irradiation effects, phase transitions, etc..
     \end{itemize}
-    \item A wide range of mechanical loadings.
+    \item A wide range of mechanical loadings
   \end{itemize}
+
+\begin{textblock}{.40}(0.2,0.04)
+\scalebox{.8}{\rotatebox{90}{
+\begin{minipage}{7.cm}
+\textcolor{blue}{The Pleiades Platform}
+\end{minipage}}}
+\end{textblock}
+
+\begin{textblock}{.40}(0.8,0.08)
+\scalebox{.8}{\rotatebox{90}{
+\begin{minipage}{7.cm}
+\textcolor{red}{Existing mechanical solver}\\\textcolor{red}{not well parallelized}
+\end{minipage}}}
+\end{textblock}
 \end{frame}
 
 \Titre{Goals of MFEM-MGIS}
