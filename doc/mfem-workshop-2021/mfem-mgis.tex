@@ -178,7 +178,7 @@
 \section{Context and goals}
 \Intercalaire{Context and goals}
 
-\Titre{Fuel modelling\\\hspace*{10mm}The Pleiades platform}
+\Titre{Fuel modelling and the Pleiades platform}
 \begin{frame}[fragile]
   \begin{itemize}
     \item French Atomic Energy Commission (CEA), public institution.
@@ -238,7 +238,8 @@
 \Intercalaire{A small tutorial}
 
 
-\begin{frame}[fragile]{What are we talking about ? \\\hspace*{1cm}Example of enduser API}
+\begin{frame}[fragile]{What are we talking about ? \\
+Example of end-user API}
   \begin{center}
 %    \scalebox{0.7}{
       \begin{minipage}{\linewidth}
@@ -278,8 +279,8 @@
   \begin{itemize}
     \item Instantiating \scalebox{0.8}{\texttt{NonLinearEvolutionProblem}} class is the
     main entry point.
-    \item \textbf{Behaviour integrator} is a key
-    concept (from MGIS/MFront) .
+    \item \textbf{Behaviour integrator} is the main new
+    concept of {\tt MFEM/MGIS} .
   \end{itemize}
 \end{frame}
 
@@ -314,8 +315,7 @@
   \end{itemize}
 \end{frame}
 
-\Titre{The \texttt{MFrontGenericInterfaceSupport} project
-  (MGIS)}
+\Titre{The \texttt{MFrontGenericInterfaceSupport} project}
 \begin{frame}
   \begin{center}
     \includegraphics[width=0.75\textwidth]{img/mgis.pdf}
@@ -631,8 +631,41 @@
 \section{Conclusions and perspectives}
 \Intercalaire{Conclusions and perspectives}
 
-\Titre{Conclusions and perspectives}
-\frame{}
+\Titre{Conclusions and perspectives} \frame{
+  \begin{itemize}
+    \item What was done:
+    \begin{itemize}
+      \item High level declarative API suitable for engineering
+      studies and integration in the {\tt PLEIADES} platform.
+      \begin{itemize}
+        \item {\tt MFEM}' API still accessible user a lower
+        level API (not shown here)
+      \end{itemize}
+      \item Multi-material support
+      \item Ability to handle arbitrary complex small and finite
+      strain behaviours:
+      \begin{itemize}
+        \item All behaviours are loaded dynamically at runtime.
+      \end{itemize}
+      \item Easy extension to other physical phenomea (non linear
+      heat-transfer, diffusion, non local mechanics) with basic code
+      generation of behaviour integrators (loadable at runtime).
+    \end{itemize}
+    \item<2-> What is to be improved:
+    \begin{itemize}
+      \item Overall robustness of the code (critical).
+      \item Prediction and handling of the Dirichlet boundary conditions (critical).
+    \end{itemize}
+    \item<3-> What is to be done:
+    \begin{itemize}
+      \item Adaptative mesh refinements (requires new data structures in MGIS).
+      \item Add new boundary conditions and post-processings
+      \item Port to GPUs (requires tremendous work on the MFront and MGIS side).
+      \item Support for partial assembly, save/restore, etc...
+    \end{itemize}
+  \end{itemize}
+}
+
 
 \DernierePage{ \vspace*{1.5cm} \hspace*{-1.2cm}
   \scalebox{0.9}{
