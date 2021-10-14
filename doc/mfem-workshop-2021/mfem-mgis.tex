@@ -149,7 +149,7 @@
 
 \titre{\texttt{MFEM-MGIS}: an \texttt{MFEM}
   based application for non linear solid thermomechanics}
-\evenement{MFEM Workshop} \date{10/2021}% \auteurprincipal{T. Helfer}
+\evenement{MFEM Workshop} \date{20/10/2021}% \auteurprincipal{T. Helfer}
 \auteurs{T. Helfer, G. Latu}
 
 \newcommand{\gallery}[4]{
@@ -305,7 +305,7 @@ Example of end-user API}
     \begin{itemize}
       \item Numerical efficiency (see various benchmarks on
       the website).
-      \item Portability ({\tt Cast3M}, {\tt Cyrano}, {\tt
+      \item Portability and coupling capabilities ({\tt Cast3M}, {\tt Cyrano}, {\tt
         code\_aster}, {\tt Europlexus}, {\tt TMFTT}, {\tt AMITEX\_FFTP},
       {\tt Abaqus}, {\tt CalculiX}, {\tt MTest}).
       \item {\bf Ease of use}: {\em Longum iter est per
@@ -525,12 +525,12 @@ Example of end-user API}
   \begin{itemize}
     \item All those steps depends on:
     \begin{itemize}
-      \item The type of problem described (mechanics, heat
+      \item Kind of problem described (mechanics, heat
       transfer).
-      \item The symmetry of the material (isotropic or
+      \item Symmetry of the material (isotropic or
       orthotropic).
-      \item The modelling hypotheses (\(3D\), plane strain,
-      plane stress, axisymmetry, etc\ldots).
+      \item Modelling hypotheses: \(3D\), plane strain,
+      plane stress, axisymmetry \ldots
     \end{itemize}
   \end{itemize}
   \begin{itemize}
@@ -551,7 +551,7 @@ Example of end-user API}
     \item Aim of this code-generator
     \begin{itemize}
       \item Generate behaviour integrators from definition of the gradients.
-      \item Code factorisation and optimisation (no sparse matrix multiplication).
+      \item Automated code factorisation/optimisation (no sparse matrix multiply).
       \item Avoid coding errors due to tedious formula.
     \end{itemize}
     \item Machinery
@@ -572,8 +572,8 @@ Example of end-user API}
   \end{itemize}
 \end{frame}
 
-\section{Feed-backs on some limitations of {\tt MFEM}}
-\Intercalaire{Feed-backs on some limitations of {\tt MFEM}}
+\section{Feed-backs on some issues using {\tt MFEM}}
+\Intercalaire{Feed-backs on some issues using {\tt MFEM}}
 
 \Titre{Issues related to the behaviour integration step}
 \frame{
@@ -616,8 +616,8 @@ Example of end-user API}
       \item In finite strain, this leads to severe divergence
       of the Newton algorithm du to the geometric stiffness matrix.
     \end{itemize}
-    \item<2-> In most finite element solvers, a prediction of the
-    solution based on the tangent problem is made.
+    \item<2-> In most \textbf{mechanical} solvers, a \textbf{prediction} of the
+    solution based on the tangent problem is performed.
     \begin{itemize}
       \item We were not able to implement this prediction so far.
       \item \url{https://github.com/mfem/mfem/issues/2174}
@@ -641,35 +641,40 @@ Example of end-user API}
 
 \Titre{Conclusions and perspectives} \frame{
   \begin{itemize}
-    \item What was done:
+    \item What was done ?
     \begin{itemize}
-      \item High level declarative API suitable for engineering
-      studies and integration in the {\tt PLEIADES} platform.
+      \item High level declarative API suitable for
+      engineering studies and upcoming integration in the {\tt PLEIADES}
+      platform.
       \begin{itemize}
         \item {\tt MFEM}' API still accessible user a lower
         level API (not shown here)
       \end{itemize}
       \item Multi-material support
-      \item Ability to handle arbitrary complex small and finite
-      strain behaviours:
+      \item Ability to handle arbitrary complex small and
+      finite strain behaviours:
       \begin{itemize}
-        \item All behaviours are loaded dynamically at runtime.
+        \item All behaviours are set at runtime
+        (dynamically loaded libraries).
       \end{itemize}
-      \item Easy extension to other physical phenomea (non linear
-      heat-transfer, diffusion, non local mechanics) with basic code
-      generation of behaviour integrators (loadable at runtime).
     \end{itemize}
-    \item<2-> What is to be improved:
+    \item<2-> What comes next ?
     \begin{itemize}
       \item Overall robustness of the code (critical).
-      \item Prediction and handling of the Dirichlet boundary conditions (critical).
-    \end{itemize}
-    \item<3-> What is to be done:
-    \begin{itemize}
-      \item Adaptative mesh refinements (requires new data structures in MGIS).
-      \item Add new boundary conditions and post-processings
-      \item Port to GPUs (requires tremendous work on the MFront and MGIS side).
-      \item Support for partial assembly, save/restore, etc...
+      \item Prediction and handling of the Dirichlet boundary
+      conditions (critical).
+      \item Provide more examples (urgent).
+      \item Extension to other physical phenomea (non linear
+      heat-transfer, diffusion, non local mechanics). \textit{Should be
+        easy} using code generation of behaviour integrators .
+      \item Adaptative mesh refinements (requires new data
+      structures in MGIS).
+      \item Additional boundary conditions, including contact
+      with friction.
+      \item Port to GPUs (requires tremendous work on the
+      MFront and MGIS side).
+      \item Support for partial assembly (if possible ...),
+      chekpoint/restart.
     \end{itemize}
   \end{itemize}
 }
@@ -697,7 +702,7 @@ Example of end-user API}
   \scalebox{1}{
     \begin{minipage}[h]{0.95\textwidth}
       \textcolor{white}{The development
-        of \texttt{MFEM-MGIS} is supported \\
+        of \texttt{MFront} is supported \\
         financially by CEA, EDF and Framatome \\
         in the framework of the \texttt{PLEIADES} project.
       }
