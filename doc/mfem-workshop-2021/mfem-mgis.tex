@@ -181,19 +181,19 @@
 \Titre{Fuel modelling\\\hspace*{10mm}The Pleiades platform}
 \begin{frame}[fragile]
   \begin{itemize}
-    \item French Atomic Energy Commission (CEA), public institution
-    \item Our department: modelling and simulation of nuclear fuel
+    \item French Atomic Energy Commission (CEA), public institution.
+    \item Our department: modelling and simulation of nuclear fuel.
   \end{itemize}
   \begin{center}
     \includegraphics[trim = .2cm .2cm .2cm .6cm,clip,width=0.50\linewidth]{img/PLEIADES_2019_en.png}
   \end{center}
   \begin{itemize}
-    \item A wide range of materials (ceramics, metals, composites)
-    \item A wide range of mechanical phenomena and behaviours
+    \item A wide range of materials (ceramics, metals, composites).
+    \item A wide range of mechanical phenomena and behaviours.
     \begin{itemize}
       \item Creep, swelling, irradiation effects, phase transitions, etc..
     \end{itemize}
-    \item A wide range of mechanical loadings
+    \item A wide range of mechanical loadings.
   \end{itemize}
 
 \begin{textblock}{.40}(0.2,0.04)
@@ -215,19 +215,21 @@
 \frame{
   \begin{itemize}
     \item Build a HPC general purpose non linear multi-physics
-    library
+    library,\\
+\hspace*{1cm}\textit{development began end of 2020.}
     \begin{itemize}
-      \item Primary focus is non linear solid mechanics and
-      heat transfer.
-      \item Expected modelling: Shells, Beams, Phase-field
+      \item Primary focus is \textbf{non linear solid mechanics} and
+      \textbf{heat transfer}.
+      \item Expected modelling (long-term): Shells, Beams,\\Phase-field
       approaches of brittle fracture, micromorphic models, Cosserat
       plasticity, strongly coupled thermo-chemical-mechanical or
-      thermo-hydro-mechanical phenomena must also be considered.
+      thermo-hydro-mechanical phenomena.
     \end{itemize}
-    \item  Two-pillar libraries:
+\bigskip
+    \item  A two-pillar library with \textit{opensource} commitment (\scalebox{0.8}{MFEM-MGIS \textit{LGPL 3.0}}):
     \begin{itemize}
-      \item \texttt{MFEM}: HPC finite element solver.
-      \item \texttt{MGIS/MFront}: constitutive laws, material modelling.
+      \item \texttt{MFEM:} HPC finite element solver. \scalebox{0.8}{\textit{(LGPL 2.1)}}
+      \item \texttt{MGIS/MFront:} constitutive laws, material modelling. \scalebox{0.8}{\textit{(LGPL 3.0 / GPL 3.0)}}
     \end{itemize}
   \end{itemize}
 }
@@ -236,7 +238,7 @@
 \Intercalaire{A small tutorial}
 
 
-\begin{frame}[fragile]{What are we talking about ? Final usage of library}
+\begin{frame}[fragile]{What are we talking about ? \\\hspace*{1cm}Example of enduser API}
   \begin{center}
 %    \scalebox{0.7}{
       \begin{minipage}{\linewidth}
@@ -274,10 +276,10 @@
     %    }
   \end{center}
   \begin{itemize}
-    \item The \texttt{NonLinearEvolutionProblem} is the
+    \item Instantiating \scalebox{0.8}{\texttt{NonLinearEvolutionProblem}} class is the
     main entry point.
-    \item \textbf{Behaviour integrators} are the main new
-    concept.
+    \item \textbf{Behaviour integrator} is a key
+    concept (from MGIS/MFront) .
   \end{itemize}
 \end{frame}
 
