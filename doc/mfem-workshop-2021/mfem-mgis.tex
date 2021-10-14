@@ -628,14 +628,93 @@ Example of end-user API}
 \section{Examples}
 \Intercalaire{Examples}
 
-\begin{frame}{Tensile test on an elasto-plastic notched beam at finite strain}
+%\begin{frame}{Tensile test on an elasto-plastic notched beam at finite strain}
+%
+%\end{frame}
 
+\begin{frame}{Periodic
+    Representative Volume Element (RVE)\\\hspace*{1cm}
+    Pratical setting}
+  \begin{block}{Test
+      case setting - elastic model}
+    \protect\hypertarget{test-case-setting---elastic-model}{}
+    \begin{itemize}
+      \item Two isotropic materials, each one filling half of
+      a cube
+      \item Aim : compare against \textbf{\texttt{MFEM-MGIS}}
+      results against \textbf{analytical} results
+      \begin{itemize}
+        \item considering 3 cases with uniaxial strain
+        \item considering 3 cases with shear test
+      \end{itemize}
+    \end{itemize}
+  \end{block}
+  \begin{block}{Mesh
+      and result} \vspace*{-5mm}
+    \includegraphics[width=0.33\textwidth]{img/cube_2mat.png}
+    \includegraphics[width=0.49\textwidth]{img/cube_2mat_exx.png}
+    \vspace*{-1mm}
+  \end{block}
 \end{frame}
 
-\begin{frame}{Periodic computations}
-  \begin{center}
-    \includegraphics[width=0.75\linewidth]{img/MFEMMGIS.jpeg}
-  \end{center}
+\begin{frame}{Periodic
+    RVE - Numerical results on 32 cores}
+  \begin{block}{Properties}
+    \begin{itemize}
+      \item 14 million unknowns, elastic modelling
+      \item Ref. case on \emph{32 cores} - skylake @
+      mesocentre Aix-Marseille University
+      \item Main linear solver: Conj. Gradient (iterative),
+      no preconditioner used
+    \end{itemize}
+  \end{block}
+  \vspace*{2mm}
+  \begin{block}{Timings}
+    \begin{itemize}
+      \item MFEM linear solve
+      \begin{itemize}
+        \item total \textbf{166s}, ~~ matrix assembly 39s,
+        ~~ CGsolver 120s
+      \end{itemize}
+      \item MFEM non-linear solve - residual form, a single
+      newton iteration
+      \begin{itemize}
+        \item total \textbf{179s}, ~~ matrix assembly 53s,
+        ~~ CGsolver 117s
+      \end{itemize}
+      \item MFEM-MGIS non-linear solve - residual form, a
+      single newton iteration
+      \begin{itemize}
+        \item total \textbf{188s}, ~~ matrix assembly 42s,
+        ~~ CGsolver 133s
+      \end{itemize}
+      \item Overheads due to MFEM-MGIS are low
+      \begin{itemize}
+        \item Due to: read/write to memory buffers,
+        function calls for assembly
+      \end{itemize}
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\begin{frame}{Periodic
+    REV - Strong Scaling}
+  \begin{block}{Strong
+      scaling}
+    \begin{itemize}
+      \item Using MFEM-MGIS non-linear solve
+      \item Strong scaling from 32 to 256 cores
+      \begin{itemize}
+        \item \emph{Quite easy to go for a larger nb of
+          cores \(\rightarrow\) need a larger machine}
+      \end{itemize}
+      \item Scalable parallelism observed
+    \end{itemize}
+  \end{block}
+  \begin{block}{}
+    \includegraphics[width=0.4\textwidth]{img/bench_3.png}
+    \includegraphics[width=0.4\textwidth]{img/bench_4.png}
+  \end{block}
 \end{frame}
 
 \section{Conclusions and perspectives}
