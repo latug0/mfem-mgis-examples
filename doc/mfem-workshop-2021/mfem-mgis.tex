@@ -290,7 +290,8 @@ Example of end-user API}
 \Titre{MFront goals}
 \begin{frame}
   \begin{center}
-    \includegraphics[width=0.55\textwidth]{img/MFrontPrinciple.pdf}
+    \includegraphics[trim = .01cm .0cm .01cm .0cm,clip,width=0.73\textwidth]{img/MFrontPrinciple.pdf}
+    \vspace*{-0.2cm}
   \end{center}
   \begin{itemize}
     \item {\tt MFront} is a code generation tool dedicated to
@@ -302,10 +303,10 @@ Example of end-user API}
       or multiphysics).
     \end{itemize}
     \item Main goals:
-    \begin{itemize}
+    \begin{itemize} 
       \item Numerical efficiency (see various benchmarks on
       the website).
-      \item Portability ({\tt Cast3M}, {\tt Cyrano}, {\tt
+      \item Portability and coupling capabilities ({\tt Cast3M}, {\tt Cyrano}, {\tt
         code\_aster}, {\tt Europlexus}, {\tt TMFTT}, {\tt AMITEX\_FFTP},
       {\tt Abaqus}, {\tt CalculiX}, {\tt MTest}).
       \item {\bf Ease of use}: {\em Longum iter est per
@@ -315,13 +316,13 @@ Example of end-user API}
   \end{itemize}
 \end{frame}
 
-\Titre{The \texttt{MFrontGenericInterfaceSupport} project}
+\Titre{MFrontGenericInterfaceSupport \\\hspace*{1cm}to accompany MFront }
 \begin{frame}
   \begin{center}
     \includegraphics[width=0.75\textwidth]{img/mgis.pdf}
   \end{center}
   \begin{itemize}
-    \item The {\tt MGIS} project provides classes on the solver
+    \item The {\tt MGIS} project provides classes on the mechanical solver
     side to retrieve {\bf metadata} from an {\tt MFront} behaviour and
     call the behaviour integration over a time step.
     \item Written in \texttt{C++}. Bindings exists for
@@ -344,33 +345,38 @@ Example of end-user API}
       \item \emph{No} support for functions on integration
       points for a given material (element attribute).
     \end{itemize}
-    \item Proposed improvements:
+    \medskip
+    \item Improvements achieved:
     \begin{itemize}
       \item Add support for non linear behaviour integrators
       based on \texttt{MFront}.
       \item Add functions on integration points that depends on
-      material identifier (element attribute).
+      material identifier.
       \item Simplified High-level API for end users (mechanics)
     \end{itemize}
+    \medskip
     \item<2-> In practice:
     \begin{itemize}
       \item \texttt{MFEM-MGIS} is a library made up of
       \begin{enumerate}
         
-        \item Classes that inherit from \texttt{MFEM}:\\ loops
+        \item Classes that inherit from \texttt{MFEM}:\\\hspace*{5mm} loops
         on elements, linear \& non-linear solvers, mesh management\ldots{}
-        \item Classes that inherit from \texttt{MGIS}:
-        materials management, internal variables, fill matrix
+        \item Classes that inherit from \texttt{MGIS}:\\\hspace*{5mm} 
+        manage materials and internal variables, fill matrix
         entries\ldots{}
-        \item Procedures for the end user to interact with MFEM
+        \item Procedures and API for the end user\\\hspace*{5mm}  to interact with MFEM
         \& MGIS
       \end{enumerate}
     \end{itemize}
     \item<3-> \texttt{MFEM-MGIS} is a C++17 opensource library:
+    \scalebox{0.7}{
+    \begin{minipage}{11cm}
     \begin{itemize}
-      \item \url{https://github.com/thelfer/mfem-mgis}
-      \item \url{https://github.com/latug0/mfem-mgis-examples}
+      \item \url{https://github.com/thelfer/mfem-mgis} (core library)\vspace*{-2mm}
+      \item \url{https://github.com/latug0/mfem-mgis-examples} (examples)
     \end{itemize}
+    \end{minipage}}
   \end{itemize}
 \end{frame}
 
