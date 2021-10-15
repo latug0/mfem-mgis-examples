@@ -37,7 +37,7 @@
 \newboolean{latin}
 \newboolean{english}
 
-\DeclareOptionBeamer{latin}{\setboolean{latin}{false}}
+\DeclareOptionBeamer{latin}{\setboolean{latin}{true}}
 \DeclareOptionBeamer{english}{\setboolean{english}{true}}
 \ProcessOptionsBeamer
 
@@ -50,9 +50,11 @@
 }
 
 % babel french
-\RequirePackage[english]{babel}
-%\RequirePackage[frenchb]{babel}
-
+\ifthenelse{\boolean{english}}{
+  \RequirePackage[english]{babel}
+}{
+  \RequirePackage[frenchb]{babel}
+}
 
 \mode<presentation>
 
