@@ -155,8 +155,8 @@
   columns=flexible
 }
 
-\titre{\texttt{MFEM-MGIS-MFront},\\ a \texttt{MFEM} based library for non linear solid thermomechanics}
-\evenement{MFEM Workshop} \date{20/10/2021}% \auteurprincipal{T. Helfer}
+\titre{The \scalebox{0.8}{\texttt{MFEM-MGIS}} project: coupling  \scalebox{0.8}{\texttt{MFEM}} and \scalebox{0.8}{\texttt{MGIS}} for high performance nonlinear simulations}
+\evenement{MFront User Meeting} \date{21/10/2021}% \auteurprincipal{T. Helfer}
 \auteurs{T. Helfer, G. Latu}
 
 \newcommand{\gallery}[4]{
@@ -294,32 +294,68 @@ Example of end-user API}
 \section{Design and features of the \texttt{MFEM-MGIS} project}
 \Intercalaire{Design and features of the \texttt{MFEM-MGIS} project}
 
-\Titre{MFront goals}
-\begin{frame}
-  \begin{center}
-    \includegraphics[width=0.55\textwidth]{img/MFrontPrinciple.pdf}
-  \end{center}
+\begin{frame}[fragile]{\texttt{MFEM} library}
+\begin{itemize}
+\item
+  Main features
   \begin{itemize}
-    \item {\tt MFront} is a code generation tool dedicated to
-    material knowledge (material properties, mechanical behaviours,
-    point-wise models):
-    \begin{itemize}
-      \item Support for small and finite strain behaviours,
-      cohesive zone models, {\bf generalised behaviours} (non local and
-      or multiphysics).
-    \end{itemize}
-    \item Main goals:
-    \begin{itemize}
-      \item Numerical efficiency (see various benchmarks on
-      the website).
-      \item Portability and coupling capabilities ({\tt Cast3M}, {\tt Cyrano}, {\tt
-        code\_aster}, {\tt Europlexus}, {\tt TMFTT}, {\tt AMITEX\_FFTP},
-      {\tt Abaqus}, {\tt CalculiX}, {\tt MTest}).
-      \item {\bf Ease of use}: {\em Longum iter est per
-        praecepta, breve et efficax per exempla} (It's a long way by the
-      rules, but short and efficient with examples).
-    \end{itemize}
+  \item
+    C++, opensource FEM library. Large community. \hspace*{2mm} {\small \url{https://mfem.org/}}.
+  \item
+    High-order finite element meshes and spaces.
   \end{itemize}
+\end{itemize}
+\vspace*{1mm}
+\begin{itemize}
+\item  HPC oriented
+ \begin{itemize}
+  \item
+    Scales to hundreds of thousands of cores.
+  \item
+    Many hardware devices are supported, such as GPUs.
+  \item
+    Minimal changes to switch from serial to parallel version.
+  \item
+    Top-notch optimizations for speeding up computations.
+  \item
+    Able to call many standard linear solvers (Hypre, PETSC, \ldots).
+  \end{itemize}
+\end{itemize}
+\vspace*{1mm}
+\begin{itemize}
+\item
+  Mesh features
+  \begin{itemize}
+  \item
+    Triangular, quadrilateral, tetrahedral, wedge, and hexahedral
+    elements.
+  \item
+    Periodic meshes.
+  \item
+    Conforming and nonconforming adaptive mesh refinement.
+  \item
+    Parallel load balancing (several methods).
+  \end{itemize}
+\end{itemize}
+\vspace*{1mm}
+\begin{itemize}
+\item
+  Non linear PDE's resolution
+  \begin{itemize}
+  \item
+    handled by \textbf{non linear form integrators} which describes how
+    to build the element contribution to the \emph{residual} and its
+    \emph{jacobian}.\\
+    \hspace*{0.333em}\hspace*{0.333em}Glue with \texttt{MGIS} is here.
+  \end{itemize}
+\end{itemize}
+\begin{textblock}{.15}(0.8,0.23)
+    \includegraphics[width=\textwidth]{img/amr1.png}
+\end{textblock}
+\begin{textblock}{.19}(0.79,0.44)
+    \includegraphics[width=\textwidth]{img/ex21.png}
+\end{textblock}
+
 \end{frame}
 
 \Titre{The \texttt{MFrontGenericInterfaceSupport} project}
@@ -732,7 +768,9 @@ Example of end-user API}
 \section{Conclusions and perspectives}
 \Intercalaire{Conclusions and perspectives}
 
-\Titre{Conclusions and perspectives} \frame{
+\begin{frame}{Conclusions and perspectives}
+\scalebox{0.9}{
+\begin{minipage}{1.1\textwidth}
   \begin{itemize}
     \item What was done ?
     \begin{itemize}
@@ -751,6 +789,7 @@ Example of end-user API}
         (dynamically loaded libraries).
       \end{itemize}
     \end{itemize}
+    \vspace*{8mm}
     \item<2-> What comes next ?
     \begin{itemize}
       \item Overall robustness of the code (critical).
@@ -770,7 +809,11 @@ Example of end-user API}
       chekpoint/restart.
     \end{itemize}
   \end{itemize}
-}
+    \end{minipage}}
+  \begin{textblock}{.20}(0.77,0.48)
+  \includegraphics[width=.94\textwidth]{img/ex1p-np100.png}
+  \end{textblock}
+\end{frame}    
 
 
 \DernierePage{ \vspace*{1.5cm} \hspace*{-1.2cm}
