@@ -24,6 +24,9 @@
 #define PRINT_DEBUG (std::cout <<  __FILE__ << ":" <<  __LINE__ << std::endl)
 
 #define USE_PROFILER 1
+#ifndef USE_PROFILER
+#define USE_PROFILER 0
+#endif
 #if USE_PROFILER == 1
 #define LIB_PROFILER_IMPLEMENTATION
 #define LIB_PROFILER_PRINTF MpiPrintf
@@ -48,7 +51,7 @@ int main(int argc, char** argv) {
   const char* library = "src/libBehaviour.so";
   auto solver = "HypreFGMRES";
   auto preconditioner = "HypreBoomerAMG"; //"";//
-  auto ref_para = 0;
+  auto ref_para = 2;
   auto ref_seq = 0;
   auto order = 1;
 
@@ -71,10 +74,10 @@ int main(int argc, char** argv) {
                  "Number of Refinement for sequential call.");
   args.Parse();
   if (!args.Good()) {
-    args.PrintUsage(std::cout);
+    args.PrintUsage(mfem::out);
     return EXIT_FAILURE;
   }
-  args.PrintOptions(std::cout);
+  args.PrintOptions(mfem::out);
 
   // loading the mesh
   {
@@ -86,7 +89,7 @@ int main(int argc, char** argv) {
        {"UnknownsSize", dim},
        {"NumberOfUniformRefinements", parallel ? ref_para : ref_seq},
        {"Hypothesis", "Tridimensional"},
-       {"Parallel", true}});
+	 {"Parallel", parallel}});
 
   auto mesh = problem.getImplementation<true>().getFiniteElementSpace().GetMesh();
   //get the number of vertices

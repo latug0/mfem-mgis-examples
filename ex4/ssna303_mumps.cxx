@@ -31,18 +31,37 @@
 
 #define PRINT_DEBUG (std::cout <<  __FILE__ << ":" <<  __LINE__ << std::endl)
 
-int main(int argc, char** argv) {
+#define USE_PROFILER 1
+#ifndef USE_PROFILER
+#define USE_PROFILER 0
+#endif
+#if USE_PROFILER == 1
+#define LIB_PROFILER_IMPLEMENTATION
+#define LIB_PROFILER_PRINTF MpiPrintf
+#include "libProfiler.h"
+#else
+#define LogProfiler()
+#define PROFILER_ENABLE
+#define PROFILER_DISABLE
+#define PROFILER_START(x)
+#define PROFILER_END()
+#endif
 
+
+int main(int argc, char** argv) {
+  PROFILER_ENABLE;
   mfem_mgis::initialize(argc, argv);
+  PROFILER_START(0_total);
+  PROFILER_START(1_initialize);
   constexpr const auto dim = mfem_mgis::size_type{3};
   const char* mesh_file = "ssna303_3d.msh";
   const char* behaviour = "Plasticity";
   const char* library = "src/libBehaviour.so";
   const char* petscrc_file = "";
-  auto parallel = int{1};
-  auto ref_para = 0;
-  auto ref_seq = 0;
-  auto order = 1;
+  int parallel = 1;
+  int ref_para = 2;
+  int ref_seq = 0;
+  int order = 1;
 
   // options treatment
   mfem::OptionsParser args(argc, argv);
@@ -51,22 +70,27 @@ int main(int argc, char** argv) {
                  "Perform parallel computations.");
   args.AddOption(&order, "-o", "--order",
                  "Finite element order (polynomial degree).");
+  args.AddOption(&ref_para,"-rp", "--refinement_parallel",
+                 "Number of Refinement for parallel call.");
+  args.AddOption(&ref_seq,"-rs", "--refinement_sequential",
+                 "Number of Refinement for sequential call.");
   args.Parse();
   if (!args.Good()) {
-    args.PrintUsage(std::cout);
+    args.PrintUsage(mfem::out);
     return EXIT_FAILURE;
   }
-  args.PrintOptions(std::cout);
+  args.PrintOptions(mfem::out);
 
   // loading the mesh
   mfem_mgis::NonLinearEvolutionProblem problem(
-      {{"MeshFileName", mesh_file},
-       {"FiniteElementFamily", "H1"},
-       {"FiniteElementOrder", order},
-       {"UnknownsSize", dim},
-       {"Hypothesis", "Tridimensional"},
-       {"Parallel", true},
-       {"NumberOfUniformRefinements", parallel ? ref_para : ref_seq}});
+                                               {{"MeshFileName", mesh_file},
+                                                   {"FiniteElementFamily", "H1"},
+                                                     {"FiniteElementOrder", order},
+                                                       {"UnknownsSize", dim},
+                                                         {"Hypothesis", "Tridimensional"},
+                                                           {"Parallel", parallel !=0},
+                                                             {"NumberOfUniformRefinements", parallel ? ref_para : ref_seq}});
+  PROFILER_END(); PROFILER_START(2_mfem_mgis_settings);
 
   // 2 1 "Volume"
   problem.addBehaviourIntegrator("Mechanics", 1, library, behaviour);
@@ -78,67 +102,71 @@ int main(int argc, char** argv) {
 
   // 3 LowerBoundary
   problem.addBoundaryCondition(
-      std::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
-          problem.getFiniteElementDiscretizationPointer(), 3, 1));
+                               std::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
+                                                                                              problem.getFiniteElementDiscretizationPointer(), 3, 1));
   // 4 SymmetryPlane1
   problem.addBoundaryCondition(
-      std::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
-          problem.getFiniteElementDiscretizationPointer(), 4, 0));
+                               std::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
+                                                                                              problem.getFiniteElementDiscretizationPointer(), 4, 0));
   // 5 SymmetryPlane2
   problem.addBoundaryCondition(
-      std::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
-          problem.getFiniteElementDiscretizationPointer(), 5, 2));
+                               std::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
+                                                                                              problem.getFiniteElementDiscretizationPointer(), 5, 2));
   // 2 UpperBoundary 
   problem.addBoundaryCondition(
-      std::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
-          problem.getFiniteElementDiscretizationPointer(), 2, 1,
-          [](const auto t) {
-            const auto u = 6e-3 * t;
-            return u;
-          }));
+                               std::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
+                                                                                              problem.getFiniteElementDiscretizationPointer(), 2, 1,
+                                                                                              [](const auto t) {
+                                                                                                const auto u = 6e-3 * t;
+                                                                                                return u;
+                                                                                              }));
 
   // solving the problem without petsc
   if (!mfem_mgis::usePETSc()) {
     problem.setSolverParameters({{"VerbosityLevel", 2},
-                                 {"RelativeTolerance", 1e-6},
-                                 {"AbsoluteTolerance", 0.},
-                                 {"MaximumNumberOfIterations", 10}});
+          {"RelativeTolerance", 1e-6},
+            {"AbsoluteTolerance", 0.},
+              {"MaximumNumberOfIterations", 10}});
     if (parallel) {
-      std::cout << "MUMPS" << std::endl;
+      mfem::out << "MUMPS" << std::endl;
       problem.setLinearSolver("MUMPSSolver", {});
     } else {
-        std::cout << "UMFSolver" << std::endl;
-        problem.setLinearSolver("UMFPackSolver", {});
+      mfem::out << "UMFSolver" << std::endl;
+      problem.setLinearSolver("UMFPackSolver", {});
     }
   }
 
   // vtk export
-//  problem.addPostProcessing("ParaviewExportResults",
-//                            {{"OutputFileName", std::string("ssna303-displacements")}});
+  //  problem.addPostProcessing("ParaviewExportResults",
+  //                            {{"OutputFileName", std::string("ssna303-displacements")}});
   problem.addPostProcessing("ComputeResultantForceOnBoundary",
                             {{"Boundary", 2}, {"OutputFileName", "force.txt"}});
   
   // loop over time step
-  const auto nsteps = mfem_mgis::size_type{50};
-  const auto dt = mfem_mgis::real{1} / nsteps;
+  PROFILER_END(); PROFILER_START(3_time_loop);
+  //  const auto nsteps = mfem_mgis::size_type{50};
+  //  const auto dt = mfem_mgis::real{1} / nsteps;
+  const auto nsteps = 8;
+  const auto dt = mfem_mgis::real{4} / 50;
   auto t = mfem_mgis::real{0};
   auto iteration = mfem_mgis::size_type{};
   for (mfem_mgis::size_type i = 0; i != nsteps; ++i) {
-    std::cout << "iteration " << iteration << " from " << t << " to " << t + dt
+    mfem::out << "iteration " << iteration << " from " << t << " to " << t + dt
               << '\n';
     // resolution
+    PROFILER_START(3.1_solve);
     auto ct = t;
     auto dt2 = dt;
     auto nsteps = mfem_mgis::size_type{1};
     auto niter  = mfem_mgis::size_type{0};
     while (nsteps != 0) {
-     bool converged = problem.solve(ct, dt2);
+      bool converged = problem.solve(ct, dt2);
       if (converged) {
         --nsteps;
         ct += dt2;
         problem.update();
       } else {
-        std::cout << "\nsubstep: " << niter << '\n';
+        mfem::out << "\nsubstep: " << niter << '\n';
         nsteps *= 2;
         dt2 /= 2;
         ++niter;
@@ -148,10 +176,17 @@ int main(int argc, char** argv) {
         }
       }
     }
+    PROFILER_END(); PROFILER_START(3.2_postproc);
     problem.executePostProcessings(t, dt);
+    PROFILER_END(); 
     t += dt;
     ++iteration;
-    std::cout << '\n';
+    mfem::out << '\n';
   }
+  PROFILER_END(); 
+  PROFILER_END(); 
+  if (mfem_mgis::getMPIrank() == 0) 
+    LogProfiler();
+  PROFILER_DISABLE;
   return EXIT_SUCCESS;
 }
