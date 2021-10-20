@@ -15,6 +15,15 @@
 \setlength{\TPHorizModule}{\paperwidth}
 \setlength{\TPVertModule}{\paperheight}
 
+\newcommand{\backupbegin}{
+   \newcounter{finalframe}
+   \setcounter{finalframe}{\value{framenumber}}
+}
+\newcommand{\backupend}{
+   \setcounter{framenumber}{\value{finalframe}}
+}
+\setbeamercolor{block title}{bg=cea_rouge!90,fg=white}
+
 \newcommand{\dx}{\text{ dx}}
 \newcommand{\dS}{\text{ dS}}
 \newcommand{\udl}[1]{\boldsymbol{#1}}
@@ -147,8 +156,7 @@
   columns=flexible
 }
 
-\titre{\texttt{MFEM-MGIS}: an \texttt{MFEM}
-  based application for non linear solid thermomechanics}
+\titre{\texttt{MFEM-MGIS-MFront},\\ a \texttt{MFEM} based library for non linear solid thermomechanics}
 \evenement{MFEM Workshop} \date{20/10/2021}% \auteurprincipal{T. Helfer}
 \auteurs{T. Helfer, G. Latu}
 
@@ -628,23 +636,22 @@ Example of end-user API}
 \section{Examples}
 \Intercalaire{Examples}
 
-\begin{frame}{Non linear case \\\hspace*{1cm} Finite strain}
+\begin{frame}{Non linear case \\\hspace*{1cm} Elastoplastic modelling, finite strain}
 \begin{textblock}{.9}(0.02,0.1)
   \begin{block}{Case description}
     \begin{itemize}
-      \item Imposed displacement: right of the stick
-      \item Uniaxial tensile test
-      \item Symmetry conditions : left position, down position 
-      \item Non-linear elastoplastic modelling
+      \item Uniaxial tensile test on a 3D notched beam
+      \item Imposed displacement: right of the beam
+      \item Symmetry conditions at: left position, down position 
     \end{itemize}
   \end{block}
 \end{textblock}
-\begin{textblock}{.5}(0.,0.5)
-\includegraphics[width=0.8\textwidth]{img/ssna303-geom.png}\\
-\hspace*{3mm}{\small 3D geometry of the notched beam}
+\begin{textblock}{.4}(0.,0.5)
+\includegraphics[width=0.9\textwidth]{img/ssna303-geom.png}\\
+\hspace*{3mm}{\footnotesize Geometry of the notched beam}
 \end{textblock}
-\begin{textblock}{.5}(0.44,0.49)
-\includegraphics[width=0.9\textwidth]{img/ssna303_scaling.png}
+\begin{textblock}{.61}(0.39,0.37)
+\includegraphics[trim = .1cm .1cm .1cm .1cm,clip,width=\textwidth]{bench/scal_ssna303.pdf}
 \end{textblock}
 \end{frame}
 
@@ -821,5 +828,30 @@ Example of end-user API}
     \end{minipage}
   }
 }
+
+\backupbegin
+\begin{frame}{Non linear resolution\\\hspace*{1cm} in solid mechanics}
+  \begin{itemize}
+     \item    Mechanical equilibrium:
+    find\(\Delta\ensuremath{\mathbb{\uppercase{\vec{u}}}}\) such as: \[
+    \ensuremath{\ensuremath{\mathbb{\uppercase{\vec{R}}}}}{\left(\Delta\ensuremath{\mathbb{\uppercase{\vec{u}}}}\right)}=\ensuremath{\mathbb{\uppercase{\vec{O}}}}\quad\text{
+      avec
+    }\quad\ensuremath{\ensuremath{\mathbb{\uppercase{\vec{R}}}}}{\left(\Delta\ensuremath{\mathbb{\uppercase{\vec{u}}}}\right)}=\ensuremath{\ensuremath{\mathbb{\uppercase{\vec{F}}}}_{i}}{\left(\Delta\ensuremath{\mathbb{\uppercase{\vec{u}}}}\right)}-\ensuremath{\ensuremath{\mathbb{\uppercase{\vec{F}}}}_{e}}
+    \] 
+    \item Resolution using the Newton-Raphson algorithm: \[ 
+    \Delta\ensuremath{\mathbb{\uppercase{\vec{u}}}}^{n+1}=\Delta\ensuremath{\mathbb{\uppercase{\vec{u}}}}^{n}-\ensuremath{\underline{\underline{\mathbf{\mathbb{K}}}}}^{-1}.\ensuremath{\ensuremath{\mathbb{\uppercase{\vec{R}}}}}{\left(\Delta\ensuremath{\mathbb{\uppercase{\vec{u}}}}^{n}\right)}
+    \] 
+        \item  Element contribution to inner forces: \[
+    \ensuremath{\ensuremath{\mathbb{\uppercase{\vec{F}}}}_{i}^{e}}= \sum_{i=1}^{N^{G}} {\left(\ensuremath{\ensuremath{\underline{\mathbf{\sigma}}}}_{t+\Delta\,t}{\left(\Delta\ensuremath{\ensuremath{\underline{\mathbf{\epsilon}}}^{\mathit{to}}}{\left(\vec{\eta}_{i}\right)},\Delta\, t\right)}\colon\ensuremath{\underline{\underline{\mathbf{B}}}}{\left(\vec{\eta}_{i}\right)}\right)}w_{i}
+    \]
+        \item    Element contribution to the stiffness: \[
+    \ensuremath{\underline{\underline{\mathbf{\mathbb{K}}}}}^{e}=\displaystyle\sum_{i=1}^{N^{G}}
+    \mbox{}^{t}\ensuremath{\underline{\underline{\mathbf{B}}}}{\left(\vec{\eta}_{i}\right)}\colon\frac{\displaystyle\partial\,\Delta\ensuremath{\ensuremath{\underline{\mathbf{\sigma}}}}}{\displaystyle\partial\,\Delta\ensuremath{\ensuremath{\underline{\mathbf{\epsilon}}}^{\mathit{to}}}}{\left(\vec{\eta}_{i}\right)}\colon\ensuremath{\underline{\underline{\mathbf{B}}}}{\left(\vec{\eta}_{i}\right)}w_{i}
+    \]
+    \(\scriptsize\frac{\displaystyle\partial\,\Delta\ensuremath{\ensuremath{\underline{\mathbf{\sigma}}}}}{\displaystyle\partial\,\Delta\ensuremath{\ensuremath{\underline{\mathbf{\epsilon}}}^{\mathit{to}}}}\)
+    is the \{\bf consistent tangent operator\}
+  \end{itemize}
+\end{frame}
+\backupend
 
 \end{document}
