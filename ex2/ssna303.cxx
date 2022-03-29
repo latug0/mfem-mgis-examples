@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
   problem.addPostProcessing("ParaviewExportResults",
                             {{"OutputFileName", "ssna303-displacements"}});
   problem.addPostProcessing("ParaviewExportIntegrationPointResultsAtNodes",
-                            {{{"Results", "FirstPiolaKirchhoffStress"},
+                            {{{"Results", "Stress"},
                               {"OutputFileName", "ssna303-stress"}}});
   problem.addPostProcessing(
       "ParaviewExportIntegrationPointResultsAtNodes",
