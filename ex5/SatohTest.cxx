@@ -78,8 +78,8 @@ int main(int argc, char** argv) {
   auto& m1 = problem.getMaterial("plate");
   // material properties at the beginning and the end of the time step
   for (auto& s : {&m1.s0, &m1.s1}) {
-    mgis::behaviour::setMaterialProperty(*s, "YoungModulus", 200e9);
-    mgis::behaviour::setMaterialProperty(*s, "PoissonRatio", 0.499);
+    mgis::behaviour::setMaterialProperty(*s, "YoungModulus", 150e9);
+    mgis::behaviour::setMaterialProperty(*s, "PoissonRatio", 0.3);
   }
   // temperature
   mgis::behaviour::setExternalStateVariable(m1.s0, "Temperature", 293.15);

@@ -13,7 +13,7 @@ young.setGlossaryName("YoungModulus");
 @MaterialProperty real nu;
 nu.setGlossaryName("PoissonRatio");
 
-@Parameter thermalexpansion alpha = 1e-6;
+@Parameter thermalexpansion alpha = 1e-5;
 @StaticVariable temperature Tref = 293.15;
 
 @AuxiliaryStateVariable temperature ImposedTemperature;
