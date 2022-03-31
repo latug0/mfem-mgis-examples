@@ -37,6 +37,7 @@ if (NOT TARGET mfem-mgis::MFEMMGIS)
   find_package(MFEMMGIS REQUIRED)
 endif(NOT TARGET mfem-mgis::MFEMMGIS)
 
+
 # Copy needed file for execution
 file(COPY
   ${PROJECT_SOURCE_DIR}/Plasticity.mfront
@@ -51,7 +52,7 @@ add_custom_command(
   DEPENDS ${PROJECT_BINARY_DIR}/Plasticity.mfront
   COMMENT "Performing mfront code generation")
 
-add_custom_target(generate-libBehaviour-ex4 ALL
+add_custom_target(generate-libBehaviour-ex5 ALL
   DEPENDS "src/libBehaviour.so")
 
 # Define a test that will be called during the "make check"
@@ -60,21 +61,22 @@ function(add_ssna303_3d_test_ex solver)
  add_test(NAME ${test} COMMAND ${test})
 endfunction(add_ssna303_3d_test_ex)
 
-if(MFEM_USE_MPI)
-  foreach(tg IN ITEMS mumps hypre petsc)
-    # Define the executable to build for this example
-    if(((NOT MFEM_USE_PETSC) AND (${tg} STREQUAL "petsc")) OR
-        ((NOT MFEM_USE_MUMPS) AND (${tg} STREQUAL "mumps")))
-    else()
-      add_executable("Ssna303_3d_${tg}" ssna303_${tg}.cxx)
-      target_link_libraries(Ssna303_3d_${tg} mfem-mgis::MFEMMGIS)
-      target_include_directories(Ssna303_3d_${tg}
-        SYSTEM
-        PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
-        PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
-      
-      add_dependencies(check Ssna303_3d_${tg} generate-libBehaviour-ex4)
-      add_ssna303_3d_test_ex(${tg})
-    endif()
-  endforeach()
-endif()
+foreach(tg IN ITEMS mumps hypre petsc)
+  # Define the executable to build for this example
+  if(((NOT MFEM_USE_PETSC) AND (${tg} STREQUAL "petsc")) OR
+      ((NOT MFEM_USE_MUMPS) AND (${tg} STREQUAL "mumps")))
+  else()
+    add_executable("Ssna303_3d_${tg}" ssna303_${tg}.cxx)
+    target_link_libraries(Ssna303_3d_${tg} mfem-mgis::MFEMMGIS)
+    target_include_directories(Ssna303_3d_${tg}
+      SYSTEM
+      PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
+      PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
+    
+    add_dependencies(check Ssna303_3d_${tg} generate-libBehaviour-ex5)
+    add_ssna303_3d_test_ex(${tg})
+  endif()
+endforeach()
+
+
+

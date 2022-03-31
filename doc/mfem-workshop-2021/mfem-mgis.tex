@@ -23,7 +23,6 @@
    \setcounter{framenumber}{\value{finalframe}}
 }
 \setbeamercolor{block title}{bg=cea_rouge!90,fg=white}
-
 \newcommand{\dx}{\text{ dx}}
 \newcommand{\dS}{\text{ dS}}
 \newcommand{\udl}[1]{\boldsymbol{#1}}
@@ -418,31 +417,6 @@ Example of end-user API}
   \end{itemize}
 \end{frame}
 
-%\begin{frame}{Non linear resolution in solid mechanics}
-%  \protect\hypertarget{non-linear-resolution-in-solid-mechanics}{}
-%  \begin{itemize}
-%     %    \item %    Mechanical equilibrium:
-%    find\(\Delta\ensuremath{\mathbb{\uppercase{\vec{u}}}}\) such as: \[
-%    \small
-%    \ensuremath{\ensuremath{\mathbb{\uppercase{\vec{R}}}}}{\left(\Delta\ensuremath{\mathbb{\uppercase{\vec{u}}}}\right)}=\ensuremath{\mathbb{\uppercase{\vec{O}}}}\quad\text{
-%      avec
-%    }\quad\ensuremath{\ensuremath{\mathbb{\uppercase{\vec{R}}}}}{\left(\Delta\ensuremath{\mathbb{\uppercase{\vec{u}}}}\right)}=\ensuremath{\ensuremath{\mathbb{\uppercase{\vec{F}}}}_{i}}{\left(\Delta\ensuremath{\mathbb{\uppercase{\vec{u}}}}\right)}-\ensuremath{\ensuremath{\mathbb{\uppercase{\vec{F}}}}_{e}}
-%    \] %     %    \item %    
-%    Resolution using the Newton-Raphson algorithm: \[ %    \small
-%    \Delta\ensuremath{\mathbb{\uppercase{\vec{u}}}}^{n+1}=\Delta\ensuremath{\mathbb{\uppercase{\vec{u}}}}^{n}-\ensuremath{\underline{\underline{\mathbf{\mathbb{K}}}}}^{-1}.\ensuremath{\ensuremath{\mathbb{\uppercase{\vec{R}}}}}{\left(\Delta\ensuremath{\mathbb{\uppercase{\vec{u}}}}^{n}\right)}
-%    \] %    \item %    Element contribution to inner forces: \[
-%    \small
-%    \ensuremath{\ensuremath{\mathbb{\uppercase{\vec{F}}}}_{i}^{e}}= \sum_{i=1}^{N^{G}} {\left(\ensuremath{\ensuremath{\underline{\mathbf{\sigma}}}}_{t+\Delta\,t}{\left(\Delta\ensuremath{\ensuremath{\underline{\mathbf{\epsilon}}}^{\mathit{to}}}{\left(\vec{\eta}_{i}\right)},\Delta\, t\right)}\colon\ensuremath{\underline{\underline{\mathbf{B}}}}{\left(\vec{\eta}_{i}\right)}\right)}w_{i}
-%    \] %    \item %    Element contribution to the stiffness: \[
-%    \small
-%    \ensuremath{\underline{\underline{\mathbf{\mathbb{K}}}}}^{e}=\displaystyle\sum_{i=1}^{N^{G}}
-%    \mbox{}^{t}\ensuremath{\underline{\underline{\mathbf{B}}}}{\left(\vec{\eta}_{i}\right)}\colon\frac{\displaystyle\partial\,\Delta\ensuremath{\ensuremath{\underline{\mathbf{\sigma}}}}}{\displaystyle\partial\,\Delta\ensuremath{\ensuremath{\underline{\mathbf{\epsilon}}}^{\mathit{to}}}}{\left(\vec{\eta}_{i}\right)}\colon\ensuremath{\underline{\underline{\mathbf{B}}}}{\left(\vec{\eta}_{i}\right)}w_{i}
-%    \]
-%    \(\scriptsize\frac{\displaystyle\partial\,\Delta\ensuremath{\ensuremath{\underline{\mathbf{\sigma}}}}}{\displaystyle\partial\,\Delta\ensuremath{\ensuremath{\underline{\mathbf{\epsilon}}}^{\mathit{to}}}}\)
-%    is the \{\bf consistent tangent operator\}
-%  \end{itemize}
-%\end{frame}
-%
 \begin{frame}{The
     role of behaviour integrators}
   \begin{center}
@@ -619,26 +593,26 @@ Example of end-user API}
 \section{Feed-backs on some issues using {\tt MFEM}}
 \Intercalaire{Feed-backs on some issues using {\tt MFEM}}
 
-\Titre{Issues related to the behaviour integration step}
+\Titre{Issues related to\\\hspace*{1cm}the behaviour integration step}
 \frame{
   \begin{itemize}
     \item The integration of the mechanical behaviour is a {\bf
       complex} kernel solving a system of ordinary differential
     equations which can {\bf fail}.
-    \item<2-> Problem: the {\tt
+    \item Problem: the {\tt
       NonlinearFormIntegrator::AssembleElementVector} and {\tt
       NonlinearFormIntegrator::AssembleElementGrad} does not handle
     failures.
-    \item<3-> As a work-around, we derived our own Newton
+    \item<2-> As a work-around, we derived our own Newton
     algorithm which separates the behaviour integration step from
     residual and stiffness assemblies.
     \begin{itemize}
-      \item<4-> This solution seems compatible with
+      \item This solution seems compatible with
       partial assembly (untested).
-      \item<4-> {\bf This work-around does not work with {\tt
+      \item This work-around  {\bf does not work with {\tt
         PETSc}}.
     \end{itemize}
-    \item<5-> More generally, we started a discussion on
+    \item<2-> More generally, we started a discussion on
     how to improve the robustness of operators in {\tt MFEM}:
     \begin{itemize}
       \item \url{https://github.com/mfem/mfem/issues/2139}
