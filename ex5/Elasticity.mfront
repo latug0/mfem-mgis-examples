@@ -30,7 +30,7 @@ pr.setGlossaryName("HydrostaticPressure");
 
 @Integrator{
   constexpr const auto id = Stensor::Id();
-  const auto eth = (alpha / 3) * (T + dT - Tref) * id;
+  const auto eth = alpha * (T + dT - Tref) * id;
   const auto e = eto + deto - eth;
   sig = lambda * trace(e) * id + 2 * mu * e;
 }
