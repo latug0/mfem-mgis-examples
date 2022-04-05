@@ -10,21 +10,21 @@ pathadd() {
     fi
 }
 
-export MFEM_DIR="/home/th202608/codes/mfem/master/install/lib/cmake/mfem"
-export MFEMMGIS_DIR="/home/th202608/codes/mfem-mgis/master/install/share/mfem-mgis/cmake"
-export MFrontGenericInterface_DIR="/home/th202608/codes/mgis/master/install-python-3.7/share/mgis/cmake"
+export MFEM_DIR="/home/gl224549/Work/Dev/helix/mfem/install/lib/cmake/mfem"
+export MFEMMGIS_DIR="/home/gl224549/Work/Dev/mfem-mgis/build_parallel/install/share/mfem-mgis/cmake"
+export MFrontGenericInterface_DIR="/home/gl224549/spack/opt/spack/linux-debian9-skylake_avx512/gcc-9.2.0/mgis-master-dxbc5zylhv25ten4equum6z6kwt7sf7j/share/mgis/cmake"
 
-pathadd "/home/th202608/codes/tfel/master/install-python-3.7/bin"
-pathadd ""
-pathadd "/usr/bin"
+pathadd "/home/gl224549/spack/opt/spack/linux-debian9-skylake_avx512/gcc-9.2.0/tfel-master-gudzydfnwltqnohtkihohehgsmrfe2jm/bin"
+pathadd "/home/gl224549/spack/opt/spack/linux-debian9-skylake_avx512/gcc-9.2.0/openmpi-3.1.5-fa6b2jot7wirv5h44rom6lbxl2xue36c/bin"
+pathadd "/home/gl224549/spack/opt/spack/linux-debian9-skylake_avx512/gcc-9.2.0/cmake-3.16.2-sda3osp22ts55fu4mqdv4og4s7m37t4y/bin"
 export PATH
 
-ldadd "/home/th202608/codes/tfel/master/install-python-3.7/lib"
-ldadd "/home/th202608/codes/mgis/master/install-python-3.7/share/mgis/cmake/../../../lib"
+ldadd "/home/gl224549/spack/opt/spack/linux-debian9-skylake_avx512/gcc-9.2.0/tfel-master-gudzydfnwltqnohtkihohehgsmrfe2jm/lib"
+ldadd "/home/gl224549/spack/opt/spack/linux-debian9-skylake_avx512/gcc-9.2.0/mgis-master-dxbc5zylhv25ten4equum6z6kwt7sf7j/share/mgis/cmake/../../../lib"
 export LD_LIBRARY_PATH
 
-export CC=/usr/bin/cc
-export CXX=/usr/bin/c++
+export CC=/home/gl224549/spack/opt/spack/linux-debian9-skylake_avx512/gcc-9.2.0/gcc-9.2.0-3b2g3pktyfgjw7b4jmpeunbqoplys3ib/bin/gcc
+export CXX=/home/gl224549/spack/opt/spack/linux-debian9-skylake_avx512/gcc-9.2.0/gcc-9.2.0-3b2g3pktyfgjw7b4jmpeunbqoplys3ib/bin/g++
 
 
 
