@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
-project(InclusionsExample)
-
+project(SatohTestExample)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -37,21 +36,13 @@ if (NOT TARGET mfem-mgis::MFEMMGIS)
   find_package(MFEMMGIS REQUIRED)
 endif(NOT TARGET mfem-mgis::MFEMMGIS)
 
-if(MFEM_USE_MPI)
-  # Define the executable to build for this example
-  add_executable(InclusionsEx InclusionsEx.cxx)
-  target_link_libraries(InclusionsEx mfem-mgis::MFEMMGIS)
-  target_include_directories(InclusionsEx
-      SYSTEM
-      PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
-      PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
-  
+# Define a test that will be called during the "make check"
+
+if(MFEM_USE_SUITESPARSE)
   # Copy needed file for execution
   file(COPY
     ${PROJECT_SOURCE_DIR}/Elasticity.mfront
-    ${PROJECT_SOURCE_DIR}/cube_2mat_per.mesh
-    ${PROJECT_SOURCE_DIR}/Box.med
-    ${PROJECT_SOURCE_DIR}/Box.per
+    ${PROJECT_SOURCE_DIR}/cube.msh
     DESTINATION ${PROJECT_BINARY_DIR})
   
   # Use mfront to generate libBehaviour.so
@@ -61,21 +52,22 @@ if(MFEM_USE_MPI)
     DEPENDS ${PROJECT_BINARY_DIR}/Elasticity.mfront
     COMMENT "Performing mfront code generation")
   
-  add_custom_target(generate-libBehaviour-ex3 ALL
+  add_custom_target(generate-libBehaviour-ex5 ALL
     DEPENDS "src/libBehaviour.so")
-  
-  add_dependencies(check InclusionsEx generate-libBehaviour-ex3)
-  
-  # Define a test that will be called during the "make check"
-  function(add_inclusions_ex)
-    set(test "InclusionsEx")
-    add_test(NAME ${test} COMMAND mpirun -n 4 InclusionsEx)
-  endfunction(add_inclusions_ex)
 
-  add_inclusions_ex()
+  add_executable("SatohTest" SatohTest.cxx)
+  target_link_libraries(SatohTest mfem-mgis::MFEMMGIS)
+  target_include_directories(SatohTest
+    SYSTEM
+    PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
+    PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
+    
+  add_dependencies(check SatohTest generate-libBehaviour-ex5)
 
+  set(test "SatohTest")
+  add_test(NAME ${test} COMMAND ${test})
+else()
+  message(STATUS "Disabling SatohTest. Compile MFEM with SuiteSparse support to enable it")
 endif()
-
-
 
 
