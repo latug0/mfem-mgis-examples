@@ -57,48 +57,28 @@ class gather_information
 			}
 		}	
 	}
-
-	gather_information read(const std::string a_input_file_name)
+	
+	std::vector<info>& get_data()
 	{
-		START_TIMER("gather_information::read");
-
-		assert(a_input_file_name != "" && "this file does not exist");
-
-		gather_information res;
-		std::ifstream input_file (a_input_file_name, std::ifstream::in);
-		std::string line;
-
-		while(std::getline(input_file, line))
-		{
-			info data;
-			std::istringstream iss(line);
-			int solv_id=-1;
-			int precond_id=-1;
-			if(!(iss>> solv_id 
-				>> precond_id 
-				>> data.m_converged 
-				>> data.m_iteration 
-				>> data.m_residu 
-				>> data.m_time))
-			{
-				std::abort();
-			}
-
-			data.m_solver = solver_name(solv_id);
-			data.m_precond = precond_name(precond_id);
-			res.add(data);
-		}
-		profiling::output::printMessage("file ",a_input_file_name,"has been correctly read");
+		std::vector<info>& ref = m_data;
+		return ref;
 	}
 
-	void writeMD()
+	void insert(gather_information& a_in)
+	{
+		auto& in_data = a_in.get_data();
+		m_data.resize(m_data.size() + in_data.size());
+		std::move(in_data.begin(), in_data.end(), std::back_inserter(m_data));
+	}
+
+
+	void writeMD(std::string a_name)
 	{
 		START_TIMER("gather_information::writeMD");
 		if(profiling::output::is_master())
 		{
-			auto name = "markdown_" + build_name();
-			std::ofstream file (name, std::ofstream::out);
-			file << "| solver | preconditionner | converged | iterations | residu | time |";
+			std::ofstream file (a_name, std::ofstream::out);
+			file << "| solver | preconditionner | converged | iterations | residu | time |" << std::endl;
 			for(auto it : m_data)
 			{
 				std::string solv = getName(it.m_solver);
@@ -118,6 +98,12 @@ class gather_information
 				file << line << std::endl;
 			}
 		}	
+	}
+
+	void writeMD()
+	{
+		auto name = "markdown_" + build_name();
+		writeMD(name);
 	}
 
 	void print()
@@ -178,4 +164,37 @@ class gather_information
 	std::vector<info> m_data;
 };
 
+gather_information read(const std::string a_input_file_name)
+{
+	START_TIMER("gather_information::read");
+
+	assert(a_input_file_name != "" && "this file does not exist");
+
+	gather_information res;
+	std::ifstream input_file (a_input_file_name, std::ifstream::in);
+	std::string line;
+
+	while(std::getline(input_file, line))
+	{
+		info data;
+		std::istringstream iss(line);
+		int solv_id=-1;
+		int precond_id=-1;
+		if(!(iss>> solv_id 
+			>> precond_id 
+			>> data.m_converged 
+			>> data.m_iteration 
+			>> data.m_residu 
+			>> data.m_time))
+		{
+			std::abort();
+		}
+
+		data.m_solver = solver_name(solv_id);
+		data.m_precond = precond_name(precond_id);
+		res.add(data);
+	}
+	profiling::output::printMessage("file ",a_input_file_name,"has been correctly read");
+	return res;
+}
 
