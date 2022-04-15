@@ -17,25 +17,27 @@ bool match(solver_name s, precond_name p)
 	}
 	if(p == precond_name::HypreParaSails) 
 	{
-		if(s==HyprePCG) return false; // seg fault
+		if(s==solver_name::HyprePCG) return false; // seg fault
 		return true; // NU MUMPS
 	}
 	if(p == precond_name::HypreEuclid) 
 	{
-		if(s==HypreFGMRES) return false; // seg fault
-		if(s==HypreGMRES) return false; // seg fault
+		if(s==solver_name::CGSolver) return false;
+		if(s==solver_name::HypreFGMRES) return false; // seg fault
+		if(s==solver_name::HypreGMRES) return false; // seg fault
 		return true; // NU MUMPS
 	}
 	if(p == precond_name::HypreILU) 
 	{
-		if(s==CGSolver) return false; // setup error
+		if(s==solver_name::CGSolver) return false; // setup error
 		return true; // NU MUMPS
 	}
 	return false;
 }
 
 static void setLinearSolver(mfem_mgis::AbstractNonLinearEvolutionProblem& p,
-                            const solver_name a_solver_name, const precond_name a_precond_name) 
+                            const solver_name a_solver_name, 
+			    const precond_name a_precond_name)
 {
 	START_TIMER("set_linear_solver");
 	// pilote
@@ -43,7 +45,8 @@ static void setLinearSolver(mfem_mgis::AbstractNonLinearEvolutionProblem& p,
 	constexpr int defaultMaxNumOfIt	 	= 5000; 	//MaximumNumberOfIterations
 	constexpr int adjustMaxNumOfIt 		= 500000; 	//MaximumNumberOfIterations
 	constexpr mfem_mgis::real absTol	= 1e-12; 	// AbsoluteTolerance
-	constexpr mfem_mgis::real relTol	= 1e-12; 	// RelativeTolerance
+	constexpr mfem_mgis::real relTol	= 0; 		// RelativeTolerance
+	//constexpr mfem_mgis::real relTol	= 1e-12; 	// RelativeTolerance
 	constexpr mfem_mgis::real Tol		= 1e-12;        // Tolerance
 
 
