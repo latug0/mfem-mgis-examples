@@ -104,6 +104,20 @@ namespace profiling
 			static profilingTimer* __current;
 			return __current;
 		}
+
+		template<typename Lambda>
+		double chrono_section(Lambda&& lambda)
+		{
+			using duration = std::chrono::duration<double>;
+			using steady_clock = std::chrono::steady_clock;
+			using time_point = std::chrono::time_point<steady_clock>;
+			time_point tic, toc;
+			tic = steady_clock::now();
+			lambda();
+			toc = steady_clock::now();
+			auto measure = toc - tic;
+			return measure.count();	
+		}
 	};
 
 	namespace timer
@@ -115,8 +129,8 @@ namespace profiling
 		{
 			public:
 			Timer(duration * acc);
-			inline void start();
-			inline void end();
+			void start();
+			void end();
 			~Timer(); 
 
 			private:

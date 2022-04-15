@@ -305,28 +305,26 @@ namespace profiling
 		}
 
 		inline 
-		void 
-		Timer::start()
+		void Timer::start()
 		{
 			m_start = steady_clock::now();
 		}
 
 		inline 
-		void 
-		Timer::end()
+		void Timer::end()
 		{
 			assert(m_duration != nullptr && "duration has to be initialised");
 			m_stop = steady_clock::now();
 			*m_duration += m_stop - m_start;
 			assert(m_duration->count() >= 0);
 		}
+
 		Timer::~Timer() 
 		{
 			end();
 			auto& current_timer = profiling::timers::get_timer<CURRENT>();
 			current_timer = current_timer->get_mother();
 		}
-
 	};
 
 	namespace outputManager
@@ -389,6 +387,9 @@ namespace profiling
 
 		void writeFile(std::string a_name)
 		{
+			using namespace profiling::output;
+			//using profiling::output::reduce_max;
+
 			std::ofstream myFile (a_name, std::ofstream::out);	
 			profilingTimer* root_timer = profiling::timers::get_timer<ROOT>();
 			auto rootTime = root_timer->get_duration();
@@ -400,11 +401,16 @@ namespace profiling
 
 				for(std::size_t i = 0 ; i < a_ptr->get_level() ; i++) space +=motif;
 
-				a_file << space << a_ptr->getName() 
-					<< " " << a_ptr->get_iteration()
-					<< " " << a_ptr->get_duration()
-					<< " " <<(a_ptr->get_duration()/rootTime)*100
-					<< std::endl;
+				const auto max_time = reduce_max(a_ptr->get_duration());
+
+				if(is_master())
+				{
+					a_file << space << a_ptr->getName() 
+						<< " " << a_ptr->get_iteration()
+						<< " " << max_time
+						<< " " <<(max_time/rootTime)*100
+						<< std::endl;
+				}
 			};
 
 			recursive_call(my_write,root_timer,myFile);
