@@ -174,11 +174,16 @@ int executeMFEMMGISTest(const TestParameters& p, const bool use_post_processing,
 	} // end timer add_postprocessing_and_outputs
 
 	mfem_mgis::NonLinearResolutionOutput solverStatistics;
+	double measure = 0.;
 
 	{
 		START_TIMER("Solve");
 		// solving the problem
-		solverStatistics = problem.solve(0, 1);
+		
+		measure = profiling::timers::chrono_section( [&](){
+			solverStatistics = problem.solve(0, 1);
+		});
+
 		// check status
 		if (!solverStatistics) {
 			profiling::output::printMessage("INFO: ", string_solver,"+",string_precond," FAILED");
@@ -194,13 +199,15 @@ int executeMFEMMGISTest(const TestParameters& p, const bool use_post_processing,
 
 	{
 		START_TIMER("get_statistics");
+		measure = profiling::output::reduce_max(measure);
 		a_info.add(
 				info{
 					a_solv, 
-					a_precond,  
+					a_precond,
 					solverStatistics.status, 
 					solverStatistics.iterations, 
-					solverStatistics.final_residual_norm
+					solverStatistics.final_residual_norm,
+					measure
 					}
 			);
 	} // end timer get_statistics
@@ -295,7 +302,8 @@ int try_several_solvers(TestParameters& p, const bool use_post_processing)
 		}
 	}
 
-	data.print();
+	data.write();
+	data.writeMD();
 	return res;
 }
 
