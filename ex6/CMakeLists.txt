@@ -60,7 +60,27 @@ if(MFEM_USE_MPI)
       PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
       PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>"
       )
+
+  add_executable(reader read_markdown.cxx)
+  target_link_libraries(reader mfem-mgis::MFEMMGIS)
+  target_link_libraries(reader timers)
+
+  target_include_directories(reader
+      SYSTEM
+      PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
+      PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>"
+      )
   
+  add_executable(one_test one_test.cxx)
+  target_link_libraries(one_test mfem-mgis::MFEMMGIS)
+  target_link_libraries(one_test timers)
+  
+  target_include_directories(one_test
+      SYSTEM
+      PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
+      PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>"
+      )
+
   # Copy needed file for execution
   file(COPY
     ${PROJECT_SOURCE_DIR}/Elasticity.mfront
@@ -89,7 +109,20 @@ if(MFEM_USE_MPI)
     add_test(NAME ${test}_cube_2mat_per COMMAND mpirun -n 3 ./perf --mesh cube_2mat_per.mesh) #see later why it fails with -n 4 and it works with n = 1,2,3,5,6,7,44
   endfunction(add_perf)
 
+  function(add_solver_preconditioner)
+	  #no foreach
+    add_test(NAME periodic_hypreCG_HypreDiagScale_cube_2mat_per COMMAND mpirun -n 3 ./one_test -ls 3 --preconditioner 0 --mesh cube_2mat_per.mesh) 
+    add_test(NAME periodic_hypreCG_HypreEuclid_cube_2mat_per COMMAND mpirun -n 3 ./one_test -ls 3 --preconditioner 2 --mesh cube_2mat_per.mesh) 
+    add_test(NAME periodic_hypreCG_HypreBoomerAMG_cube_2mat_per COMMAND mpirun -n 3 ./one_test -ls 3 --preconditioner 3 --mesh cube_2mat_per.mesh) 
+    add_test(NAME periodic_hypreCG_HypreILU_cube_2mat_per COMMAND mpirun -n 3 ./one_test -ls 3 --preconditioner 4 --mesh cube_2mat_per.mesh) 
+    add_test(NAME periodic_hypreCG_any_cube_2mat_per COMMAND mpirun -n 3 ./one_test -ls 3 --preconditioner 5 --mesh cube_2mat_per.mesh) 
+    add_test(NAME periodic_CGSolver_HypreDiagScale_cube_2mat_per COMMAND mpirun -n 3 ./one_test -ls 6 --preconditioner 0 --mesh cube_2mat_per.mesh) 
+    add_test(NAME periodic_CGSolver_HypreParaSails_cube_2mat_per COMMAND mpirun -n 3 ./one_test -ls 6 --preconditioner 1 --mesh cube_2mat_per.mesh) 
+    add_test(NAME periodic_CGSolver_any_cube_2mat_per COMMAND mpirun -n 3 ./one_test -ls 6 --preconditioner 5 --mesh cube_2mat_per.mesh) 
+  endfunction(add_solver_preconditioner)
+
   add_perf()
+  add_solver_preconditioner()
 
 endif()
 
