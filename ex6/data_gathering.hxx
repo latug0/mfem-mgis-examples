@@ -1,5 +1,7 @@
 #pragma once
 
+#include<precond_name.hxx>
+#include<solver_name.hxx>
 
 struct info
 {
@@ -71,14 +73,17 @@ class gather_information
 		std::move(in_data.begin(), in_data.end(), std::back_inserter(m_data));
 	}
 
-
-	void writeMD(std::string a_name)
+	void writeMD(std::string a_name, bool add_banner = true)
 	{
 		START_TIMER("gather_information::writeMD");
 		if(profiling::output::is_master())
 		{
-			std::ofstream file (a_name, std::ofstream::out);
-			file << "| solver | preconditionner | converged | iterations | residu | time |" << std::endl;
+			std::ofstream file (a_name, std::ofstream::in | std::ofstream::out | std::ofstream::ate);
+			if(add_banner)
+			{
+				file << "| solver | preconditionner | converged | iterations | residu | time |" << std::endl;
+			}
+
 			for(auto it : m_data)
 			{
 				std::string solv = getName(it.m_solver);
@@ -94,7 +99,7 @@ class gather_information
 
 				std::string res  = it.m_converged ? streamRes.str()  : "&cross;";
 				std::string time = it.m_converged ? streamTime.str() : "&cross;";
-				std::string line = "| " + getName(it.m_solver) + " | " + prec + " | " + conv + " | " + ite + " | " + res + " | " + time + " | ";
+				std::string line = "| " + solv + " | " + prec + " | " + conv + " | " + ite + " | " + res + " | " + time + " | ";
 				file << line << std::endl;
 			}
 		}	
@@ -160,6 +165,13 @@ class gather_information
 	{
 		m_data.clear();
 	}
+
+	size_t size()
+	{
+		const size_t _size = m_data.size();
+		return _size;
+	}
+
 	private:
 	std::vector<info> m_data;
 };

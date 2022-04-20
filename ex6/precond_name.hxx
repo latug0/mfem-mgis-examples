@@ -1,5 +1,12 @@
 #pragma once
 
+#include "MFEMMGIS/MFEMForward.hxx"
+#include "MFEMMGIS/Material.hxx"
+#include "MFEMMGIS/Profiler.hxx"
+#include "MFEMMGIS/AnalyticalTests.hxx"
+#include "MFEMMGIS/NonLinearEvolutionProblemImplementation.hxx"
+#include "MFEMMGIS/PeriodicNonLinearEvolutionProblem.hxx"
+
 enum precond_name
 {
 	HypreDiagScale, //JACOBI
