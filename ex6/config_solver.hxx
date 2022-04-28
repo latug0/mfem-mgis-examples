@@ -29,7 +29,7 @@ bool match(solver_name s, precond_name p)
 	}
 	if(p == precond_name::HypreILU) 
 	{
-		if(s==solver_name::CGSolver) return false; // setup error
+		//if(s==solver_name::CGSolver) return false; // setup error
 		return true; // NU MUMPS
 	}
 	return false;
@@ -85,6 +85,7 @@ static void setLinearSolver(mfem_mgis::AbstractNonLinearEvolutionProblem& p,
 		auto precond = buildPrecond(a_precond_name, verbosity);
 		solverParameters.insert(mfem_mgis::Parameters{{"Preconditioner",precond}});
 	}
+
 
 	auto current_solver_name = getName(a_solver_name);
 	auto current_precond_name = getName(a_precond_name);

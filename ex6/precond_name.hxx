@@ -33,11 +33,13 @@ std::string getName(const precond_name a_name)
 
 mfem_mgis::Parameters buildPrecond(const precond_name a_name, const int a_verbosity)
 {
-	return mfem_mgis::Parameters{{"Name", getName(a_name)},
-                                {"Options",
-                                        mfem_mgis::Parameters{
-                                                {"VerbosityLevel", a_verbosity}
-                                        }
-                                }
-                        };
+	auto options = mfem_mgis::Parameters{{"VerbosityLevel", a_verbosity}};
+	/*	
+	if(a_name == precond_name::HypreILU)
+	{
+		options.insert(	mfem_mgis::Parameters{
+						{"LevelOfFill", 2}
+				});
+	}*/
+	return mfem_mgis::Parameters{{"Name", getName(a_name)}, {"Options",options}};
 }
