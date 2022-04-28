@@ -197,7 +197,11 @@ namespace profiling
 };
 
 
-#define START_TIMER(name) profiling::timers::profilingTimer*& current = profiling::timers::get_timer<CURRENT>(); \
-				assert(current != nullptr && "do not use an undefined profilingTimer");\
-				current = current->find(name); \
-				profiling::timer::Timer tttt(current->get_ptr_duration());
+inline 
+void START_TIMER(std::string name)
+{
+	profiling::timers::profilingTimer*& current = profiling::timers::get_timer<CURRENT>();
+	assert(current != nullptr && "do not use an undefined profilingTimer");
+	current = current->find(name); 
+        profiling::timer::Timer tttt(current->get_ptr_duration());
+}
