@@ -19,13 +19,65 @@ void writeMD(std::vector<gather_information> a_vec, std::string a_name)
 	profiling::output::printMessage("write: ", a_name);
 }
 
+template<typename T>
+void build_speed_up_for_python(const T a_in, const int a_first, const int a_last)
+{
+	START_TIMER("build_speed_up_for_python");
+	const std::string name = "speedup.log";
+	std::ofstream out(name, std::ofstream::out);
+
+	std::string header = "solver preconditionner";
+		
+	
+	int nb_elem = 0;
+	for(int i=a_first; i<= a_last ; i*=2) 
+	{
+		header += " " + std::to_string(i);
+		nb_elem++;
+	}	
+
+	out << header << std::endl;
+	std::cout << header << std::endl;
+	double res[nb_elem]; 
+	auto iterator = a_in.begin();
+
+	while (iterator != a_in.end())
+	{
+		auto solv = getName(iterator->second.m_solver);
+		auto prec = getName(iterator->second.m_precond);
+		std::string baseline = solv + "-" + prec;
+		for(int i = 0 ; i < nb_elem ; i++)
+		{
+			if(solv != getName(iterator->second.m_solver)) std::cout << "solver is different" << std::endl;
+			if(prec != getName(iterator->second.m_precond)) std::cout << "preconditionner is different" << std::endl;
+			res[i] = iterator->second.m_time;
+			//std::next(iterator);
+			iterator++;
+		}
+		auto base = res[0];
+                for(int i = 0 ; i < nb_elem ; i++)
+                {
+			assert(res[i]>0);
+                        res[i] = base / res[i];
+                }
+
+                for(int i = 0 ; i < nb_elem ; i++)
+		{
+			baseline += " " + std::to_string(res[i]);
+		}
+//		std::cout << baseline << std::endl;
+		out << baseline << std::endl;
+	}
+
+
+}
 
 int main(int argc, char* argv[]) 
 {
 	mfem_mgis::initialize(argc, argv);
 	profiling::timers::init_timers();
-	const int first = 128;
-	const int last = 512;
+	const int first = 32;
+	const int last = 4096;
 	const std::string base_name = "collect_";
 	//const int last = 4096;
 
@@ -92,6 +144,8 @@ int main(int argc, char* argv[])
 					return false;
 				}
 			});
+	
+	build_speed_up_for_python(try_classification, first, last);
 
 
 	std::ofstream out("all.md", std::ofstream::out);
@@ -118,6 +172,7 @@ int main(int argc, char* argv[])
 		std::string line = "| " + solv + " | " + prec + " | " + proc + " | " + conv + " | " + ite + " | " + res + " | " + time + " | ";
 		out << line << std::endl;
 	}	
+
 
 	profiling::timers::print_and_write_timers();
 	return EXIT_SUCCESS;
