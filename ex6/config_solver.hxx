@@ -25,17 +25,21 @@ bool match(solver_name s, precond_name p)
 		if(s==solver_name::CGSolver) return false;
 		if(s==solver_name::HypreFGMRES) return false; // seg fault
 		if(s==solver_name::HypreGMRES) return false; // seg fault
+		if(s==solver_name::HyprePCG) return false; // seg fault
 		return true; // NU MUMPS
 	}
 	if(p == precond_name::HypreILU) 
 	{
-		//if(s==solver_name::CGSolver) return false; // setup error
+		if(s==solver_name::CGSolver) return false; // setup error
 		return true; // NU MUMPS
 	}
 	return false;
 }
 
-static void setLinearSolver(mfem_mgis::AbstractNonLinearEvolutionProblem& p,
+//static void setLinearSolver(mfem_mgis::AbstractNonLinearEvolutionProblem& p,
+
+template<typename Problem>		
+static void setLinearSolver(Problem& p,
                             const solver_name a_solver_name, 
 			    const precond_name a_precond_name)
 {

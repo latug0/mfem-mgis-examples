@@ -40,11 +40,6 @@
 #include "mfem/linalg/mumps.hpp"
 #endif /* MFEM_USE_MUMPS */
 
-#include "timer.hpp"
-#include "solver_name.hxx"
-#include "precond_name.hxx"
-#include "config_solver.hxx"
-#include "data_gathering.hxx"
 
 
 constexpr double xmax = 1.;
@@ -63,6 +58,15 @@ struct TestParameters {
 	double zmax = 1.;
 	bool parallel = true;
 };
+
+
+#include "timer.hpp"
+#include "solver_name.hxx"
+#include "precond_name.hxx"
+#include "config_solver.hxx"
+#include "data_gathering.hxx"
+#include "mfem_mgis_test.cxx"
+
 
 // legacy
 TestParameters parseCommandLineOptions(int& argc, char* argv[]) {
@@ -103,126 +107,16 @@ TestParameters parseCommandLineOptions(int& argc, char* argv[]) {
   return p;
 }
 
-int executeMFEMMGISTest(const TestParameters& p, const bool use_post_processing, const solver_name a_solv, const precond_name a_precond, gather_information& a_info) {
-	constexpr const auto dim = mfem_mgis::size_type{3};
-	
-	//std::string string_solver = std::to_string(solv);
-	std::string string_solver 	= getName(a_solv);
-	std::string string_precond 	= getName(a_precond);
-	std::string timer_name 		= "run_" + string_solver + "_" + string_precond;
-	START_TIMER(timer_name);
-
-	// creating the finite element workspace
-	auto fed = std::make_shared<mfem_mgis::FiniteElementDiscretization>(
-	mfem_mgis::Parameters{{"MeshFileName", p.mesh_file},
-			    {"FiniteElementFamily", "H1"},
-			    {"FiniteElementOrder", p.order},
-			    {"UnknownsSize", dim},
-			    {"NumberOfUniformRefinements", p.parallel ? 0 : 0},
-			    {"Parallel", p.parallel}});
-
-	mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed);
-
-	{
-		START_TIMER("set_mgis_stuff");
-		problem.addBehaviourIntegrator("Mechanics", 1, p.library, "Elasticity");
-		problem.addBehaviourIntegrator("Mechanics", 2, p.library, "Elasticity");
-		// materials
-		auto& m1 = problem.getMaterial(1);
-		auto& m2 = problem.getMaterial(2);
-		// setting the material properties
-		auto set_properties = [](auto& m, const double l, const double mu) {
-			mgis::behaviour::setMaterialProperty(m.s0, "FirstLameCoefficient", l);
-			mgis::behaviour::setMaterialProperty(m.s0, "ShearModulus", mu);
-			mgis::behaviour::setMaterialProperty(m.s1, "FirstLameCoefficient", l);
-			mgis::behaviour::setMaterialProperty(m.s1, "ShearModulus", mu);
-		};
-
-		std::array<mfem_mgis::real,2> lambda({100, 200});
-		std::array<mfem_mgis::real,2>     mu({75 , 150});
-		set_properties(m1, lambda[0], mu[0]);
-		set_properties(m2, lambda[1], mu[1]);
-		//
-		auto set_temperature = [](auto& m) {
-			mgis::behaviour::setExternalStateVariable(m.s0, "Temperature", 293.15);
-			mgis::behaviour::setExternalStateVariable(m.s1, "Temperature", 293.15);
-		};
-		set_temperature(m1);
-		set_temperature(m2);
-
-		// macroscopic strain
-		std::vector<mfem_mgis::real> e(6, mfem_mgis::real{});
-		if (p.tcase < 3) {
-			e[p.tcase] = 1;
-		} else {
-			e[p.tcase] = 1.41421356237309504880 / 2;
-		}
-		problem.setMacroscopicGradientsEvolution([e](const double) { return e; });
-	} // end timer set_mgis_stuff
-	
-
-	setLinearSolver(problem, a_solv, a_precond);
-	setSolverParameters(problem);
-
-	if(use_post_processing)
-	{
-		START_TIMER("add_postprocessing_and_outputs");
-		problem.addPostProcessing(
-			"ParaviewExportResults",
-			{{"OutputFileName", "PeriodicTestOutput-" + std::to_string(p.tcase)}}	
-		);
-	} // end timer add_postprocessing_and_outputs
-
-	mfem_mgis::NonLinearResolutionOutput solverStatistics;
-	double measure = 0.;
-
-	{
-		START_TIMER("Solve");
-		// solving the problem
-		
-		measure = profiling::timers::chrono_section( [&](){
-			solverStatistics = problem.solve(0, 1);
-		});
-
-		// check status
-		if (!solverStatistics) {
-			profiling::output::printMessage("INFO: ", string_solver,"+",string_precond," FAILED");
-//			mfem_mgis::abort(EXIT_FAILURE);
-		}
-	} // end timer Solve
-
-	if(use_post_processing)
-	{
-		START_TIMER("Postprocessing_step");
-		problem.executePostProcessings(0, 1);
-	} // en timer Postprocessing_step
-
-	{
-		START_TIMER("get_statistics");
-		measure = profiling::output::reduce_max(measure);
-		a_info.add(
-				info{
-					a_solv, 
-					a_precond,
-					solverStatistics.status, 
-					solverStatistics.iterations, 
-					solverStatistics.final_residual_norm,
-					measure
-					}
-			);
-	} // end timer get_statistics
-	return(EXIT_SUCCESS);
-}
-
-
-int try_several_solvers(TestParameters& p, const bool use_post_processing)
+template<typename Func>
+int try_several_solvers(TestParameters& p, const bool use_post_processing, Func & fun)
 {
     	if (mfem_mgis::getMPIrank() == 0)
       		std::cout << "Number of processes: " << mfem_mgis::getMPIsize() << std::endl;
 
 	gather_information data; // gather information (converged/residu/iterations) for all solver/precond used
 	//constexpr bool all = false;
-	constexpr bool all = true;
+	constexpr bool all = false;
+	//constexpr bool all = true;
 	auto res = EXIT_SUCCESS;
 
 	// build your solver / precond list
@@ -241,6 +135,8 @@ int try_several_solvers(TestParameters& p, const bool use_post_processing)
 	};
 
 	std::vector<solver_name> solverTraversalFast = {
+		solver_name::HypreFGMRES,
+		solver_name::HypreGMRES,
 		solver_name::HyprePCG,
 //		solver_name::MUMPSSolver, // not really fast
 		solver_name::CGSolver,
@@ -254,7 +150,7 @@ int try_several_solvers(TestParameters& p, const bool use_post_processing)
 		precond_name::HypreBoomerAMG,
 		precond_name::HypreILU,
 		precond_name::HypreEuclid,
-		precond_name::HypreParaSails,
+	//	precond_name::HypreParaSails,
 		precond_name::HypreDiagScale 
 	};
 
@@ -269,13 +165,14 @@ int try_several_solvers(TestParameters& p, const bool use_post_processing)
 				if(match(solverIterator,precondIterator))
 				{
 					START_TIMER(getName(precondIterator));
-					executeMFEMMGISTest(
-							p,
-							use_post_processing, 
-							solverIterator, 
-							precondIterator,
-							data
-						);
+					//executeMFEMMGISTest(
+					fun(
+						p,
+						use_post_processing, 
+						solverIterator, 
+						precondIterator,
+						data
+					);
 				}
 			}
 		}
@@ -287,16 +184,16 @@ int try_several_solvers(TestParameters& p, const bool use_post_processing)
 			START_TIMER(getName(solverIterator));
 			for(auto precondIterator : precondTraversal)
 			{
-				if(true); //match(solverIterator,precondIterator))
+				if(match(solverIterator,precondIterator))
 				{
 					START_TIMER(getName(precondIterator));
-					executeMFEMMGISTest(
-							p,
-							use_post_processing, 
-							solverIterator, 
-							precondIterator,
-							data
-						);
+					fun(
+						p,
+						use_post_processing, 
+						solverIterator, 
+						precondIterator,
+						data
+					);
 				}
 			}
 		}
@@ -317,7 +214,8 @@ int main(int argc, char* argv[])
 	auto p = parseCommandLineOptions(argc, argv);
 	//gather_information data;
 	//auto res = executeMFEMMGISTest(p, use_post_processing, solver_name::HyprePCG, precond_name::ANY, data);
-	auto res = try_several_solvers(p, use_post_processing);
+	auto res = try_several_solvers(p, use_post_processing, executeMFEMMGISTest);
+	//auto res = try_several_solvers(p, use_post_processing, thomas_main_function);
 
 	profiling::timers::print_and_write_timers();
 	return res;
