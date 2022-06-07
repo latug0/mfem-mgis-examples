@@ -176,7 +176,7 @@ class gather_information
 	std::vector<info> m_data;
 };
 
-gather_information read(const std::string a_input_file_name)
+gather_information read(const std::string a_input_file_name, bool& a_exist)
 {
 	START_TIMER("gather_information::read");
 
@@ -186,6 +186,8 @@ gather_information read(const std::string a_input_file_name)
 	std::ifstream input_file (a_input_file_name, std::ifstream::in);
 	std::string line;
 
+
+	size_t number_of_lines = 0;
 	while(std::getline(input_file, line))
 	{
 		info data;
@@ -205,8 +207,19 @@ gather_information read(const std::string a_input_file_name)
 		data.m_solver = solver_name(solv_id);
 		data.m_precond = precond_name(precond_id);
 		res.add(data);
+		number_of_lines++;
 	}
-	profiling::output::printMessage("file ",a_input_file_name,"has been correctly read");
+
+	if(number_of_lines != 0)
+	{	
+		a_exist = true;
+		profiling::output::printMessage("file ",a_input_file_name,"has been correctly read");
+	}
+	else 
+	{
+		a_exist = false;
+		profiling::output::printMessage("file ",a_input_file_name," is empty");
+	}
 	return res;
 }
 

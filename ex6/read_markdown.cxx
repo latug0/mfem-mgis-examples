@@ -19,8 +19,56 @@ void writeMD(std::vector<gather_information> a_vec, std::string a_name)
 	profiling::output::printMessage("write: ", a_name);
 }
 
+using simu_name = std::pair<solver_name,precond_name>;
+using simu_val  = std::pair<size_t, double>;
+using list_val  = std::vector<simu_val>;
+
+class store_speed_up_values : public std::map<simu_name, list_val>
+{
+	public:
+
+	store_speed_up_values() {}
+	
+	void fill(const solver_name a_solv, const precond_name a_precond, const size_t a_proc, const double a_time)
+	{
+		simu_name name {a_solv,a_precond};
+		simu_val value{a_proc,a_time};
+		auto elem = this->find(name);
+		if(elem != this->end())
+		{
+			auto& list = elem->second;
+			list.push_back(value);	
+		}
+		else
+		{
+			list_val list;
+			list.push_back(value);
+			(*this)[name] = list;
+		}
+	}
+
+	std::string get_line(const solver_name a_solv, const precond_name a_precond, list_val a_list)
+	{
+		std::string line = getName(a_solv) + "-" + getName(a_precond);
+		for (auto val : a_list) line += " (" + std::to_string(val.first) + " " +  std::to_string(val.second) + ")";
+		return line;
+	}
+};
+
+
+void build_speed_up_for_python_partial(store_speed_up_values& a_in)
+{
+	for(auto it : a_in)
+	{
+		auto key = it.first;
+		auto values = it.second;
+		auto line = a_in.get_line(key.first, key.second, values);
+		std::cout << line << std::endl;
+	}
+}
+
 template<typename T>
-void build_speed_up_for_python(const T a_in, const int a_first, const int a_last)
+void build_speed_up_for_python_full(const T a_in, const int a_first, const int a_last)
 {
 	START_TIMER("build_speed_up_for_python");
 	const std::string name = "speedup.log";
@@ -76,22 +124,34 @@ int main(int argc, char* argv[])
 {
 	mfem_mgis::initialize(argc, argv);
 	profiling::timers::init_timers();
-	const int first = 32;
-	const int last = 4096;
+	const int first = 1;
+	const int last = 16384;
 	const std::string base_name = "collect_";
 	//const int last = 4096;
 
 	std::vector<gather_information> all; // easier to manage it with a vector
+	std::vector<bool> if_file; 
 
+	store_speed_up_values storage; // just a map[sovler,precond]={(proc1,val1), .... , (procn,valn)}
 
 	// get data
 	for(unsigned int nb_proc = first ; nb_proc <= last ; nb_proc*=2)
 	{
 		const std::string name = base_name + std::to_string(nb_proc);
-		auto sub_all = read(name);
+		bool exist = false;
+		auto sub_all = read(name, exist);
 		//all.insert(sub_all); 
+		if(exist)
+		{
+			for(auto it : sub_all.get_data())
+			{
+				storage.fill(it.m_solver, it.m_precond, nb_proc, it.m_time);
+			}
+		}
+		if_file.push_back(exist);
 		all.push_back(std::move(sub_all));
 	}
+	build_speed_up_for_python_partial(storage);
 
 	assert(all.size()>0);
 	const auto number_of_simu = all.size();
@@ -104,17 +164,18 @@ int main(int argc, char* argv[])
 		int proc_id = first;
 		for(int simu_id = 0 ; simu_id < number_of_simu ; simu_id++)
 		{
-			auto& local_cont_data = all[simu_id];
-			auto& local_data = local_cont_data.get_data();
-			auto& local_info = local_data[item_id]; 
+			if(if_file[simu_id] == true)
+			{
+				auto& local_cont_data = all[simu_id];
+				auto& local_data = local_cont_data.get_data();
+				auto& local_info = local_data[item_id]; 
 
-			auto elem = std::make_pair(proc_id,local_info);
-			try_classification.push_back(elem);
+				auto elem = std::make_pair(proc_id,local_info);
+				try_classification.push_back(elem);
+			}
 			proc_id *= 2;
 		}
 	}	
-
-	//writeMD(all, "all.md");
 
 	// other
 	std::sort (try_classification.begin(), try_classification.end(), [](const std::pair<int,info> a, const std::pair<int,info> b)
@@ -145,8 +206,7 @@ int main(int argc, char* argv[])
 				}
 			});
 	
-	build_speed_up_for_python(try_classification, first, last);
-
+	//build_speed_up_for_python_full(try_classification, first, last);
 
 	std::ofstream out("all.md", std::ofstream::out);
 
