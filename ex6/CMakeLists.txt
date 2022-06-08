@@ -112,7 +112,6 @@ if(MFEM_USE_MPI)
   function(add_solver_preconditioner)
 	  #no foreach
     add_test(NAME periodic_hypreCG_HypreDiagScale_cube_2mat_per COMMAND mpirun -n 3 ./one_test -ls 3 --preconditioner 0 --mesh cube_2mat_per.mesh) 
-    add_test(NAME periodic_hypreCG_HypreEuclid_cube_2mat_per COMMAND mpirun -n 3 ./one_test -ls 3 --preconditioner 2 --mesh cube_2mat_per.mesh) 
     add_test(NAME periodic_hypreCG_HypreBoomerAMG_cube_2mat_per COMMAND mpirun -n 3 ./one_test -ls 3 --preconditioner 3 --mesh cube_2mat_per.mesh) 
     add_test(NAME periodic_hypreCG_HypreILU_cube_2mat_per COMMAND mpirun -n 3 ./one_test -ls 3 --preconditioner 4 --mesh cube_2mat_per.mesh) 
     add_test(NAME periodic_hypreCG_any_cube_2mat_per COMMAND mpirun -n 3 ./one_test -ls 3 --preconditioner 5 --mesh cube_2mat_per.mesh) 
