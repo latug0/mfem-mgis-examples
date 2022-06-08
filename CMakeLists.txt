@@ -35,6 +35,7 @@ add_subdirectory(ex2)
 add_subdirectory(ex3)
 add_subdirectory(ex4)
 add_subdirectory(ex5)
+add_subdirectory(ex6)
 
 
 #include(FetchContent)
