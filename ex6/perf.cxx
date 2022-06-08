@@ -146,7 +146,7 @@ int try_several_solvers(TestParameters& p, const bool use_post_processing, Func 
 
 	std::vector<precond_name> precondTraversal = 
 	{
-		precond_name::ANY,
+//		precond_name::ANY,
 		precond_name::HypreBoomerAMG,
 		precond_name::HypreILU,
 		precond_name::HypreEuclid,

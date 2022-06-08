@@ -20,7 +20,7 @@ void writeMD(std::vector<gather_information> a_vec, std::string a_name)
 }
 
 using simu_name = std::pair<solver_name,precond_name>;
-using simu_val  = std::pair<size_t, double>;
+using simu_val  = std::tuple<size_t, double, bool>;
 using list_val  = std::vector<simu_val>;
 
 class store_speed_up_values : public std::map<simu_name, list_val>
@@ -29,10 +29,10 @@ class store_speed_up_values : public std::map<simu_name, list_val>
 
 	store_speed_up_values() {}
 	
-	void fill(const solver_name a_solv, const precond_name a_precond, const size_t a_proc, const double a_time)
+	void fill(const solver_name a_solv, const precond_name a_precond, const size_t a_proc, const double a_time, const bool a_conv)
 	{
 		simu_name name {a_solv,a_precond};
-		simu_val value{a_proc,a_time};
+		simu_val value{a_proc,a_time,a_conv};
 		auto elem = this->find(name);
 		if(elem != this->end())
 		{
@@ -47,10 +47,88 @@ class store_speed_up_values : public std::map<simu_name, list_val>
 		}
 	}
 
-	std::string get_line(const solver_name a_solv, const precond_name a_precond, list_val a_list)
+	std::string get_line(const solver_name a_solv, const precond_name a_precond, list_val& a_list)
 	{
+		// get the first value
+		double coeff = 0.0;
+		// a_list is sorted by construction
+		for(auto it : a_list)
+		{
+			if(std::get<2>(it))
+			{
+				coeff = std::get<0>(it) * std::get<1>(it);
+				break;
+			}
+		}
+		
 		std::string line = getName(a_solv) + "-" + getName(a_precond);
-		for (auto val : a_list) line += " (" + std::to_string(val.first) + " " +  std::to_string(val.second) + ")";
+		
+		for (auto val : a_list)
+		{
+			if(std::get<2>(val)) // converged
+			{
+				auto speed_up = coeff / std::get<1>(val);
+				line += " (" + std::to_string(std::get<0>(val)) + " " +  std::to_string(speed_up) + ")";
+			}
+		}
+		
+		return line;
+	}
+	
+	std::string get_label(const solver_name a_solv, const precond_name a_precond)
+	{
+		std::string label = "label=\"" + getName(a_solv) + "-" + getName(a_precond) + "\"";
+		return label;
+	}
+	
+	std::string get_procs(const solver_name a_solv, const precond_name a_precond, list_val& a_list)
+	{
+		std::string line = "np.array([";
+		bool first = true;
+		for (auto val : a_list)
+		{
+			if(std::get<2>(val)) // converged
+			{
+				if(!first) line += ",";
+				line += std::to_string(std::get<0>(val));
+				first = false;
+			}
+		}
+		
+		line += "])";
+
+		return line;
+	}
+	
+	std::string get_values(const solver_name a_solv, const precond_name a_precond, list_val a_list)
+	{
+		// get the first value
+		double coeff = 0.0;
+		// a_list is sorted by construction
+		for(auto it : a_list)
+		{
+			if(std::get<2>(it))
+			{
+				coeff = std::get<0>(it) * std::get<1>(it);
+				break;
+			}
+		}
+		
+		std::string line = "np.array([";
+		bool first = true;
+		for (auto val : a_list)
+		{
+			if(std::get<2>(val)) // converged
+			{
+				if(!first) line += ",";
+				auto speed_up = coeff / std::get<1>(val) ;
+				line += std::to_string(speed_up);
+				first = false;
+			}
+		}
+		
+		line += "])";
+
 		return line;
 	}
 };
@@ -67,56 +145,59 @@ void build_speed_up_for_python_partial(store_speed_up_values& a_in)
 	}
 }
 
-template<typename T>
-void build_speed_up_for_python_full(const T a_in, const int a_first, const int a_last)
+void build_speed_up_for_python_plot(store_speed_up_values& a_in)
 {
-	START_TIMER("build_speed_up_for_python");
-	const std::string name = "speedup.log";
-	std::ofstream out(name, std::ofstream::out);
+	std::cout << "import numpy as np" << std::endl;
+	std::cout << "import matplotlib.pyplot as plt" << std::endl;
+	std::cout << "from matplotlib.ticker import FormatStrFormatter" << std::endl;
+	std::cout << "import matplotlib.ticker as ticker" << std::endl;
+	std::cout << "def my_function():" << std::endl;	
+	for(auto it : a_in)
+	{
+		auto key = it.first;
+		auto values = it.second;
 
-	std::string header = "solver preconditionner";
+		// test if at least one simulation has converged 
+		size_t do_print = 0; // we need at least two points
+		for(auto it : values)
+		{
+			if(std::get<2>(it))
+			{
+				do_print++;
+				if(do_print >= 2)
+				{
+					break;
+				}
+			}
+		}
 		
-	
-	int nb_elem = 0;
-	for(int i=a_first; i<= a_last ; i*=2) 
-	{
-		header += " " + std::to_string(i);
-		nb_elem++;
-	}	
-
-	out << header << std::endl;
-	std::cout << header << std::endl;
-	double res[nb_elem]; 
-	auto iterator = a_in.begin();
-
-	while (iterator != a_in.end())
-	{
-		auto solv = getName(iterator->second.m_solver);
-		auto prec = getName(iterator->second.m_precond);
-		std::string baseline = solv + "-" + prec;
-		for(int i = 0 ; i < nb_elem ; i++)
-		{
-			if(solv != getName(iterator->second.m_solver)) std::cout << "solver is different" << std::endl;
-			if(prec != getName(iterator->second.m_precond)) std::cout << "preconditionner is different" << std::endl;
-			res[i] = iterator->second.m_time;
-			//std::next(iterator);
-			iterator++;
-		}
-		auto base = res[0];
-                for(int i = 0 ; i < nb_elem ; i++)
-                {
-			assert(res[i]>0);
-                        res[i] = base / res[i];
-                }
-
-                for(int i = 0 ; i < nb_elem ; i++)
-		{
-			baseline += " " + std::to_string(res[i]);
-		}
-//		std::cout << baseline << std::endl;
-		out << baseline << std::endl;
+		if(do_print<2) continue;
+		
+		std::string line = "	plt.plot(";
+		line += a_in.get_procs(key.first, key.second, values);
+		line += ",";
+		line += a_in.get_values(key.first, key.second, values);
+		line += ",";
+		line += a_in.get_label(key.first, key.second);
+		line += ")";
+		std::cout << line << std::endl;
 	}
-
+	std::cout << "	pass" 	<< std::endl<< std::endl;
+	std::cout << "my_function()"			<< std::endl;
+	std::cout << "legend_outside = plt.legend(loc=\'center left\',bbox_to_anchor=(1, 0.5))" << std::endl;
+	std::cout << "namepdf=\'basic-version.pdf\'" 	<< std::endl;
+	std::cout << "plt.savefig(namepdf, bbox_extra_artists=(legend_outside,), bbox_inches=\'tight\')" << std::endl;
+	std::cout << "fig, ax = plt.subplots()" 	<< std::endl;
+	std::cout << "plt.xscale(\"log\",basex=2)" 	<< std::endl;
+	std::cout << "plt.yscale(\"log\",basey=2)" 	<< std::endl;
+	std::cout << "ax.xaxis.set_major_formatter(ticker.ScalarFormatter())" 	<< std::endl;
+	std::cout << "ax.yaxis.set_major_formatter(ticker.ScalarFormatter())" 	<< std::endl;
+	std::cout << "plt.ticklabel_format(axis=\'x\', style=\'plain\')" 	<< std::endl;
+	std::cout << "plt.ticklabel_format(axis=\'y\', style=\'plain\')" 	<< std::endl;
+	std::cout << "my_function()"			<< std::endl;
+	std::cout << "legend_outside = plt.legend(loc=\'center left\',bbox_to_anchor=(1, 0.5))" << std::endl; 
+	std::cout << "namepdf=\'log-version.pdf\'" 	<< std::endl;
+	std::cout << "plt.savefig(namepdf, bbox_extra_artists=(legend_outside,), bbox_inches=\'tight\')" << std::endl;
 
 }
 
@@ -130,7 +211,7 @@ int main(int argc, char* argv[])
 	//const int last = 4096;
 
 	std::vector<gather_information> all; // easier to manage it with a vector
-	std::vector<bool> if_file; 
+	std::vector<std::pair<int,info>> try_classification;
 
 	store_speed_up_values storage; // just a map[sovler,precond]={(proc1,val1), .... , (procn,valn)}
 
@@ -145,37 +226,24 @@ int main(int argc, char* argv[])
 		{
 			for(auto it : sub_all.get_data())
 			{
-				storage.fill(it.m_solver, it.m_precond, nb_proc, it.m_time);
+				storage.fill(it.m_solver, it.m_precond, nb_proc, it.m_time, it.m_converged);
 			}
 		}
-		if_file.push_back(exist);
-		all.push_back(std::move(sub_all));
-	}
-	build_speed_up_for_python_partial(storage);
-
-	assert(all.size()>0);
-	const auto number_of_simu = all.size();
-	const auto number_of_item = all[0].size(); // same size for each elem
-
-	std::vector<std::pair<int,info>> try_classification;
-
-	for(int item_id = 0 ; item_id < number_of_item ; item_id++)
-	{
-		int proc_id = first;
-		for(int simu_id = 0 ; simu_id < number_of_simu ; simu_id++)
+		//all.push_back(std::move(sub_all));
+		if(exist)
 		{
-			if(if_file[simu_id] == true)
+			auto& local_data = sub_all.get_data();
+			for(auto it : local_data)
 			{
-				auto& local_cont_data = all[simu_id];
-				auto& local_data = local_cont_data.get_data();
-				auto& local_info = local_data[item_id]; 
-
-				auto elem = std::make_pair(proc_id,local_info);
+				auto elem = std::make_pair(nb_proc, it);
 				try_classification.push_back(elem);
 			}
-			proc_id *= 2;
 		}
-	}	
+	}
+	
+	//build_speed_up_for_python_partial(storage);
+	build_speed_up_for_python_plot(storage);
+
 
 	// other
 	std::sort (try_classification.begin(), try_classification.end(), [](const std::pair<int,info> a, const std::pair<int,info> b)
