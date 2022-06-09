@@ -19,99 +19,78 @@
  * \date   02/06/10/2021
  */
 
-#include <memory>
-#include <cstdlib>
-#include <iostream>
-#include "mfem/general/optparser.hpp"
-#include "mfem/linalg/solvers.hpp"
-#include "mfem/fem/datacollection.hpp"
-#include "MFEMMGIS/MFEMForward.hxx"
-#include "MFEMMGIS/Material.hxx"
-#include "MFEMMGIS/Profiler.hxx"
-#include "MFEMMGIS/AnalyticalTests.hxx"
-#include "MFEMMGIS/NonLinearEvolutionProblemImplementation.hxx"
-#include "MFEMMGIS/PeriodicNonLinearEvolutionProblem.hxx"
 
-#ifdef MFEM_USE_PETSC
-#include "mfem/linalg/petsc.hpp"
-#endif /* MFEM_USE_PETSC */
-
-#ifdef MFEM_USE_PETSC
-#include "mfem/linalg/mumps.hpp"
-#endif /* MFEM_USE_MUMPS */
-
-
-
-constexpr double xmax = 1.;
-
-
-struct TestParameters {
-	const char* mesh_file = "cas-cible-1.mesh";
-	const char* behaviour = "Elasticity";
-	const char* library = "src/libBehaviour.so";
-	const char* reference_file = "Elasticity.ref";
-	int order = 1;
-	int tcase = 1;
-	int linearsolver = -1;
-	double xmax = 1.;
-	double ymax = 1.;
-	double zmax = 1.;
-	bool parallel = true;
-};
-
-
+#include "test_parameters.hpp"
 #include "timer.hpp"
 #include "solver_name.hxx"
 #include "precond_name.hxx"
 #include "config_solver.hxx"
 #include "data_gathering.hxx"
-#include "mfem_mgis_test.cxx"
 
 
-// legacy
-TestParameters parseCommandLineOptions(int& argc, char* argv[]) {
-  START_TIMER("parse_command_line_options");
-  TestParameters p;
+// TEST CASE
+#include <cas_cible_1.hxx>
+#include <fissuration.hxx>
 
-  // options treatment
-  mfem::OptionsParser args(argc, argv);
-  args.AddOption(&p.mesh_file, "-m", "--mesh", "Mesh file to use.");
-  args.AddOption(&p.library, "-l", "--library", "Material library.");
-  args.AddOption(&p.order, "-o", "--order",
-                 "Finite element order (polynomial degree).");
-  args.AddOption(&p.tcase, "-t", "--test-case",
-                 "identifier of the case : Exx->0, Eyy->1, Ezz->2, Exy->3, "
-                 "Exz->4, Eyz->5");
-  args.AddOption(
-      &p.linearsolver, "-ls", "--linearsolver",
-      "identifier of the linear solver: 0 -> GMRES, 1 -> CG, 2 -> UMFPack");
-  args.Parse();
-  if (!args.Good()) {
-    if (mfem_mgis::getMPIrank() == 0)
-      args.PrintUsage(std::cout);
-    mfem_mgis::finalize();
-    exit(0);
-  }
-  if (p.mesh_file == nullptr) {
-    if (mfem_mgis::getMPIrank() == 0)
-      std::cout << "ERROR: Mesh file missing" << std::endl;
-    args.PrintUsage(std::cout);
-    mfem_mgis::abort(EXIT_FAILURE);
-  }
-  if (mfem_mgis::getMPIrank() == 0)
-    args.PrintOptions(std::cout);
-  if ((p.tcase < 0) || (p.tcase > 5)) {
-    std::cerr << "Invalid test case\n";
-    mfem_mgis::abort(EXIT_FAILURE);
-  }
-  return p;
+
+using namespace configuration;
+
+auto get_test_case(int a_case)
+{
+	switch(a_case)
+	{
+		case 1: return cas_cible_1::kernel;
+		case 2: return fissuration::kernel;
+		default: return cas_cible_1::kernel;
+	}
 }
 
-template<typename Func>
-int try_several_solvers(TestParameters& p, const bool use_post_processing, Func & fun)
+std::vector<solver_name> get_solvers(int a_case)
 {
-    	if (mfem_mgis::getMPIrank() == 0)
-      		std::cout << "Number of processes: " << mfem_mgis::getMPIsize() << std::endl;
+	switch(a_case)
+	{
+		case 1: return cas_cible_1::build_solvers_list();
+		case 2: return fissuration::build_solvers_list();
+		default: return cas_cible_1::build_solvers_list();
+	}
+}
+
+std::vector<precond_name> get_pc(int a_case)
+{
+	switch(a_case)
+	{
+		case 1: return cas_cible_1::build_pc_list();
+		case 2: return fissuration::build_pc_list();
+		default: return cas_cible_1::build_pc_list();
+	}
+}
+
+auto get_match(int a_case)
+{
+	switch(a_case)
+	{
+		case 1: return cas_cible_1::match;
+		case 2: return fissuration::match;
+		default: return cas_cible_1::match;
+	}
+}
+
+#ifdef MFEM_USE_PETSC
+auto get_solvers_with_petsc(int a_case)
+{
+	switch(a_case)
+	{
+		case 1: return cas_cible_1::build_solvers_list_with_petsc();
+		case 2: return fissuration::build_solvers_list_with_petsc();
+		default: return cas_cible_1::build_solvers_list_with_petsc();
+	}
+}
+#endif
+
+int try_several_solvers(TestParameters& p, const bool use_post_processing)
+{
+	if (mfem_mgis::getMPIrank() == 0)
+		std::cout << "Number of processes: " << mfem_mgis::getMPIsize() << std::endl;
 
 	gather_information data; // gather information (converged/residu/iterations) for all solver/precond used
 	//constexpr bool all = false;
@@ -122,79 +101,26 @@ int try_several_solvers(TestParameters& p, const bool use_post_processing, Func 
 	// build your solver / precond list
 	// some of them are really slow without a precond such as X+GMRES
 	// after a preliminary study, relevent solvers have been selected and stored in the "fast" traversal
-	std::vector<solver_name> solverTraversalAll = {
-		solver_name::HyprePCG,
-		solver_name::HypreFGMRES,
-		solver_name::HypreGMRES,
-		solver_name::MUMPSSolver,
-//		solver_name::GMRESSolver,	// does not work with HypreBoomerAMG and does not converged without precond
-		solver_name::CGSolver,
-		solver_name::BiCGSTABSolver,
-//		solver_name::UMFPackSolver,
-		solver_name::MINRESSolver
-	};
+	std::vector<solver_name> solver_traversal = get_solvers(p.tcase);
+	std::vector<precond_name> pc_traversal = get_pc(p.tcase);
+	auto fun = get_test_case(p.tcase);
+	auto match = get_match(p.tcase);
 
-	std::vector<solver_name> solverTraversalFast = {
-		solver_name::HypreFGMRES,
-		solver_name::HypreGMRES,
-		solver_name::HyprePCG,
-//		solver_name::MUMPSSolver, // not really fast
-		solver_name::CGSolver,
-		solver_name::BiCGSTABSolver,
-		solver_name::MINRESSolver
-	};
-
-	std::vector<precond_name> precondTraversal = 
+	for(auto solver_iterator : solver_traversal)
 	{
-//		precond_name::ANY,
-		precond_name::HypreBoomerAMG,
-		precond_name::HypreILU,
-		precond_name::HypreEuclid,
-	//	precond_name::HypreParaSails,
-		precond_name::HypreDiagScale 
-	};
-
-	
-	if constexpr (all)
-	{
-		for(auto solverIterator : solverTraversalAll)
+		START_TIMER(getName(solver_iterator));
+		for(auto precond_iterator : pc_traversal)
 		{
-			START_TIMER(getName(solverIterator));
-			for(auto precondIterator : precondTraversal)
+			if(match(solver_iterator, precond_iterator))
 			{
-				if(match(solverIterator,precondIterator))
-				{
-					START_TIMER(getName(precondIterator));
-					//executeMFEMMGISTest(
-					fun(
+				START_TIMER(getName(precond_iterator));
+				fun(
 						p,
 						use_post_processing, 
-						solverIterator, 
-						precondIterator,
+						solver_iterator, 
+						precond_iterator,
 						data
-					);
-				}
-			}
-		}
-	}
-	else
-	{
-		for(auto solverIterator : solverTraversalFast)
-		{
-			START_TIMER(getName(solverIterator));
-			for(auto precondIterator : precondTraversal)
-			{
-				if(match(solverIterator,precondIterator))
-				{
-					START_TIMER(getName(precondIterator));
-					fun(
-						p,
-						use_post_processing, 
-						solverIterator, 
-						precondIterator,
-						data
-					);
-				}
+				   );
 			}
 		}
 	}
@@ -212,10 +138,7 @@ int main(int argc, char* argv[])
 	constexpr bool use_post_processing = false;
 
 	auto p = parseCommandLineOptions(argc, argv);
-	//gather_information data;
-	//auto res = executeMFEMMGISTest(p, use_post_processing, solver_name::HyprePCG, precond_name::ANY, data);
-	auto res = try_several_solvers(p, use_post_processing, executeMFEMMGISTest);
-	//auto res = try_several_solvers(p, use_post_processing, thomas_main_function);
+	auto res = try_several_solvers(p, use_post_processing);
 
 	profiling::timers::print_and_write_timers();
 	return res;

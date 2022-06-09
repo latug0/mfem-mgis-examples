@@ -240,40 +240,29 @@ int main(int argc, char* argv[])
 			}
 		}
 	}
-	
+
 	//build_speed_up_for_python_partial(storage);
 	build_speed_up_for_python_plot(storage);
 
 
 	// other
-	std::sort (try_classification.begin(), try_classification.end(), [](const std::pair<int,info> a, const std::pair<int,info> b)
+	std::sort (try_classification.begin(), try_classification.end(), 
+			[](const std::pair<int,info> a, const std::pair<int,info> b) 
 			{
-				if(a.second.m_solver < b.second.m_solver) 
-				{
-					return true;
-				}
-				else if (a.second.m_solver == b.second.m_solver)
-				{
-					if(a.second.m_precond < b.second.m_precond)
-					{
-						return true;
-					}
-					else if(a.second.m_precond == b.second.m_precond)
-					{
-						if(a.first < b.first) return true;
-						else return false;
-					}
-					else
-					{
-						return false;
-					}
-				}
-				else 
-				{
-					return false;
-				}
+			if(a.second.m_solver < b.second.m_solver) return true;
+			else if (a.second.m_solver == b.second.m_solver)
+			{
+			if(a.second.m_precond < b.second.m_precond) return true;
+			else if(a.second.m_precond == b.second.m_precond)
+			{
+			if(a.first < b.first) return true;
+			else return false;
+			}
+			else return false;
+			}
+			else return false;
 			});
-	
+
 	//build_speed_up_for_python_full(try_classification, first, last);
 
 	std::ofstream out("all.md", std::ofstream::out);

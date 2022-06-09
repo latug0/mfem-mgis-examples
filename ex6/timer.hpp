@@ -33,23 +33,23 @@ namespace profiling
 		double reduce_max(double a_duration);
 
 		template<typename Arg>
-		void printMessage(Arg a_msg)
-		{
-			if(is_master())
+			void printMessage(Arg a_msg)
 			{
-				std::cout << a_msg << std::endl;
+				if(is_master())
+				{
+					std::cout << a_msg << std::endl;
+				}
 			}
-		}
 
 		template<typename Arg, typename... Args>
-		void printMessage(Arg a_msg, Args... a_msgs)
-		{
-			if(is_master())
+			void printMessage(Arg a_msg, Args... a_msgs)
 			{
-				std::cout << a_msg << " ";
-				printMessage(a_msgs...);
+				if(is_master())
+				{
+					std::cout << a_msg << " ";
+					printMessage(a_msgs...);
+				}
 			}
-		}
 	};
 
 	namespace timers
@@ -83,7 +83,7 @@ namespace profiling
 			std::vector<profilingTimer*>& get_daughter();
 			profilingTimer* get_mother();
 			double get_duration();
-		
+
 
 			private:
 
@@ -99,25 +99,25 @@ namespace profiling
 		void print_and_write_timers();
 
 		template<enumTimer T>
-		profilingTimer*& get_timer()
-		{
-			static profilingTimer* __current;
-			return __current;
-		}
+			profilingTimer*& get_timer()
+			{
+				static profilingTimer* __current;
+				return __current;
+			}
 
 		template<typename Lambda>
-		double chrono_section(Lambda&& lambda)
-		{
-			using duration = std::chrono::duration<double>;
-			using steady_clock = std::chrono::steady_clock;
-			using time_point = std::chrono::time_point<steady_clock>;
-			time_point tic, toc;
-			tic = steady_clock::now();
-			lambda();
-			toc = steady_clock::now();
-			auto measure = toc - tic;
-			return measure.count();	
-		}
+			double chrono_section(Lambda&& lambda)
+			{
+				using duration = std::chrono::duration<double>;
+				using steady_clock = std::chrono::steady_clock;
+				using time_point = std::chrono::time_point<steady_clock>;
+				time_point tic, toc;
+				tic = steady_clock::now();
+				lambda();
+				toc = steady_clock::now();
+				auto measure = toc - tic;
+				return measure.count();	
+			}
 	};
 
 	namespace timer
@@ -128,40 +128,40 @@ namespace profiling
 		class Timer
 		{
 			public:
-			Timer(duration * acc);
-			void start();
-			void end();
-			~Timer(); 
+				Timer(duration * acc);
+				void start();
+				void end();
+				~Timer(); 
 
 			private:
-			time_point m_start;
-			time_point m_stop;
-			duration * m_duration; 
+				time_point m_start;
+				time_point m_stop;
+				duration * m_duration; 
 		};
 
 		template<enumTimer T>
-		Timer*& get_timer()
-		{
-			static Timer* __timer;
-			return __timer;
-		}
+			Timer*& get_timer()
+			{
+				static Timer* __timer;
+				return __timer;
+			}
 
 		template<enumTimer T>
-		void start_global_timer()
-		{
-			assert(T == enumTimer::ROOT);
-			auto& timer = get_timer<T>(); 
-			timer = new Timer(profiling::timers::get_timer<T>()->get_ptr_duration());
-			timer->start(); // reset start
-		}
+			void start_global_timer()
+			{
+				assert(T == enumTimer::ROOT);
+				auto& timer = get_timer<T>(); 
+				timer = new Timer(profiling::timers::get_timer<T>()->get_ptr_duration());
+				timer->start(); // reset start
+			}
 
 		template<enumTimer T>
-		void end_global_timer()
-		{
-			assert(T == enumTimer::ROOT);
-			auto timer = get_timer<T>();
-			timer->end();
-		}
+			void end_global_timer()
+			{
+				assert(T == enumTimer::ROOT);
+				auto timer = get_timer<T>();
+				timer->end();
+			}
 	}
 
 	namespace outputManager
@@ -174,23 +174,23 @@ namespace profiling
 		void writeFile(std::string a_name);
 
 		template<typename Func, typename... Args>
-		void recursive_call(Func& func, profilingTimer* ptr, Args&... arg)
-		{
-			func(ptr, arg...);
-			auto& daughters = ptr->get_daughter();
-			for(auto& it: daughters)
-				recursive_call(func,it,arg...);
-		}
+			void recursive_call(Func& func, profilingTimer* ptr, Args&... arg)
+			{
+				func(ptr, arg...);
+				auto& daughters = ptr->get_daughter();
+				for(auto& it: daughters)
+					recursive_call(func,it,arg...);
+			}
 
 		template<typename Func, typename Sort, typename... Args>
-		void recursive_sorted_call(Func& func, Sort mySort, profilingTimer* ptr, Args&... arg)
-		{
-			func(ptr, arg...);
-			auto& daughters = ptr->get_daughter();
-			std::sort(daughters.begin(),daughters.end(),mySort);
-			for(auto& it:daughters)
-				recursive_sorted_call(func, mySort, it,arg...);
-		}
+			void recursive_sorted_call(Func& func, Sort mySort, profilingTimer* ptr, Args&... arg)
+			{
+				func(ptr, arg...);
+				auto& daughters = ptr->get_daughter();
+				std::sort(daughters.begin(),daughters.end(),mySort);
+				for(auto& it:daughters)
+					recursive_sorted_call(func, mySort, it,arg...);
+			}
 
 
 	};
@@ -198,7 +198,7 @@ namespace profiling
 
 
 #define START_TIMER(X) profiling::timers::profilingTimer*& current = profiling::timers::get_timer<CURRENT>();\
-	assert(current != nullptr && "do not use an undefined profilingTimer"); \
-	current = current->find(X); \
-        profiling::timer::Timer tttt(current->get_ptr_duration());
+								     assert(current != nullptr && "do not use an undefined profilingTimer"); \
+								     current = current->find(X); \
+								     profiling::timer::Timer tttt(current->get_ptr_duration());
 

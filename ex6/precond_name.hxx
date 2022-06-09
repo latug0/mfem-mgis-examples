@@ -7,39 +7,39 @@
 #include "MFEMMGIS/NonLinearEvolutionProblemImplementation.hxx"
 #include "MFEMMGIS/PeriodicNonLinearEvolutionProblem.hxx"
 
-enum precond_name
+namespace configuration
 {
-	HypreDiagScale, //JACOBI
-	HypreParaSails, 
-	HypreEuclid, // Euclid implements the Parallel Incomplete LU factorization technique
-	HypreBoomerAMG,
-	HypreILU,
-	ANY
-};
-
-std::string getName(const precond_name a_name)
-{
-  switch(a_name) 
-  {
-	  case precond_name::HypreBoomerAMG: return "HypreBoomerAMG";
-	  case precond_name::HypreILU: return "HypreILU";
-	  case precond_name::HypreDiagScale: return "HypreDiagScale"; // JACOBI
-	  case precond_name::HypreParaSails: return "HypreParaSails";
-	  case precond_name::HypreEuclid: return "HypreEuclid";
-	  case precond_name::ANY: return "ANY";
-	  default: return "ANY";
-  }
-}
-
-mfem_mgis::Parameters buildPrecond(const precond_name a_name, const int a_verbosity)
-{
-	auto options = mfem_mgis::Parameters{{"VerbosityLevel", a_verbosity}};
-	/*	
-	if(a_name == precond_name::HypreILU)
+	enum precond_name
 	{
-		options.insert(	mfem_mgis::Parameters{
-						{"LevelOfFill", 2}
-				});
-	}*/
-	return mfem_mgis::Parameters{{"Name", getName(a_name)}, {"Options",options}};
-}
+		HypreDiagScale, //JACOBI
+		HypreParaSails, 
+		HypreEuclid, // Euclid implements the Parallel Incomplete LU factorization technique
+		HypreBoomerAMG,
+		HypreILU,
+		ANY,
+		precond_name_count
+	};
+
+
+	enum class petsc_pc_type
+	{
+		jacobi,
+		bjacobi,
+		sor,
+		eisenstat,
+		icc,
+		ilu,
+		gasm,
+		gamg,
+		bddc,
+		ksp,
+		lu,
+		cholesky,
+		none,
+		petsc_pc_type_count
+	};
+
+	std::string getName(const precond_name a_name);
+	std::string getName(petsc_pc_type in);
+	mfem_mgis::Parameters buildPrecond(const precond_name a_name, const int a_verbosity);
+};
