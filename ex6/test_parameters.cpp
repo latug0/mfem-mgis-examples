@@ -2,19 +2,19 @@
 #include <cas_cible_1.hxx>
 #include <fissuration.hxx>
 
-TestParameters parseCommandLineOptions(int& argc, char* argv[]) {
-	START_TIMER("parse_command_line_options");
-	TestParameters p;
-
-	// options treatment
-	mfem::OptionsParser args(argc, argv);
+void common_parameters(mfem::OptionsParser& args, TestParameters& p)
+{
 	args.AddOption(&p.mesh_file, "-m", "--mesh", "Mesh file to use.");
 	args.AddOption(&p.library, "-l", "--library", "Material library.");
 	args.AddOption(&p.order, "-o", "--order",
 			"Finite element order (polynomial degree).");
 	args.AddOption(&p.tcase, "-t", "--test-case",
-			"identifier of the case : cas_cible_1, fissuration");
-		args.Parse();
+			"identifier of the case : cas_cible_1, fissuration : default = cas_cible_1");
+	args.AddOption(&p.refinement, "-r", "--refinement",
+			"refinement level of the mesh, default = 0");
+
+	args.Parse();
+	
 	if (!args.Good()) {
 		if (mfem_mgis::getMPIrank() == 0)
 			args.PrintUsage(std::cout);
@@ -29,6 +29,17 @@ TestParameters parseCommandLineOptions(int& argc, char* argv[]) {
 	}
 	if (mfem_mgis::getMPIrank() == 0)
 		args.PrintOptions(std::cout);
+}
+
+
+TestParameters parseCommandLineOptions(int& argc, char* argv[]) {
+	START_TIMER("parse_command_line_options");
+	TestParameters p;
+
+	// options treatment
+	mfem::OptionsParser args(argc, argv);
+	common_parameters(args, p);
+	
 	if ((p.tcase < 0) || (p.tcase > 5)) {
 		std::cerr << "Invalid test case\n";
 		mfem_mgis::abort(EXIT_FAILURE);
@@ -36,18 +47,37 @@ TestParameters parseCommandLineOptions(int& argc, char* argv[]) {
 	return p;
 }
 
-/*
-template<typename Solver, typename Pc>
-std::function<void(const TestParameters&, const bool, const Solver, const Pc, gather_information&)> get_kernel(int a_case)
-{
-	switch(a_case)
-	{
-		case 1: return cas_cible_1::kernel<Solver,Pc>;
-		case 2: return fissuration::kernel<Solver,Pc>;
-		default: return cas_cible_1::kernel<Solver,Pc>;
+// legacy
+TestParameters parseCommandLineOptions_one_test(int& argc, char* argv[]) {
+	START_TIMER("parse_command_line_options");
+	TestParameters p;
+
+	// options treatment
+	mfem::OptionsParser args(argc, argv);
+
+	args.AddOption(
+			&p.linearsolver, "-ls", "--linearsolver",
+			"identifier of the linear solver: 0 -> Default, 1 -> HypreFGMRES, 2 -> HypreGMRES, 3-> HyprePCG, 4 -> MUMPSSolver, 5 -> GMRESSolver, 6 -> CGSolver, 7 -> BiCGSTABSolver, 8 -> UMFPackSolver, 9 ->	MINRESSolver, 10 -> SLISolver");
+
+	args.AddOption(
+			&p.preconditioner, "-lp", "--preconditioner",
+			" 0 -> HypreDiagScale, 1 -> HypreParaSails, 2 -> HypreEuclid, 3 -> HypreBoomerAMG, 4 -> HypreILU, 5 -> ANY");
+
+	common_parameters(args, p);
+	if (!args.Good()) {
+		if (mfem_mgis::getMPIrank() == 0)
+			args.PrintUsage(std::cout);
+		mfem_mgis::finalize();
+		exit(0);
 	}
+
+	if ((p.tcase < 0) || (p.tcase > 5)) {
+		std::cerr << "Invalid test case\n";
+		mfem_mgis::abort(EXIT_FAILURE);
+	}
+	return p;
 }
-*/
+
 std::vector<solver_name> get_solvers(int a_case)
 {
 	switch(a_case)

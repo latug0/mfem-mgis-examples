@@ -50,7 +50,7 @@ namespace fissuration
 					{"Materials", mfem_mgis::Parameters{{"Fuel", 4}}},
 					{"FiniteElementFamily", "H1"},
 					{"FiniteElementOrder", 1},
-					{"NumberOfUniformRefinements", parallel ? 2 : 0},
+					{"NumberOfUniformRefinements", parallel ? p.refinement : 0},
 					{"Hypothesis", "Tridimensional"},
 					{"Parallel", parallel}};
 			const auto mesh_parameters = MeshParameters{};

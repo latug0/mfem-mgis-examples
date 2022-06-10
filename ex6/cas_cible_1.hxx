@@ -46,7 +46,7 @@ namespace cas_cible_1
 				{"FiniteElementFamily", "H1"},
 				{"FiniteElementOrder", p.order},
 				{"UnknownsSize", dim},
-				{"NumberOfUniformRefinements", p.parallel ? 2 : 0},
+				{"NumberOfUniformRefinements", p.parallel ? p.refinement : 0},
 				{"Parallel", p.parallel}});
 
 		mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed);

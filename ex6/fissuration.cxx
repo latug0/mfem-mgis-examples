@@ -172,7 +172,7 @@ namespace fissuration
 			std::make_shared<mfem_mgis::NonLinearEvolutionProblem>(lparameters);
 		problem->addBehaviourIntegrator("MicromorphicDamage", "Fuel",
 				"src/libBehaviour.so",
-				"MicromorphicDamageII");
+				"AT1MicromorphicDamage");
 		auto& m = problem->getMaterial("Fuel");
 		// material properties
 		for (const auto& mp :

@@ -22,9 +22,11 @@ struct TestParameters {
 	int linearsolver = 1;
 	int preconditioner = 1;
 	bool parallel = true;
+	int refinement = 0;
 };
 
 TestParameters parseCommandLineOptions(int& argc, char* argv[]);
+TestParameters parseCommandLineOptions_one_test(int& argc, char* argv[]);
 
 // get test case (kernel, solver, preconditionner and match function)
 #include <cas_cible_1.hxx>

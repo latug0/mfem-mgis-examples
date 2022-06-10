@@ -54,6 +54,7 @@ if(MFEM_USE_MPI)
 	SET(utiles test_parameters.cpp solver_name.cxx precond_name.cxx data_gathering.cxx common.cxx)
 	add_library(configuration STATIC ${utiles})
 	target_link_libraries(configuration mfem-mgis::MFEMMGIS)
+	target_link_libraries(configuration timers)
 	target_include_directories(configuration
 		SYSTEM  
 		PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
@@ -83,77 +84,52 @@ if(MFEM_USE_MPI)
 
 	# Define the executable to build for this example
 	add_executable(perf perf.cxx)
-	target_link_libraries(perf mfem-mgis::MFEMMGIS)
-	target_link_libraries(perf timers)
 	target_link_libraries(perf configuration)
 	add_case(perf cas_cible_1)
 	add_case(perf fissuration)
 
-	target_include_directories(perf
-		SYSTEM
-		PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
-		PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>"
-		)
-
-
 	add_executable(reader read_markdown.cxx)
-	target_link_libraries(reader mfem-mgis::MFEMMGIS)
-	target_link_libraries(reader timers)
 	target_link_libraries(reader configuration)
 
-	target_include_directories(reader
-		SYSTEM
-		PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
-		PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>"
-		)
-
 	add_executable(one_test one_test.cxx)
-	target_link_libraries(one_test mfem-mgis::MFEMMGIS)
-	target_link_libraries(one_test timers)
 	target_link_libraries(one_test configuration)
-
-	target_include_directories(one_test
-		SYSTEM
-		PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
-		PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>"
-		)
 
 	add_case(one_test cas_cible_1)
 	add_case(one_test fissuration)
 
 	add_executable(petsc_file_generation use_petsc.cxx)
-	target_link_libraries(petsc_file_generation mfem-mgis::MFEMMGIS)
-	target_link_libraries(petsc_file_generation timers)
 	target_link_libraries(petsc_file_generation configuration)
-
-	target_include_directories(petsc_file_generation
-		SYSTEM
-		PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
-		PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>"
-		)
 
 
 	# Copy needed file for execution
 	file(COPY
 		${PROJECT_SOURCE_DIR}/Elasticity.mfront
-		DESTINATION ${PROJECT_BINARY_DIR})
-
-	## mesh
-	file(COPY
+		${PROJECT_SOURCE_DIR}/AT1MicromorphicDamage.mfront
+		${PROJECT_SOURCE_DIR}/MicromorphicDamageI.mfront
 		${PROJECT_SOURCE_DIR}/cube_2mat_per.mesh
 		DESTINATION ${PROJECT_BINARY_DIR})
 
+
 	# Use mfront to generate libBehaviour.so
 	add_custom_command(
-		OUTPUT "src/libBehaviour.so"
+		OUTPUT "src/libBehaviour-elasticity.so"
 		COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/Elasticity.mfront
 		DEPENDS ${PROJECT_BINARY_DIR}/Elasticity.mfront
-		COMMENT "Performing mfront code generation")
+				COMMENT "Performing mfront code generation for cas cible 1")
+	
+	add_custom_command(
+		OUTPUT "src/libBehaviour-for-fissuration.so"
+		COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/AT1MicromorphicDamage.mfront ${PROJECT_BINARY_DIR}/MicromorphicDamageI.mfront
+		DEPENDS ${PROJECT_BINARY_DIR}/AT1MicromorphicDamage.mfront ${PROJECT_BINARY_DIR}/MicromorphicDamageI.mfront
+		COMMENT "Performing mfront code generation for fissuration")
 
-	add_custom_target(generate-libBehaviour-cas-cible-1 ALL
-		DEPENDS "src/libBehaviour.so")
+		add_custom_target(generate-libBehaviour-cas-cible-1 ALL
+				DEPENDS "src/libBehaviour-elasticity.so")
 
-	add_dependencies(check perf generate-libBehaviour-cas-cible-1)
+	add_custom_target(generate-libBehaviour-fissuration ALL
+		DEPENDS "src/libBehaviour-for-fissuration.so")
+	
+	add_dependencies(check perf generate-libBehaviour-fissuration generate-libBehaviour-cas-cible-1)
 
 	# Define a test that will be called during the "make check"
 	function(add_perf)
