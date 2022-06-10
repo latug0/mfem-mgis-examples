@@ -1,25 +1,11 @@
 #pragma once
-#include "timer.hpp"
-#include <memory>
-#include <cstdlib>
-#include <iostream>
-#include "mfem/general/optparser.hpp"
-#include "mfem/linalg/solvers.hpp"
-#include "mfem/fem/datacollection.hpp"
-#include "MFEMMGIS/MFEMForward.hxx"
-#include "MFEMMGIS/Material.hxx"
-#include "MFEMMGIS/Profiler.hxx"
-#include "MFEMMGIS/AnalyticalTests.hxx"
-#include "MFEMMGIS/NonLinearEvolutionProblemImplementation.hxx"
-#include "MFEMMGIS/PeriodicNonLinearEvolutionProblem.hxx"
+#include <mfem_mgis_headers.hxx>
+#include <timer.hpp>
+#include <solver_name.hxx>
+#include <common.hxx>
+#include <vector>
 
-#ifdef MFEM_USE_PETSC
-#include "mfem/linalg/petsc.hpp"
-#endif /* MFEM_USE_PETSC */
-
-#ifdef MFEM_USE_PETSC
-#include "mfem/linalg/mumps.hpp"
-#endif /* MFEM_USE_MUMPS */
+using namespace configuration;
 
 // We need this class for test case sources
 constexpr double xmax = 1.;
@@ -39,3 +25,27 @@ struct TestParameters {
 };
 
 TestParameters parseCommandLineOptions(int& argc, char* argv[]);
+
+// get test case (kernel, solver, preconditionner and match function)
+#include <cas_cible_1.hxx>
+#include <fissuration.hxx>
+
+
+
+template<typename Solver, typename Pc>
+std::function<void(const TestParameters&, const bool, const Solver, const Pc, gather_information&)> get_kernel(int a_case)
+{
+	switch(a_case)
+	{
+		case 1: return cas_cible_1::kernel<Solver,Pc>;
+		case 2: return fissuration::kernel<Solver,Pc>;
+		default: return cas_cible_1::kernel<Solver,Pc>;
+	}
+}
+
+std::vector<solver_name> get_solvers(int a_case);
+std::vector<petsc_ksp_type> get_solvers_with_petsc(int a_case);
+std::vector<precond_name> get_pc(int a_case);
+std::vector<petsc_pc_type> get_pc_with_petsc(int a_case);
+std::function<bool(solver_name,precond_name)> get_match(int a_case);
+std::function<bool(petsc_ksp_type,petsc_pc_type)> get_match_with_petsc(int a_case);

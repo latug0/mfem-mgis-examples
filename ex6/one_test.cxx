@@ -22,30 +22,18 @@
 #include <memory>
 #include <cstdlib>
 #include <iostream>
-#include "mfem/general/optparser.hpp"
-#include "mfem/linalg/solvers.hpp"
-#include "mfem/fem/datacollection.hpp"
-#include "MFEMMGIS/MFEMForward.hxx"
-#include "MFEMMGIS/Material.hxx"
-#include "MFEMMGIS/Profiler.hxx"
-#include "MFEMMGIS/AnalyticalTests.hxx"
-#include "MFEMMGIS/NonLinearEvolutionProblemImplementation.hxx"
-#include "MFEMMGIS/PeriodicNonLinearEvolutionProblem.hxx"
 
-#ifdef MFEM_USE_PETSC
-#include "mfem/linalg/petsc.hpp"
-#endif /* MFEM_USE_PETSC */
-
-#ifdef MFEM_USE_PETSC
-#include "mfem/linalg/mumps.hpp"
-#endif /* MFEM_USE_MUMPS */
+#include<mfem_mgis_headers.hxx>
 
 #include "timer.hpp"
 #include "solver_name.hxx"
 #include "precond_name.hxx"
 #include "config_solver.hxx"
 #include "data_gathering.hxx"
-#include "cas_cible_1.hxx"
+#include <test_parameters.hpp>
+
+#include <cas_cible_1.hxx>
+#include <fissuration.hxx>
 
 // legacy
 TestParameters parseCommandLineOptions_v2(int& argc, char* argv[]) {

@@ -51,7 +51,7 @@ endif()
 
 if(MFEM_USE_MPI)
 
-	SET(utiles test_parameters.cpp solver_name.cxx precond_name.cxx data_gathering.cxx)
+	SET(utiles test_parameters.cpp solver_name.cxx precond_name.cxx data_gathering.cxx common.cxx)
 	add_library(configuration STATIC ${utiles})
 	target_link_libraries(configuration mfem-mgis::MFEMMGIS)
 	target_include_directories(configuration
@@ -119,6 +119,7 @@ if(MFEM_USE_MPI)
 		)
 
 	add_case(one_test cas_cible_1)
+	add_case(one_test fissuration)
 
 	add_executable(petsc_file_generation use_petsc.cxx)
 	target_link_libraries(petsc_file_generation mfem-mgis::MFEMMGIS)

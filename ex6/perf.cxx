@@ -26,66 +26,12 @@
 #include "precond_name.hxx"
 #include "config_solver.hxx"
 #include "data_gathering.hxx"
-
+#include <functional>
 
 // TEST CASE
 #include <cas_cible_1.hxx>
 #include <fissuration.hxx>
 
-
-using namespace configuration;
-
-auto get_test_case(int a_case)
-{
-	switch(a_case)
-	{
-		case 1: return cas_cible_1::kernel;
-		case 2: return fissuration::kernel;
-		default: return cas_cible_1::kernel;
-	}
-}
-
-std::vector<solver_name> get_solvers(int a_case)
-{
-	switch(a_case)
-	{
-		case 1: return cas_cible_1::build_solvers_list();
-		case 2: return fissuration::build_solvers_list();
-		default: return cas_cible_1::build_solvers_list();
-	}
-}
-
-std::vector<precond_name> get_pc(int a_case)
-{
-	switch(a_case)
-	{
-		case 1: return cas_cible_1::build_pc_list();
-		case 2: return fissuration::build_pc_list();
-		default: return cas_cible_1::build_pc_list();
-	}
-}
-
-auto get_match(int a_case)
-{
-	switch(a_case)
-	{
-		case 1: return cas_cible_1::match;
-		case 2: return fissuration::match;
-		default: return cas_cible_1::match;
-	}
-}
-
-#ifdef MFEM_USE_PETSC
-auto get_solvers_with_petsc(int a_case)
-{
-	switch(a_case)
-	{
-		case 1: return cas_cible_1::build_solvers_list_with_petsc();
-		case 2: return fissuration::build_solvers_list_with_petsc();
-		default: return cas_cible_1::build_solvers_list_with_petsc();
-	}
-}
-#endif
 
 int try_several_solvers(TestParameters& p, const bool use_post_processing)
 {
@@ -98,12 +44,15 @@ int try_several_solvers(TestParameters& p, const bool use_post_processing)
 	//constexpr bool all = true;
 	auto res = EXIT_SUCCESS;
 
+	using std::function;
+	typedef function<void(const TestParameters&, const bool, const solver_name, const precond_name, gather_information&)> regular_kernel;
+
 	// build your solver / precond list
 	// some of them are really slow without a precond such as X+GMRES
 	// after a preliminary study, relevent solvers have been selected and stored in the "fast" traversal
 	std::vector<solver_name> solver_traversal = get_solvers(p.tcase);
 	std::vector<precond_name> pc_traversal = get_pc(p.tcase);
-	auto fun = get_test_case(p.tcase);
+	regular_kernel fun = get_kernel<solver_name, precond_name>(p.tcase);
 	auto match = get_match(p.tcase);
 
 	for(auto solver_iterator : solver_traversal)
