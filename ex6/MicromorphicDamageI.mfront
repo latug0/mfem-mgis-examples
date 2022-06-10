@@ -1,0 +1,52 @@
+@DSL DefaultDSL;
+@Behaviour MicromorphicDamageI;
+@Author Thomas Helfer, Jérémy Bleyer;
+@Date 21 / 09 / 2021;
+
+@Parameter thermalexpansion alpha = 1e-5;
+@StaticVariable temperature Tref = 293.15;
+
+@MaterialProperty stress E;
+E.setGlossaryName("YoungModulus");
+@MaterialProperty real nu;
+nu.setGlossaryName("PoissonRatio");
+
+@StateVariable stress Y;
+Y.setEntryName("EnergyReleaseRate");
+
+@ExternalStateVariable real d;
+d.setGlossaryName("Damage");
+
+@LocalVariable stress lambda;
+@LocalVariable stress mu;
+
+@InitLocalVariables {
+  lambda = computeLambda(E, nu);
+  mu = computeMu(E, nu);
+}
+
+@Integrator {
+  constexpr auto id = Stensor::Id();
+  const auto eth = alpha * (T + dT - Tref) * id;
+  const auto e = eto + deto - eth;
+  const auto sig0 = lambda * trace(e) * id + 2 * mu * e;
+  // stress computation
+  const auto d_ets = d + dd;
+  const auto gd = power<2>(1 - d_ets) + 1e-12;
+  sig = gd * sig0;
+  // energy release rate
+  Y = (sig0 | e) / 2;
+}
+
+@TangentOperator {
+  constexpr auto id = Stensor::Id();
+  const auto d_ets = d + dd;
+  const auto gd = power<2>(1 - d_ets) + 1e-12;
+  const auto De = lambda * (id ^ id) + 2 * mu * Stensor4::Id();
+  dsig_ddeto = gd * De;
+}
+
+@InternalEnergy {
+  const auto e = eto + deto;
+  Psi_s = (sig | e) / 2;
+}
