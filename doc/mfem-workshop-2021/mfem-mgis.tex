@@ -129,7 +129,8 @@
 
 \newcommand{\cmark}{\textcolor{green}{\ding{51}}}%
 \newcommand{\xmark}{\textcolor{red}{\ding{55}}}%
-
+\newcommand{\longmmm}{\texttt{MFEM-MGIS-MFRONT}}
+\newcommand{\mmm}{\texttt{MMM}}
 
 \lstset{ %
   backgroundcolor=\color{white},   % choose the background color; you must add \usepackage{color} or \usepackage{xcolor}
@@ -155,9 +156,12 @@
   columns=flexible
 }
 
-\titre{The \scalebox{0.8}{\texttt{MFEM-MGIS}} project: coupling  \scalebox{0.8}{\texttt{MFEM}} and \scalebox{0.8}{\texttt{MGIS}} for high performance nonlinear simulations}
-\evenement{MFront User Meeting} \date{21/10/2021}% \auteurprincipal{T. Helfer}
-\auteurs{T. Helfer, G. Latu}
+\titre{\hspace*{-2mm}\scalebox{0.9}{\normalsize\begin{minipage}[h]{6.5cm}\longmmm{}\\ A HPC mini-application targeting nonlinear thermo-mechanical simulations of nuclear fuels at mesoscale \end{minipage}}}
+\evenement{IAEA technical meeting} \date{24/06/2022}
+\auteurprincipal{G. Latu}
+\auteurs{ G. Latu\textsuperscript{1}, Th. Helfer\textsuperscript{1}, S. Bernaud\textsuperscript{1}, G. Folzan\textsuperscript{2}, R. Prat\textsuperscript{1}\\
+{\footnotesize  \textsuperscript{1}CEA, DEC, St-Paul-Lez-Durance, France\\\textsuperscript{2}CEA, DM2S, Gif sur Yvette, France}
+}
 
 \newcommand{\gallery}[4]{
   \Titre{#1}
@@ -188,19 +192,20 @@
 \Titre{Fuel modelling and the Pleiades platform}
 \begin{frame}[fragile]
   \begin{itemize}
-    \item French Atomic Energy Commission (CEA), public institution.
-    \item Our department: modelling and simulation of nuclear fuel.
+    \item French Atomic Energy Commission (CEA), public institution
+    \item DEC department: modelling and simulation of nuclear fuel
   \end{itemize}
   \begin{center}
-    \includegraphics[trim = .2cm .2cm .2cm .6cm,clip,width=0.50\linewidth]{img/PLEIADES_2019_en.png}
+    \includegraphics[trim = .2cm .2cm .2cm .6cm,clip,width=0.60\linewidth]{img/PLEIADES_2019_en.png}
+    \vspace*{-3mm}
   \end{center}
   \begin{itemize}
-    \item A wide range of materials (ceramics, metals, composites).
-    \item A wide range of mechanical phenomena and behaviours.
+    \item A wide range of materials (ceramics, metals, composites)
+    \item A wide range of mechanical phenomena and behaviours
     \begin{itemize}
-      \item Creep, swelling, irradiation effects, phase transitions, etc..
+      \item Creep, swelling, irradiation effects, phase transitions ...
     \end{itemize}
-    \item A wide range of mechanical loadings.
+    \item A wide range of mechanical loadings
   \end{itemize}
 
 \begin{textblock}{.40}(0.2,0.04)
@@ -218,7 +223,8 @@
 \end{textblock}
 \end{frame}
 
-\Titre{Goals of MFEM-MGIS}
+\Titre{Goals of \mmm{}\\[1mm]
+\hspace*{8mm}\scalebox{0.8}{\longmmm{}}}
 \frame{
   \begin{itemize}
     \item Build a HPC general purpose non linear multi-physics
@@ -233,9 +239,9 @@
       thermo-hydro-mechanical phenomena.
     \end{itemize}
 \bigskip
-    \item  A two-pillar library with \textit{opensource} commitment (\scalebox{0.8}{MFEM-MGIS \textit{LGPL 3.0}}):
+    \item  A two-pillar library with \textit{opensource} commitment (\scalebox{0.8}{\mmm{} \textit{LGPL 3.0}}):
     \begin{itemize}
-      \item \texttt{MFEM:} HPC finite element solver. \scalebox{0.8}{\textit{(LGPL 2.1)}}
+      \item \texttt{MFEM:} HPC finite element solver. \scalebox{0.8}{\textit{(3-clause BSD)}}
       \item \texttt{MGIS/MFront:} constitutive laws, material modelling. \scalebox{0.8}{\textit{(LGPL 3.0 / GPL 3.0)}}
     \end{itemize}
   \end{itemize}
@@ -291,8 +297,8 @@ Example of end-user API}
   \end{itemize}
 \end{frame}
 
-\section{Design and features of the \texttt{MFEM-MGIS} project}
-\Intercalaire{Design and features of the \texttt{MFEM-MGIS} project}
+\section{Design and features of the \mmm{} project}
+\Intercalaire{Design and features of the \mmm{} project}
 
 \begin{frame}[fragile]{\texttt{MFEM} library}
 \begin{itemize}
@@ -378,7 +384,7 @@ Example of end-user API}
 \end{frame}
 
 \begin{frame}[fragile]{The
-    added value of \texttt{MFEM-MGIS}}
+    added value of \mmm{}}
   \begin{itemize}
     \item Statement:
     \begin{itemize}
@@ -387,7 +393,7 @@ Example of end-user API}
       \item \emph{No} support for functions on integration
       points for a given material (element attribute).
     \end{itemize}
-    \item Proposed improvements:
+    \item Proposed improvements for \mmm{}:
     \begin{itemize}
       \item Add support for non linear behaviour integrators
       based on \texttt{MFront}.
@@ -395,9 +401,9 @@ Example of end-user API}
       material identifier (element attribute).
       \item Simplified High-level API for end users (mechanics)
     \end{itemize}
-    \item<2-> In practice:
+    \item In practice:
     \begin{itemize}
-      \item \texttt{MFEM-MGIS} is a library made up of
+      \item \mmm{} is a library made up of
       \begin{enumerate}
         
         \item Classes that inherit from \texttt{MFEM}:\\ loops
@@ -409,7 +415,7 @@ Example of end-user API}
         \& MGIS
       \end{enumerate}
     \end{itemize}
-    \item<3-> \texttt{MFEM-MGIS} is a C++17 opensource library:
+    \item \mmm{} is a C++17 opensource library:
     \begin{itemize}
       \item \url{https://github.com/thelfer/mfem-mgis}
       \item \url{https://github.com/latug0/mfem-mgis-examples}
@@ -603,7 +609,7 @@ Example of end-user API}
       NonlinearFormIntegrator::AssembleElementVector} and {\tt
       NonlinearFormIntegrator::AssembleElementGrad} does not handle
     failures.
-    \item<2-> As a work-around, we derived our own Newton
+    \item As a work-around, we derived our own Newton
     algorithm which separates the behaviour integration step from
     residual and stiffness assemblies.
     \begin{itemize}
@@ -612,7 +618,7 @@ Example of end-user API}
       \item This work-around  {\bf does not work with {\tt
         PETSc}}.
     \end{itemize}
-    \item<2-> More generally, we started a discussion on
+    \item More generally, we started a discussion on
     how to improve the robustness of operators in {\tt MFEM}:
     \begin{itemize}
       \item \url{https://github.com/mfem/mfem/issues/2139}
@@ -634,7 +640,7 @@ Example of end-user API}
       \item In finite strain, this leads to severe divergence
       of the Newton algorithm du to the geometric stiffness matrix.
     \end{itemize}
-    \item<2-> In most \textbf{mechanical} solvers, a \textbf{prediction} of the
+    \item In most \textbf{mechanical} solvers, a \textbf{prediction} of the
     solution based on the tangent problem is performed.
     \begin{itemize}
       \item We were not able to implement this prediction so far.
@@ -675,7 +681,7 @@ Example of end-user API}
     \begin{itemize}
       \item Two isotropic materials, each one filling half of
       a cube
-      \item Aim : compare against \textbf{\texttt{MFEM-MGIS}}
+      \item Aim : compare against \textbf{\mmm{}}
       results against \textbf{analytical} results
       \begin{itemize}
         \item considering 3 cases with uniaxial strain
@@ -716,13 +722,13 @@ Example of end-user API}
         \item total \textbf{179s}, ~~ matrix assembly 53s,
         ~~ CGsolver 117s
       \end{itemize}
-      \item MFEM-MGIS non-linear solve - residual form, a
+      \item \mmm{} non-linear solve - residual form, a
       single newton iteration
       \begin{itemize}
         \item total \textbf{188s}, ~~ matrix assembly 42s,
         ~~ CGsolver 133s
       \end{itemize}
-      \item Overheads due to MFEM-MGIS are low
+      \item Overheads due to \mmm{} are low
       \begin{itemize}
         \item Due to: read/write to memory buffers,
         function calls for assembly
@@ -736,7 +742,7 @@ Example of end-user API}
   \begin{block}{Strong
       scaling}
     \begin{itemize}
-      \item Using MFEM-MGIS non-linear solve
+      \item Using \mmm{} non-linear solve
       \item Strong scaling from 32 to 256 cores
       \item Scalable parallelism observed
     \end{itemize}
@@ -791,7 +797,7 @@ Example of end-user API}
       \end{itemize}
     \end{itemize}
     \vspace*{8mm}
-    \item<2-> What comes next ?
+    \item What comes next ?
     \begin{itemize}
       \item Overall robustness of the code (critical).
       \item Prediction and handling of the Dirichlet \\\hspace*{1cm}boundary
