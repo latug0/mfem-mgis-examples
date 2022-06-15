@@ -23,6 +23,7 @@ struct TestParameters {
 	int preconditioner = 1;
 	bool parallel = true;
 	int refinement = 0;
+	int post_processing = 0; // default value : disabled
 };
 
 TestParameters parseCommandLineOptions(int& argc, char* argv[]);

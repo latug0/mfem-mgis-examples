@@ -147,11 +147,12 @@ void build_speed_up_for_python_partial(store_speed_up_values& a_in)
 
 void build_speed_up_for_python_plot(store_speed_up_values& a_in)
 {
-	std::cout << "import numpy as np" << std::endl;
-	std::cout << "import matplotlib.pyplot as plt" << std::endl;
-	std::cout << "from matplotlib.ticker import FormatStrFormatter" << std::endl;
-	std::cout << "import matplotlib.ticker as ticker" << std::endl;
-	std::cout << "def my_function():" << std::endl;	
+	auto& out=std::cout;
+	out << "import numpy as np" << std::endl;
+	out << "import matplotlib.pyplot as plt" << std::endl;
+	out << "from matplotlib.ticker import FormatStrFormatter" << std::endl;
+	out << "import matplotlib.ticker as ticker" << std::endl;
+	out << "def my_function():" << std::endl;	
 	for(auto it : a_in)
 	{
 		auto key = it.first;
@@ -182,22 +183,23 @@ void build_speed_up_for_python_plot(store_speed_up_values& a_in)
 		line += ")";
 		std::cout << line << std::endl;
 	}
-	std::cout << "	pass" 	<< std::endl<< std::endl;
-	std::cout << "my_function()"			<< std::endl;
-	std::cout << "legend_outside = plt.legend(loc=\'center left\',bbox_to_anchor=(1, 0.5))" << std::endl;
-	std::cout << "namepdf=\'basic-version.pdf\'" 	<< std::endl;
-	std::cout << "plt.savefig(namepdf, bbox_extra_artists=(legend_outside,), bbox_inches=\'tight\')" << std::endl;
-	std::cout << "fig, ax = plt.subplots()" 	<< std::endl;
-	std::cout << "plt.xscale(\"log\",basex=2)" 	<< std::endl;
-	std::cout << "plt.yscale(\"log\",basey=2)" 	<< std::endl;
-	std::cout << "ax.xaxis.set_major_formatter(ticker.ScalarFormatter())" 	<< std::endl;
-	std::cout << "ax.yaxis.set_major_formatter(ticker.ScalarFormatter())" 	<< std::endl;
-	std::cout << "plt.ticklabel_format(axis=\'x\', style=\'plain\')" 	<< std::endl;
-	std::cout << "plt.ticklabel_format(axis=\'y\', style=\'plain\')" 	<< std::endl;
-	std::cout << "my_function()"			<< std::endl;
-	std::cout << "legend_outside = plt.legend(loc=\'center left\',bbox_to_anchor=(1, 0.5))" << std::endl; 
-	std::cout << "namepdf=\'log-version.pdf\'" 	<< std::endl;
-	std::cout << "plt.savefig(namepdf, bbox_extra_artists=(legend_outside,), bbox_inches=\'tight\')" << std::endl;
+	out << "	pass" 	<< std::endl<< std::endl;
+	out << "my_function()"			<< std::endl;
+	out << "legend_outside = plt.legend(loc=\'center left\',bbox_to_anchor=(1, 0.5))" << std::endl;
+	out << "namepdf=\'basic-version.pdf\'" 	<< std::endl;
+	out << "plt.savefig(namepdf, bbox_extra_artists=(legend_outside,), bbox_inches=\'tight\')" << std::endl;
+	out << "fig, ax = plt.subplots()" 	<< std::endl;
+	out << "plt.xscale(\"log\",basex=2)" 	<< std::endl;
+	out << "plt.yscale(\"log\",basey=2)" 	<< std::endl;
+	out << "ax.xaxis.set_major_formatter(ticker.ScalarFormatter())" 	<< std::endl;
+	out << "ax.yaxis.set_major_formatter(ticker.ScalarFormatter())" 	<< std::endl;
+	out << "plt.ticklabel_format(axis=\'x\', style=\'plain\')" 	<< std::endl;
+	out << "plt.ticklabel_format(axis=\'y\', style=\'plain\')" 	<< std::endl;
+	out << "my_function()"			<< std::endl;
+	out << "plt.grid()"			<< std::endl;
+	out << "legend_outside = plt.legend(loc=\'center left\',bbox_to_anchor=(1, 0.5))" << std::endl; 
+	out << "namepdf=\'log-version.pdf\'" 	<< std::endl;
+	out << "plt.savefig(namepdf, bbox_extra_artists=(legend_outside,), bbox_inches=\'tight\')" << std::endl;
 
 }
 

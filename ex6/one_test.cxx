@@ -24,11 +24,11 @@ int main(int argc, char* argv[])
 
 	mfem_mgis::initialize(argc, argv);
 	profiling::timers::init_timers();
-	constexpr bool use_post_processing = false;
 
 	auto p = parseCommandLineOptions_one_test(argc, argv);
-	auto solver = solver_name(p.linearsolver);
-	auto preconditioner = precond_name(p.preconditioner);
+	const bool use_post_processing = (p.post_processing == 1);
+	const auto solver = solver_name(p.linearsolver);
+	const auto preconditioner = precond_name(p.preconditioner);
 	regular_kernel kernel = get_kernel<solver_name,precond_name>(p.tcase);
 	auto match = get_match(p.tcase);
 	gather_information my_info;

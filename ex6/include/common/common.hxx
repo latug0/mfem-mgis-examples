@@ -36,20 +36,23 @@ namespace common
 					});
 
 			// check status
-			if (!statistics) {
+			if (!statistics.status) {
 				profiling::output::printMessage("INFO: ", string_solver,"+",string_pc," FAILED");
 			}
 			return res;
 		}
 
 	template<typename Problem>
-		double add_post_processings(Problem& p, int tcase)
+		double add_post_processings(Problem& p, std::string msg)
 		{
-			START_TIMER("common::add_postprocessing_and_outputs");
+	//		START_TIMER("common::add_postprocessing_and_outputs");
+			using profiling::output::printMessage;
+			printMessage("before AddPost");
 			p.addPostProcessing(
 					"ParaviewExportResults",
-					{{"OutputFileName", "PeriodicTestOutput-" + std::to_string(tcase)}}
+					{{"OutputFileName", msg}}
 					);
+	//		printMessage("after AddPost");
 		} // end timer add_postprocessing_and_outputs
 
 	template<typename Problem>

@@ -57,7 +57,7 @@ namespace cas_cible_1
 		setLinearSolver(problem, a_solv, a_precond);
 		setSolverParameters(problem);
 
-		if(use_post_processing) common::add_post_processings(problem, p.tcase);
+		if(use_post_processing) common::add_post_processings(problem, "OutputFile-cas_cible_1");
 
 
 		mfem_mgis::NonLinearResolutionOutput solver_statistics;

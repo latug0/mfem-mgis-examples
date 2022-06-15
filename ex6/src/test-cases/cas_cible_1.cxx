@@ -50,6 +50,14 @@ namespace cas_cible_1
 
 	bool match(solver s, pc p, int r)
 	{
+		if(r==2)
+		{
+			// these possibilities work but are too slow
+			if(s==solver::HypreFGMRES) return false;
+			if(s==solver::HypreGMRES) return false;
+			if(s==solver::BiCGSTABSolver && p==pc::HypreDiagScale) return false;
+		}
+
 		// too slow 
 		if(r == 3)
 		{
@@ -63,6 +71,7 @@ namespace cas_cible_1
 			if(s==solver::BiCGSTABSolver && p==pc::HypreILU) return false;
 			if(s==solver::BiCGSTABSolver && p==pc::HypreEuclid) return false;
 			if(s==solver::BiCGSTABSolver && p==pc::HypreDiagScale) return false;
+			if(s==solver::MINRESSolver && p==pc::HypreEuclid) return false;
 		}
 
 		if(p == pc::ANY) return true;
