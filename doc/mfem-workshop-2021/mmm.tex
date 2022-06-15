@@ -157,7 +157,7 @@
 }
 
 \titre{\hspace*{-2mm}\scalebox{0.9}{\normalsize\begin{minipage}[h]{6.5cm}\longmmm{}\\ A HPC mini-application targeting nonlinear thermo-mechanical simulations of nuclear fuels at mesoscale \end{minipage}}}
-\evenement{IAEA technical meeting} \date{24/06/2022}
+\evenement{IAEA technical meeting} \date{22/06/2022}
 \auteurprincipal{G. Latu}
 \auteurs{ G. Latu\textsuperscript{1}, Th. Helfer\textsuperscript{1}, S. Bernaud\textsuperscript{1}, G. Folzan\textsuperscript{2}, R. Prat\textsuperscript{1}\\
 {\footnotesize  \textsuperscript{1}CEA, DEC, St-Paul-Lez-Durance, France\\\textsuperscript{2}CEA, DM2S, Gif sur Yvette, France}
@@ -208,23 +208,27 @@
     \item A wide range of mechanical loadings
   \end{itemize}
 
-\begin{textblock}{.40}(0.2,0.04)
-\scalebox{.8}{\rotatebox{90}{
-\begin{minipage}{7.cm}
-\textcolor{blue}{The Pleiades Platform}
+\begin{textblock}{.40}(0.11,0.24)
+\scalebox{.7}{\rotatebox{90}{
+    \begin{minipage}{7.cm}
+      \center
+  \textcolor{blue}{The Pleiades Platform}\\
+  \textcolor{blue}{industrial partners: EDF, Framatome}
 \end{minipage}}}
 \end{textblock}
 
-\begin{textblock}{.40}(0.8,0.08)
-\scalebox{.8}{\rotatebox{90}{
+\begin{textblock}{.40}(0.84,0.22)
+\scalebox{.7}{\rotatebox{90}{
 \begin{minipage}{7.cm}
-\textcolor{red}{Existing mechanical solver}\\\textcolor{red}{not well parallelized}
+      \center
+      \textcolor{red}{Existing mechanical solver}\\
+      \textcolor{red}{not well parallelized}
 \end{minipage}}}
 \end{textblock}
 \end{frame}
 
-\Titre{Goals of \mmm{}\\[1mm]
-\hspace*{8mm}\scalebox{0.8}{\longmmm{}}}
+\Titre{Goals of \mmm{}\\[2mm]
+\hspace*{8mm}\scalebox{0.6}{\longmmm{}}}
 \frame{
   \begin{itemize}
     \item Build a HPC general purpose non linear multi-physics
@@ -237,14 +241,41 @@
       approaches of brittle fracture, micromorphic models, Cosserat
       plasticity, strongly coupled thermo-chemical-mechanical or
       thermo-hydro-mechanical phenomena.
+    \item Replace existing mechanical solver in Pleiades platform
+    \item targeted application: microstructure and mesoscale modelling for nuclear fuel  
     \end{itemize}
 \bigskip
     \item  A two-pillar library with \textit{opensource} commitment (\scalebox{0.8}{\mmm{} \textit{LGPL 3.0}}):
     \begin{itemize}
-      \item \texttt{MFEM:} HPC finite element solver. \scalebox{0.8}{\textit{(3-clause BSD)}}
-      \item \texttt{MGIS/MFront:} constitutive laws, material modelling. \scalebox{0.8}{\textit{(LGPL 3.0 / GPL 3.0)}}
+      \item \texttt{MFEM:} HPC finite element solver \scalebox{0.8}{\textit{(3-clause BSD)}}
+      \item \texttt{MGIS/MFront:} constitutive laws, material modelling \scalebox{0.8}{\textit{(LGPL 3.0 / GPL 3.0)}}
     \end{itemize}
   \end{itemize}
+}
+
+\Titre{Open-source orientation\\[1mm]
+\hspace*{8mm}\scalebox{0.8}{Expected benefits}}
+\frame{
+\scalebox{0.8}{
+  \begin{minipage}{14cm}
+    \begin{itemize}
+    \item Exchanges and collaboration\\
+    \begin{itemize}
+    \item Facilitate sharing of reference solutions, standard benchmark problems and input data
+    \item Foster collaboration with academics
+    \item Allow to assess features and opportunities for integration of already developed open-source codes
+    \item Ease the spread of the tool within industry, dodge the silos due to funding within companies
+    \end{itemize}
+\bigskip
+    \item  Lesson learned from \texttt{Mfront} developped at CEA\\\hspace*{1cm}opensource since 2014
+    \begin{itemize}
+    \item ease the access to the tool: increase in visibility, reproducibility, credibility
+    \item software engineering: users help you to improve the software (bug report) and robustness
+    \item other codes that use your product: opportunity for partnership, publications
+    \item extra work, need to book time for: minimal support, documentation, training
+    \end{itemize}
+  \end{itemize}
+  \end{minipage}}
 }
 
 \section{A small tutorial}
