@@ -20,7 +20,7 @@ std::vector<precond_name> get_pc(int a_case)
 	}
 }
 
-std::function<bool(solver_name,precond_name)> get_match(int a_case)
+std::function<bool(solver_name,precond_name,int)> get_match(int a_case)
 {
 	switch(a_case)
 	{
@@ -50,7 +50,7 @@ std::vector<petsc_pc_type> get_pc_with_petsc(int a_case)
 	}
 }
 
-std::function<bool(petsc_ksp_type,petsc_pc_type)> get_match_with_petsc(int a_case)
+std::function<bool(petsc_ksp_type,petsc_pc_type,int)> get_match_with_petsc(int a_case)
 {
 	switch(a_case)
 	{

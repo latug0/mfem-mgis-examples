@@ -39,7 +39,7 @@ int try_several_solvers(TestParameters& p, const bool use_post_processing)
 		START_TIMER(getName(solver_iterator));
 		for(auto precond_iterator : pc_traversal)
 		{
-			if(match(solver_iterator, precond_iterator))
+			if(match(solver_iterator, precond_iterator, p.refinement))
 			{
 				START_TIMER(getName(precond_iterator));
 				fun(

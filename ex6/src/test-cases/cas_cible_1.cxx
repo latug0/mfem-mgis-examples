@@ -43,9 +43,28 @@ namespace cas_cible_1
 		};
 		return res;	
 	}
-	
-	bool match(solver s, pc p)
+
+	/*
+	 * 
+	 */
+
+	bool match(solver s, pc p, int r)
 	{
+		// too slow 
+		if(r == 3)
+		{
+			// these possibilities work but are too slow
+			if(s==solver::HypreFGMRES && p==pc::HypreBoomerAMG) return false;
+			if(s==solver::HypreFGMRES && p==pc::HypreILU) return false;
+			if(s==solver::HypreFGMRES && p==pc::HypreDiagScale) return false;
+			if(s==solver::HypreGMRES && p==pc::HypreBoomerAMG) return false;
+			if(s==solver::HypreGMRES && p==pc::HypreILU) return false;
+			if(s==solver::HypreGMRES && p==pc::HypreDiagScale) return false;
+			if(s==solver::BiCGSTABSolver && p==pc::HypreILU) return false;
+			if(s==solver::BiCGSTABSolver && p==pc::HypreEuclid) return false;
+			if(s==solver::BiCGSTABSolver && p==pc::HypreDiagScale) return false;
+		}
+
 		if(p == pc::ANY) return true;
 		if(isMumps(s)) return false;
 
@@ -76,6 +95,7 @@ namespace cas_cible_1
 			if(s==solver::CGSolver) return false; // setup error
 			return true; // NU MUMPS
 		}
+
 		return false;
 	}
 
@@ -106,7 +126,7 @@ namespace cas_cible_1
 		return res;
 	}
 	
-	bool match_with_petsc(petsc_solver s, petsc_pc p)
+	bool match_with_petsc(petsc_solver s, petsc_pc p, int r)
 	{
 		return true;
 	}

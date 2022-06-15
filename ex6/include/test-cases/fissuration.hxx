@@ -15,7 +15,7 @@ namespace fissuration
 	using regular_pc_list=std::vector<pc>;
 	regular_solver_list 	build_solvers_list();
 	regular_pc_list 	build_pc_list();
-	bool match(solver, pc);
+	bool match(solver, pc, int);
 
 	using petsc_solver=petsc_ksp_type;
 	using petsc_pc=petsc_pc_type;
@@ -24,7 +24,7 @@ namespace fissuration
 
 	petsc_solver_list 	build_solvers_list_with_petsc();
 	petsc_pc_list 		build_pc_list_with_petsc();
-	bool match_with_petsc(petsc_solver, petsc_pc);
+	bool match_with_petsc(petsc_solver, petsc_pc, int r);
 	
 	// specific functions
 	struct MeshParameters {

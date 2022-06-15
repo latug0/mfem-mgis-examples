@@ -85,12 +85,12 @@ namespace fissuration
 		return res;
 	}
 
-	bool match(solver s, pc p)
+	bool match(solver s, pc p, int r)
 	{
 		return true;
 	}
 
-	bool match_with_petsc(petsc_solver s, petsc_pc p)
+	bool match_with_petsc(petsc_solver s, petsc_pc p, int r)
 	{
 		return true;
 	}

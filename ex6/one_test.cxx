@@ -34,7 +34,7 @@ int main(int argc, char* argv[])
 	gather_information my_info;
 	int res=EXIT_SUCCESS;
 
-	if(match(solver,preconditioner))
+	if(match(solver,preconditioner, p.refinement))
 	{
 		 kernel(p, 
 				use_post_processing, 
