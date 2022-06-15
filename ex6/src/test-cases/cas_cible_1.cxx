@@ -1,9 +1,4 @@
-#include "test_parameters.hpp"
-#include "solver_name.hxx"
-#include "timer.hpp"
-#include "precond_name.hxx"
-#include "config_solver.hxx"
-#include "data_gathering.hxx"
+#include <test-cases/cas_cible_1.hxx>
 
 namespace cas_cible_1
 {

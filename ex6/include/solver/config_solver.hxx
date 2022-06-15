@@ -7,17 +7,20 @@ namespace configuration
 	template<typename Problem>		
 		static void setLinearSolver(Problem& p,
 				const solver_name a_solver_name, 
-				const precond_name a_precond_name)
+				const precond_name a_precond_name,
+				const mfem_mgis::real a_abs_tol = 1e-12,
+				const mfem_mgis::real a_rel_tol = 1e-12
+				)
 		{
 			START_TIMER("set_linear_solver");
 			// pilote
 			constexpr int verbosity 		= 0; 		// VerbosityLevel
-			constexpr int defaultMaxNumOfIt	 	= 5000; 	//MaximumNumberOfIterations
-			constexpr int adjustMaxNumOfIt 		= 500000; 	//MaximumNumberOfIterations
-			constexpr mfem_mgis::real absTol	= 1e-12; 	// AbsoluteTolerance
-			constexpr mfem_mgis::real relTol	= 0; 		// RelativeTolerance
+			constexpr int defaultMaxNumOfIt	 	= 5000; 	// MaximumNumberOfIterations
+			constexpr int adjustMaxNumOfIt 		= 500000; 	// MaximumNumberOfIterations
+			const mfem_mgis::real absTol		= a_abs_tol; 	// AbsoluteTolerance
+			const mfem_mgis::real relTol		= a_rel_tol;	// RelativeTolerance
 			//constexpr mfem_mgis::real relTol	= 1e-12; 	// RelativeTolerance
-			constexpr mfem_mgis::real Tol		= 1e-12;        // Tolerance
+			const mfem_mgis::real Tol		= a_rel_tol;    // Tolerance
 
 
 

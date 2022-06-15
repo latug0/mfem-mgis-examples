@@ -1,12 +1,12 @@
 #pragma once
 
-#include<iostream>
-#include<chrono>
-#include<vector>
-#include<omp.h>
+#include <iostream>
+#include <chrono>
+#include <vector>
+#include <omp.h>
 #include <fstream>
 #include <algorithm>
-#include<cassert>
+#include <cassert>
 
 // variables 
 #ifdef __MPI

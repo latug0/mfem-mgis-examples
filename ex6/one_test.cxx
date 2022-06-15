@@ -1,40 +1,20 @@
-/*!
- * \file   InclusionsEx.cxx
- * \brief
- * This example is modelling several inclusion within a periodic cube.
- *
- * Mechanical strain:
- *                 eps = E + grad_s v
- *
- *           with  E the given macrocoscopic strain
- *                 v the periodic displacement fluctuation
- * Displacement:
- *                   u = U + v
- *
- *           with  U the given displacement associated to E
- *                   E = grad_s U
- * The local microscopic strain is equal, on average, to the macroscopic strain:
- *           <eps> = <E>
- * \author Thomas Helfer, Guillaume Latu
- * \date   02/06/10/2021
- */
-
 #include <memory>
 #include <cstdlib>
 #include <iostream>
 
-#include<mfem_mgis_headers.hxx>
+#include <common/mfem_mgis_headers.hxx>
+#include <parameters/test_parameters.hpp>
+#include <common/timer.hpp>
+#include <solver/solver_name.hxx>
+#include <solver/precond_name.hxx>
+#include <solver/config_solver.hxx>
+#include <common/data_gathering.hxx>
+#include <functional>
 
-#include "timer.hpp"
-#include "solver_name.hxx"
-#include "precond_name.hxx"
-#include "config_solver.hxx"
-#include "data_gathering.hxx"
-#include <test_parameters.hpp>
-
-#include <cas_cible_1.hxx>
-#include <fissuration.hxx>
-
+// TEST CASE
+#include <test-cases/cas_cible_1.hxx>
+#include <test-cases/fissuration.hxx>
+#include <parameters/catch_functions.hxx>
 
 
 int main(int argc, char* argv[]) 

@@ -1,6 +1,6 @@
-#include<timer.hpp>
-#include<data_gathering.hxx>
-
+#include<common/timer.hpp>
+#include<common/data_gathering.hxx>
+#include<parameters/test_parameters.hpp>
 
 
 void writeMD(std::vector<gather_information> a_vec, std::string a_name)
@@ -205,8 +205,9 @@ int main(int argc, char* argv[])
 {
 	mfem_mgis::initialize(argc, argv);
 	profiling::timers::init_timers();
-	const int first = 1;
-	const int last = 16384;
+	auto parameters = markdown_reader_parameters_with_parse(argc, argv);
+	const int first = parameters.start;
+	const int last = parameters.last;
 	const std::string base_name = "collect_";
 	//const int last = 4096;
 

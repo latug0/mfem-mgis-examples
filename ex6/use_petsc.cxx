@@ -10,9 +10,9 @@
 #include "mfem/linalg/petsc.hpp"
 #endif /* MFEM_USE_PETSC */
 
-#include<timer.hpp>
-#include<solver_name.hxx>
-#include<precond_name.hxx>
+#include<common/timer.hpp>
+#include<solver/solver_name.hxx>
+#include<solver/precond_name.hxx>
 
 // make a petsc file
 //

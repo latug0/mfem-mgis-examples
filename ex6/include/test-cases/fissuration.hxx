@@ -1,6 +1,10 @@
 #pragma once
 // thomas example
-#include "test_parameters.hpp"
+#include <common/timer.hpp>
+#include <solver/solver_name.hxx>
+#include <solver/precond_name.hxx>
+#include <solver/config_solver.hxx>
+#include <parameters/test_parameters.hpp>
 
 namespace fissuration
 {
@@ -22,7 +26,6 @@ namespace fissuration
 	petsc_pc_list 		build_pc_list_with_petsc();
 	bool match_with_petsc(petsc_solver, petsc_pc);
 	
-
 	// specific functions
 	struct MeshParameters {
 		// fuel pellet radius
@@ -33,10 +36,104 @@ namespace fissuration
 		const mfem_mgis::real dh = mfem_mgis::real{3.2e-4};
 	};
 
-	std::shared_ptr<mfem_mgis::NonLinearEvolutionProblem> buildMechanicalProblem(const mfem_mgis::Parameters& common_problem_parameters,
-			const MeshParameters mesh_parameters);
-	std::shared_ptr<mfem_mgis::NonLinearEvolutionProblem> buildMicromorphicProblem(
-			const mfem_mgis::Parameters& common_problem_parameters);
+	static std::shared_ptr<mfem_mgis::NonLinearEvolutionProblem> buildMechanicalProblem(const mfem_mgis::Parameters& common_problem_parameters,
+			const MeshParameters mesh_parameters) 
+	{
+
+		START_TIMER("fissuration::buildMechanicalProblem");
+		auto lparameters = common_problem_parameters;
+		lparameters.insert("UnknownsSize", 3);
+		// building the non linear problem
+		auto problem =
+			std::make_shared<mfem_mgis::NonLinearEvolutionProblem>(lparameters);
+		// materials
+		problem->addBehaviourIntegrator("Mechanics", 
+				"Fuel", 
+				"src/libBehaviour.so",
+				"MicromorphicDamageI");
+		auto& m1 = problem->getMaterial("Fuel");
+		// material properties at the beginning and the end of the time step
+		for (auto& s : {&m1.s0, &m1.s1}) {
+			mgis::behaviour::setMaterialProperty(*s, "YoungModulus", 150e9);
+			mgis::behaviour::setMaterialProperty(*s, "PoissonRatio", 0.3);
+		}
+		// temperature
+		mgis::behaviour::setExternalStateVariable(m1.s0, "Temperature", 293.15);
+		mgis::behaviour::setExternalStateVariable(m1.s0, "Damage", 0);
+		// boundary conditions
+		std::array<mfem_mgis::real, 3u> p1{0, 0, mesh_parameters.dh};
+		std::array<mfem_mgis::real, 3u> p2{0, 0, mesh_parameters.hp - mesh_parameters.dh};
+		std::array<mfem_mgis::real, 3u> p3{mesh_parameters.rp, 0, 0};
+		problem->addBoundaryCondition(
+				std::make_unique<
+				mfem_mgis::ImposedDirichletBoundaryConditionAtClosestNode>(
+					problem->getFiniteElementDiscretizationPointer(), p1, 0));
+		problem->addBoundaryCondition(
+				std::make_unique<
+				mfem_mgis::ImposedDirichletBoundaryConditionAtClosestNode>(
+					problem->getFiniteElementDiscretizationPointer(), p1, 1));
+		problem->addBoundaryCondition(
+				std::make_unique<
+				mfem_mgis::ImposedDirichletBoundaryConditionAtClosestNode>(
+					problem->getFiniteElementDiscretizationPointer(), p1, 2));
+		problem->addBoundaryCondition(
+				std::make_unique<
+				mfem_mgis::ImposedDirichletBoundaryConditionAtClosestNode>(
+					problem->getFiniteElementDiscretizationPointer(), p2, 0));
+		problem->addBoundaryCondition(
+				std::make_unique<
+				mfem_mgis::ImposedDirichletBoundaryConditionAtClosestNode>(
+					problem->getFiniteElementDiscretizationPointer(), p2, 1));
+		problem->addBoundaryCondition(
+				std::make_unique<
+				mfem_mgis::ImposedDirichletBoundaryConditionAtClosestNode>(
+					problem->getFiniteElementDiscretizationPointer(), p3, 1));
+		return problem;
+	}
+
+	static std::shared_ptr<mfem_mgis::NonLinearEvolutionProblem> buildMicromorphicProblem(
+			const mfem_mgis::Parameters& common_problem_parameters) {
+
+		START_TIMER("fissuration::buildMicromorphicProblem");
+		//  1/(2*E)*smax**2*lc = Gc
+		constexpr auto Gc = mfem_mgis::real{5};
+		constexpr auto DGc = mfem_mgis::real{0.5};
+		//  constexpr auto l0 = mfem_mgis::real{60e-5};
+		constexpr auto l0 = mfem_mgis::real{30e-5};
+		constexpr auto beta = mfem_mgis::real{300};
+		auto lparameters = common_problem_parameters;
+		lparameters.insert({{"UnknownsSize", 1}});
+		auto problem =
+			std::make_shared<mfem_mgis::NonLinearEvolutionProblem>(lparameters);
+		problem->addBehaviourIntegrator("MicromorphicDamage", "Fuel",
+				"src/libBehaviour.so",
+				"AT1MicromorphicDamage");
+		auto& m = problem->getMaterial("Fuel");
+		// material properties
+		for (const auto& mp :
+				std::map<std::string, double>{{"CharacteristicLength", l0},
+				{"PenalisationFactor", beta}}) {
+								       mgis::behaviour::setMaterialProperty(m.s0, mp.first, mp.second);
+								       mgis::behaviour::setMaterialProperty(m.s1, mp.first, mp.second);
+							       }
+		std::default_random_engine Gc_generator;
+		std::normal_distribution<double> Gc_distribution(Gc,DGc);
+		auto Gc_mp = mfem_mgis::PartialQuadratureFunction::evaluate(
+				problem->getMaterial("Fuel").getPartialQuadratureSpacePointer(),
+				[&Gc_generator, &Gc_distribution](const mfem_mgis::real,
+					const mfem_mgis::real,
+					const mfem_mgis::real) {
+
+				return std::max(Gc_distribution(Gc_generator), Gc - 3 * DGc);
+				});
+		mgis::behaviour::setMaterialProperty(m.s0, "FractureEnergy", Gc_mp->getValues());
+		mgis::behaviour::setMaterialProperty(m.s1, "FractureEnergy", Gc_mp->getValues());
+		mgis::behaviour::setExternalStateVariable(m.s0, "Temperature", 293.15);
+		mgis::behaviour::setExternalStateVariable(m.s1, "Temperature", 293.15);
+		mgis::behaviour::setExternalStateVariable(m.s0, "EnergyReleaseRate", 0);
+		return problem;
+	}
+
 
 	template<typename Solver, typename Pc>
 		int kernel(const TestParameters& p, const bool use_post_processing, const solver_name a_solv, const precond_name a_precond, gather_information& a_info)
@@ -125,8 +222,8 @@ namespace fissuration
 				auto micromorphic_problem_initial_residual = mfem_mgis::real{};
 
 				// set solver and preconditionner
-				setLinearSolver(*micromorphic_problem, a_solv, a_precond);
-				setLinearSolver(*mechanical_problem, a_solv, a_precond);
+				setLinearSolver(*mechanical_problem, a_solv, a_precond, mfem_mgis::real{1e-8}, mfem_mgis::real{1e-6});
+				setLinearSolver(*micromorphic_problem, a_solv, a_precond, mfem_mgis::real{0}, mfem_mgis::real{1e-6});
 
 				// alternate miminisation algorithm
 				while (!converged) {
@@ -134,6 +231,21 @@ namespace fissuration
 					if(mfem_mgis::getMPIrank() == 0) {
 						std::cout << "time step " << i  //
 							<< ", alternate minimisation iteration, " << iter << '\n';
+					}
+					if (iter == 0) {
+						mechanical_problem->setSolverParameters({{"AbsoluteTolerance", 1e-10},
+								{"RelativeTolerance", reps}});
+						micromorphic_problem->setSolverParameters({{"AbsoluteTolerance", 1e-10},
+								{"RelativeTolerance", reps}});
+					} else {
+						mechanical_problem->setSolverParameters(
+								{{"AbsoluteTolerance",
+								mechanical_problem_initial_residual * reps},
+								{"RelativeTolerance", reps}});
+						micromorphic_problem->setSolverParameters(
+								{{"AbsoluteTolerance",
+								micromorphic_problem_initial_residual * reps},
+								{"RelativeTolerance", reps}});
 					}
 
 					// solving the mechanical problem

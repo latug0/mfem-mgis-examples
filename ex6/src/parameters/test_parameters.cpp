@@ -1,6 +1,6 @@
-#include "test_parameters.hpp"
-#include <cas_cible_1.hxx>
-#include <fissuration.hxx>
+#include <parameters/test_parameters.hpp>
+#include <test-cases/cas_cible_1.hxx>
+#include <test-cases/fissuration.hxx>
 
 void common_parameters(mfem::OptionsParser& args, TestParameters& p)
 {
@@ -31,6 +31,28 @@ void common_parameters(mfem::OptionsParser& args, TestParameters& p)
 		args.PrintOptions(std::cout);
 }
 
+markdown_reader_parameters markdown_reader_parameters_with_parse(int& argc, char* argv[])
+{
+	START_TIMER("reader_parameters_with_parse");
+	
+	mfem::OptionsParser args(argc, argv);
+	
+	// default value are start = 1 to last = 1024 
+	markdown_reader_parameters obj;
+	
+	// options
+	args.AddOption(&obj.start, "-s", "--start", "number of mpi processes of the first collect file");
+	args.AddOption(&obj.last, "-l", "--last", "number of mpi processes of the last collect file");
+	
+	args.Parse();
+	if (!args.Good()) {
+		if (mfem_mgis::getMPIrank() == 0)
+			args.PrintUsage(std::cout);
+		mfem_mgis::finalize();
+		exit(0);
+	}
+	return obj;
+}
 
 TestParameters parseCommandLineOptions(int& argc, char* argv[]) {
 	START_TIMER("parse_command_line_options");
@@ -78,63 +100,6 @@ TestParameters parseCommandLineOptions_one_test(int& argc, char* argv[]) {
 	return p;
 }
 
-std::vector<solver_name> get_solvers(int a_case)
-{
-	switch(a_case)
-	{
-		case 1: return cas_cible_1::build_solvers_list();
-		case 2: return fissuration::build_solvers_list();
-		default: return cas_cible_1::build_solvers_list();
-	}
-}
-
-std::vector<precond_name> get_pc(int a_case)
-{
-	switch(a_case)
-	{
-		case 1: return cas_cible_1::build_pc_list();
-		case 2: return fissuration::build_pc_list();
-		default: return cas_cible_1::build_pc_list();
-	}
-}
 
 
-std::function<bool(solver_name,precond_name)> get_match(int a_case)
-{
-	switch(a_case)
-	{
-		case 1: return cas_cible_1::match;
-		case 2: return fissuration::match;
-		default: return cas_cible_1::match;
-	}
-}
 
-std::vector<petsc_ksp_type> get_solvers_with_petsc(int a_case)
-{
-	switch(a_case)
-	{
-		case 1: return cas_cible_1::build_solvers_list_with_petsc();
-		case 2: return fissuration::build_solvers_list_with_petsc();
-		default: return cas_cible_1::build_solvers_list_with_petsc();
-	}
-}
-
-std::vector<petsc_pc_type> get_pc_with_petsc(int a_case)
-{
-	switch(a_case)
-	{
-		case 1: return cas_cible_1::build_pc_list_with_petsc();
-		case 2: return fissuration::build_pc_list_with_petsc();
-		default: return cas_cible_1::build_pc_list_with_petsc();
-	}
-}
-
-std::function<bool(petsc_ksp_type,petsc_pc_type)> get_match_with_petsc(int a_case)
-{
-	switch(a_case)
-	{
-		case 1: return cas_cible_1::match_with_petsc;
-		case 2: return fissuration::match_with_petsc;
-		default: return cas_cible_1::match_with_petsc;
-	}
-}

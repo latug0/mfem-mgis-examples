@@ -1,7 +1,7 @@
 #pragma once
 
-#include <mfem_mgis_headers.hxx>
-#include <data_gathering.hxx>
+#include <common/mfem_mgis_headers.hxx>
+#include <common/data_gathering.hxx>
 
 namespace common
 {

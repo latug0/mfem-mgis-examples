@@ -1,4 +1,4 @@
-#include "precond_name.hxx"
+#include <solver/precond_name.hxx>
 
 namespace configuration
 {

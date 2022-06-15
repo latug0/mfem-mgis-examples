@@ -1,8 +1,8 @@
 #pragma once
 
-#include<precond_name.hxx>
-#include<solver_name.hxx>
-#include<timer.hpp>
+#include<solver/precond_name.hxx>
+#include<solver/solver_name.hxx>
+#include<common/timer.hpp>
 
 using namespace configuration;
 

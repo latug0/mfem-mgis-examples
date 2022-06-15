@@ -1,36 +1,15 @@
-/*!
- * \file   InclusionsEx.cxx
- * \brief
- * This example is modelling several inclusion within a periodic cube.
- *
- * Mechanical strain:
- *                 eps = E + grad_s v
- *
- *           with  E the given macrocoscopic strain
- *                 v the periodic displacement fluctuation
- * Displacement:
- *                   u = U + v
- *
- *           with  U the given displacement associated to E
- *                   E = grad_s U
- * The local microscopic strain is equal, on average, to the macroscopic strain:
- *           <eps> = <E>
- * \author Thomas Helfer, Guillaume Latu
- * \date   02/06/10/2021
- */
-
-
-#include "test_parameters.hpp"
-#include "timer.hpp"
-#include "solver_name.hxx"
-#include "precond_name.hxx"
-#include "config_solver.hxx"
-#include "data_gathering.hxx"
+#include <parameters/test_parameters.hpp>
+#include <common/timer.hpp>
+#include <solver/solver_name.hxx>
+#include <solver/precond_name.hxx>
+#include <solver/config_solver.hxx>
+#include <common/data_gathering.hxx>
 #include <functional>
 
 // TEST CASE
-#include <cas_cible_1.hxx>
-#include <fissuration.hxx>
+#include <test-cases/cas_cible_1.hxx>
+#include <test-cases/fissuration.hxx>
+#include <parameters/catch_functions.hxx>
 
 
 int try_several_solvers(TestParameters& p, const bool use_post_processing)

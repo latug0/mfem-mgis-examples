@@ -1,12 +1,12 @@
 #pragma once
 
-#include <timer.hpp>
-#include <test_parameters.hpp>
-#include <solver_name.hxx>
-#include <precond_name.hxx>
-#include <config_solver.hxx>
-#include <data_gathering.hxx>
-#include <common.hxx>
+#include <common/timer.hpp>
+#include <parameters/test_parameters.hpp>
+#include <solver/solver_name.hxx>
+#include <solver/precond_name.hxx>
+#include <solver/config_solver.hxx>
+#include <common/data_gathering.hxx>
+#include <common/common.hxx>
 
 namespace cas_cible_1
 {

@@ -1,4 +1,4 @@
-#include "solver_name.hxx"
+#include <solver/solver_name.hxx>
 
 namespace configuration
 {

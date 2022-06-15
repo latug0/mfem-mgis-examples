@@ -1,4 +1,4 @@
-#include "data_gathering.hxx"
+#include <common/data_gathering.hxx>
 
 using namespace configuration;
 
