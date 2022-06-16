@@ -267,12 +267,12 @@
     \item Ease the spread of the tool within industry, dodge the silos due to funding within companies
     \end{itemize}
 \bigskip
-    \item  Lesson learned from \texttt{Mfront} developped at CEA\\\hspace*{1cm}opensource since 2014
+    \item  Lesson learned from \texttt{Mfront} developped at CEA\\\hspace*{1cm}opensource since 2014 (cf. poster session)
     \begin{itemize}
     \item ease the access to the tool: increase in visibility, reproducibility, credibility
     \item software engineering: users help you to improve the software (bug report) and robustness
     \item other codes that use your product: opportunity for partnership, publications
-    \item extra work, need to book time for: minimal support, documentation, training
+    \item extra work, need to book time for: minimal user support, documentation, training
     \end{itemize}
   \end{itemize}
   \end{minipage}}
@@ -322,9 +322,9 @@ Example of end-user API}
   \end{center}
   \begin{itemize}
     \item Instantiating \scalebox{0.8}{\texttt{NonLinearEvolutionProblem}} class is the
-    main entry point.
+    main entry point
     \item \textbf{Behaviour integrator} is the main new
-    concept of {\tt MFEM/MGIS} .
+    concept of {\tt MFEM/MGIS}
   \end{itemize}
 \end{frame}
 
@@ -334,28 +334,28 @@ Example of end-user API}
 \begin{frame}[fragile]{\texttt{MFEM} library}
 \begin{itemize}
 \item
-  Main features
-  \begin{itemize}
+  Main features \hspace*{2mm} {\small \url{https://mfem.org/}}
+  \begin{itemize} 
   \item
-    C++, opensource FEM library. Large community. \hspace*{2mm} {\small \url{https://mfem.org/}}.
+    C++, opensource FEM library. Large community 
   \item
-    High-order finite element meshes and spaces.
+    \textbf{High-order} finite element meshes and spaces
   \end{itemize}
 \end{itemize}
 \vspace*{1mm}
 \begin{itemize}
-\item  HPC oriented
+\item  \textbf{HPC} oriented
  \begin{itemize}
   \item
-    Scales to hundreds of thousands of cores.
+    Scales to hundreds of thousands of cores
   \item
-    Many hardware devices are supported, such as GPUs.
+    Many hardware devices are supported, such as GPUs
   \item
-    Minimal changes to switch from serial to parallel version.
+    Minimal changes to switch from serial to parallel version
   \item
-    Top-notch optimizations for speeding up computations.
+    Top-notch optimizations for speeding up computations
   \item
-    Able to call many standard linear solvers (Hypre, PETSC, \ldots).
+    Able to call many standard linear solvers (Hypre, PETSC, \ldots)
   \end{itemize}
 \end{itemize}
 \vspace*{1mm}
@@ -365,13 +365,13 @@ Example of end-user API}
   \begin{itemize}
   \item
     Triangular, quadrilateral, tetrahedral, wedge, and hexahedral
-    elements.
+    elements
   \item
-    Periodic meshes.
+    \textbf{Periodic} meshes
   \item
-    Conforming and nonconforming adaptive mesh refinement.
+    Conforming and nonconforming adaptive mesh refinement
   \item
-    Parallel load balancing (several methods).
+    Parallel \textbf{load balancing} (several methods)
   \end{itemize}
 \end{itemize}
 \vspace*{1mm}
@@ -383,13 +383,13 @@ Example of end-user API}
     handled by \textbf{non linear form integrators} which describes how
     to build the element contribution to the \emph{residual} and its
     \emph{jacobian}.\\
-    \hspace*{0.333em}\hspace*{0.333em}Glue with \texttt{MGIS} is here.
+    \hspace*{0.333em}\hspace*{0.333em}Glue with \texttt{MGIS} is here
   \end{itemize}
 \end{itemize}
-\begin{textblock}{.15}(0.8,0.23)
+\begin{textblock}{.15}(0.8,0.13)
     \includegraphics[width=\textwidth]{img/amr1.png}
 \end{textblock}
-\begin{textblock}{.19}(0.79,0.44)
+\begin{textblock}{.19}(0.79,0.34)
     \includegraphics[width=\textwidth]{img/ex21.png}
 \end{textblock}
 
@@ -403,7 +403,7 @@ Example of end-user API}
   \begin{itemize}
     \item The {\tt MGIS} project provides classes on the solver
     side to retrieve {\bf metadata} from an {\tt MFront} behaviour and
-    call the behaviour integration over a time step.
+    call the behaviour integration over a time step
     \item Written in \texttt{C++}. Bindings exists for
     \texttt{C}, \texttt{Fortran2003}, \texttt{python}, \texttt{Julia}.
     \item Used/tested in \texttt{mgis.fenics},
@@ -416,42 +416,47 @@ Example of end-user API}
 
 \begin{frame}[fragile]{The
     added value of \mmm{}}
+  \scalebox{0.85}{
+    \begin{minipage}{1.2\linewidth}
   \begin{itemize}
-    \item Statement:
+    \item Statements
     \begin{itemize}
       \item \emph{Poor} support of multiple materials in
-      \texttt{MFEM} for solid mechanics.
+      \texttt{MFEM} for solid mechanics
       \item \emph{No} support for functions on integration
-      points for a given material (element attribute).
+      points for a given material (element attribute)
     \end{itemize}
-    \item Proposed improvements for \mmm{}:
+    \smallskip
+    \item Improvements made by \mmm{}
     \begin{itemize}
-      \item Add support for non linear behaviour integrators
-      based on \texttt{MFront}.
-      \item Add functions on integration points that depends on
-      material identifier (element attribute).
-      \item Simplified High-level API for end users (mechanics)
+      \item Support for non linear behaviour integrators
+      based on \texttt{MFront}
+      \item Support for functions on integration points that depends on
+      material identifier
+    \item Simplified High-level API for end users (mechanics)
+    \item Support for the MED mesh file format (needed for EDF/CEA partnership)
+    \item [TODO] Support for complex boundary conditions specific to nonlinear mechanics
     \end{itemize}
-    \item In practice:
-    \begin{itemize}
-      \item \mmm{} is a library made up of
+    \smallskip
+    \item In practice, \mmm{} is a library made up of
       \begin{enumerate}
         
-        \item Classes that inherit from \texttt{MFEM}:\\ loops
+        \item Classes that inherit from \texttt{MFEM}\\\hspace*{6mm} loops
         on elements, linear \& non-linear solvers, mesh management\ldots{}
-        \item Classes that inherit from \texttt{MGIS}:
+        \item Classes that inherit from \texttt{MGIS}\\\hspace*{6mm}
         materials management, internal variables, fill matrix
         entries\ldots{}
         \item Procedures for the end user to interact with MFEM
         \& MGIS
       \end{enumerate}
-    \end{itemize}
-    \item \mmm{} is a C++17 opensource library:
+    \smallskip
+    \item \mmm{} is a C++17 opensource library
     \begin{itemize}
       \item \url{https://github.com/thelfer/mfem-mgis}
       \item \url{https://github.com/latug0/mfem-mgis-examples}
     \end{itemize}
   \end{itemize}
+  \end{minipage}}
 \end{frame}
 
 \begin{frame}{The
@@ -565,35 +570,35 @@ Example of end-user API}
 \begin{frame}{Behaviour
     integrators}
   \begin{itemize}
-    \item Behaviour integrators are meant to:
+    \item Behaviour integrators are meant to
     \begin{itemize}
       \item Compute the gradients from unknowns (using the
-      \(B\) matrix).
-      \item Handle the state variables.
-      \item Call the behaviour integration.
+      \(B\) matrix)
+      \item Handle the state variables
+      \item Call the behaviour integration
       \item Compute the inner forces from the thermodynamic
-      forces.
+      forces
       \item Compute the stiffness matrix from the consistent
-      tangent operator blocks.
+      tangent operator
     \end{itemize}
   \end{itemize}
   \begin{itemize}
-    \item All those steps depends on:
+    \item All those steps depends on
     \begin{itemize}
       \item Kind of problem described (mechanics, heat
-      transfer).
+      transfer)
       \item Symmetry of the material (isotropic or
-      orthotropic).
+      orthotropic)
       \item Modelling hypotheses: \(3D\), plane strain,
       plane stress, axisymmetry \ldots
     \end{itemize}
   \end{itemize}
   \begin{itemize}
     \item The writting of behaviour integrators is tedious and
-    error-prone and shall be done with care.
+    error-prone and shall be done with care
     \begin{itemize}
       \item However, specific behaviour integrators gives
-      access to pieces of physics.
+      access to pieces of physics
       \item Code generation to the rescue !
     \end{itemize}
   \end{itemize}
@@ -605,9 +610,9 @@ Example of end-user API}
   \begin{itemize}
     \item Aim of this code-generator
     \begin{itemize}
-      \item Generate behaviour integrators from definition of the gradients.
-      \item Automated code factorisation/optimisation (no sparse matrix multiply).
-      \item Avoid coding errors due to tedious formula.
+      \item Generate behaviour integrators from definition of the gradients
+      \item Automated code factorisation/optimisation (no sparse matrix multiply)
+      \item Avoid coding errors due to tedious formula
     \end{itemize}
     \item Machinery
     \begin{itemize}
@@ -615,14 +620,14 @@ Example of end-user API}
       computations in \texttt{C++}
       \item Current scope: isotropic and orthotropic, small
       and finite strain behaviours in plane strain, plane stress and
-      tridimensional hypotheses.
+      tridimensional hypotheses
     \end{itemize}
     \item Extensions (to come)
     \begin{itemize}
       \item Support of axisymmetry
-      \item Non linear heat transfer, non linear diffusion.
+      \item Non linear heat transfer, non linear diffusion
       \item Can be extended to other non-linear models, wide
-      range of phenomena.
+      range of phenomena
     \end{itemize}
   \end{itemize}
 \end{frame}
@@ -635,19 +640,19 @@ Example of end-user API}
   \begin{itemize}
     \item The integration of the mechanical behaviour is a {\bf
       complex} kernel solving a system of ordinary differential
-    equations which can {\bf fail}.
+    equations which can {\bf fail}
     \item Problem: the {\tt
       NonlinearFormIntegrator::AssembleElementVector} and {\tt
       NonlinearFormIntegrator::AssembleElementGrad} does not handle
-    failures.
+    failures
     \item As a work-around, we derived our own Newton
     algorithm which separates the behaviour integration step from
-    residual and stiffness assemblies.
+    residual and stiffness assemblies
     \begin{itemize}
       \item This solution seems compatible with
-      partial assembly (untested).
+      partial assembly (untested)
       \item This work-around  {\bf does not work with {\tt
-        PETSc}}.
+        PETSc}}
     \end{itemize}
     \item More generally, we started a discussion on
     how to improve the robustness of operators in {\tt MFEM}:
@@ -667,18 +672,55 @@ Example of end-user API}
     the first iteration:
     \begin{itemize}
       \item The problem becomes more and more import as the
-      mesh is refined.
+      mesh is refined
       \item In finite strain, this leads to severe divergence
-      of the Newton algorithm du to the geometric stiffness matrix.
+      of the Newton algorithm du to the geometric stiffness matrix
     \end{itemize}
     \item In most \textbf{mechanical} solvers, a \textbf{prediction} of the
-    solution based on the tangent problem is performed.
+    solution based on the tangent problem is performed
     \begin{itemize}
-      \item We were not able to implement this prediction so far.
+      \item We were not able to implement this prediction so far
       \item \url{https://github.com/mfem/mfem/issues/2174}
     \end{itemize}
   \end{itemize}
 }
+
+\section{European project - OperaHPC}
+\Intercalaire{European project - OperaHPC}
+
+\begin{frame}{{\small OPEn HPC theRmo-mechanical tools for the development of eAtf fuels}\\\hspace*{1cm}OperaHPC}
+\begin{textblock}{.94}(0.02,0.1)
+  \begin{block}{European project}
+    \small
+    \begin{itemize}
+      \itemsep 0pt
+      \parskip 0pt
+      \item Duration nov 2022 -> 2027
+      \item Focus: Advanced simulation tools enabling \textbf{3D representation} of fuel rod
+      \item Consortium: France, Italy, UK, Switzerland, Czech Republic, Sweden ...
+    \end{itemize}
+  \end{block}
+\end{textblock}
+\begin{textblock}{.94}(0.02,0.34)
+  \begin{block}{Aims}
+    \small
+    \begin{itemize}
+      \itemsep 0pt
+      \parskip 0pt
+    \item \textbf{Open-source} tools enabling direct or indirect use in industrial context
+    \item Research \& training activities, better \textbf{knowledge} of fuel rods \& fuel behavior
+    \item Support for \textbf{safe operation} of existing nuclear power plants
+    \end{itemize}
+  \end{block}
+\end{textblock}
+\begin{textblock}{.7}(0.36,0.58)
+\includegraphics[trim = .1cm .25cm .02cm .2cm,clip,width=3cm]{img/members_operahpc.png}\\[-2mm]
+\hspace*{7mm}\scalebox{0.8}{\footnotesize Consortium}
+\end{textblock}
+
+
+\end{frame}
+
 
 \section{Examples}
 \Intercalaire{Examples}
@@ -814,7 +856,7 @@ Example of end-user API}
     \begin{itemize}
       \item High level declarative API suitable for
       engineering studies\\\hspace*{1cm} and upcoming integration in the {\tt PLEIADES}
-      platform.
+      middleware
       \begin{itemize}
         \item {\tt MFEM}' API still accessible user a lower
         level API (not shown here)
@@ -824,27 +866,28 @@ Example of end-user API}
       finite strain behaviours:
       \begin{itemize}
         \item All behaviours are set at runtime
-        (dynamically loaded libraries).
+        (dynamically loaded libraries)
       \end{itemize}
     \end{itemize}
-    \vspace*{8mm}
+    \vspace*{6mm}
     \item What comes next ?
     \begin{itemize}
-      \item Overall robustness of the code (critical).
-      \item Prediction and handling of the Dirichlet \\\hspace*{1cm}boundary
-      conditions (critical).
-      \item Provide more examples (urgent).
+      \item Overall robustness of the code
+      \item Setup extensive continuous integration
+      \item Prediction and handling of the Dirichlet BC
+      \item Provide more examples
+      \item Chekpoint/restart
       \item Extension to other physical phenomea (non linear
       heat-transfer, diffusion, non local mechanics). \textit{Should be
-        easy} using code generation of behaviour integrators .
+        easy} using code generation of behaviour integrators
       \item Adaptative mesh refinements (requires new data
-      structures in MGIS).
+      structures in MGIS)
       \item Additional boundary conditions, including contact
-      with friction.
+      with friction
       \item Port to GPUs (requires tremendous work on the
-      MFront and MGIS side).
-      \item Support for partial assembly (if possible ...),
-      chekpoint/restart.
+      MFront and MGIS side)
+      \item Support for partial assembly (if possible ...)
+      
     \end{itemize}
   \end{itemize}
     \end{minipage}}
@@ -859,29 +902,27 @@ Example of end-user API}
     \begin{minipage}[h]{0.75\textwidth}
       \begin{center}
         \textcolor{white}{ Thank you for your
-          attention.\\ Time for discussion !\\
+          attention.\\ Time for discussion !\\[6mm]
           \small{\url{https://github.com/thelfer/mfem-mgis}}\\
+          \small{\url{https://github.com/latug0/mfem-mgis-examples}}\\
           \small{\url{https://github.com/thelfer/MFrontGenericInterfaceSupport}}\\
-          \small{\url{https://github.com/thelfer/mfem-mgis}}\\
           \small{\url{https://tfel.sourceforge.net}}\\
           \small{\url{https://www.researchgate.net/project/TFEL-MFront}}\\
-          \small{\url{https://twitter.com/TFEL_MFront}}\\
-          \small{\href{mailto:tfel-contact@cea.fr}{tfel-contact@cea.fr}}
         }
       \end{center}
     \end{minipage}
   }
-  \hspace*{-5cm}
+%  \hspace*{-5cm}
 %  \vspace{-1.5cm}
-  \scalebox{1}{
-    \begin{minipage}[h]{0.95\textwidth}
-      \textcolor{white}{The development
-        of \texttt{MFront} is supported \\
-        financially by CEA, EDF and Framatome \\
-        in the framework of the \texttt{PLEIADES} project.
-      }
-    \end{minipage}
-  }
+%  \scalebox{1}{
+%    \begin{minipage}[h]{0.95\textwidth}
+%      \textcolor{white}{The development
+%        of \texttt{MFront} is supported \\
+%        financially by CEA, EDF and Framatome \\
+%        in the framework of the \texttt{PLEIADES} project.
+%      }
+%    \end{minipage}
+%  }
 }
 
 \backupbegin
