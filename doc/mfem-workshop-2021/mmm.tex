@@ -931,7 +931,7 @@ Example of end-user API}
     REV\\\hspace*{1cm}{\small Large runs on 65k cores}}
 \begin{textblock}{.92}(0.02,0.11)
   \scalebox{0.8}{
-    \begin{minipage}{1.2\linewidth}
+    \begin{minipage}{1.28\linewidth}
   \begin{block}{MFEM iterative solvers and preconditioners}
     \begin{itemize}
       \item Investigate several solvers in MFEM\\[-1mm]
@@ -940,30 +940,41 @@ Example of end-user API}
       \item While direct solvers represent a fallback solution\\[-1mm]
       \hspace*{8mm}\scalebox{0.8}{iterative solvers deals with largest systems} \\[-1mm] 
       \hspace*{8mm}\scalebox{0.8}{finding good preconditionners is a key}
-      \item Strong scaling benchmark (CEA/CCRT AMD Milan architecture). $400\ 10^6$ unknowns
+      \item Strong scaling benchmark \scalebox{0.8}{(CEA/CCRT AMD Milan architecture)} \\[-1mm] 
+      \hspace*{8mm}\scalebox{0.8}{ $400\ 10^6$ unknowns}
     \end{itemize}
   \end{block}
   \end{minipage}}
 \end{textblock}
-\begin{textblock}{.98}(0.0,0.51)
-\includegraphics[height=3.6cm]{ver/timer-r3.pdf}
+\begin{textblock}{.48}(0.0,0.51)
+\includegraphics[height=3.6cm]{ver/speedup-r3.pdf}\\[-3mm]
+\hspace*{3mm}\scalebox{0.7}{Very good scalability up to \textbf{16k} cores}\\[-1.5mm]
+\hspace*{3mm}\scalebox{0.7}{Even superlinear for HyperPCG-HypreDiagScale}
 \end{textblock}
-\begin{textblock}{.98}(0.58,0.51)
-\includegraphics[trim = .1cm .1cm 7.9cm .1cm,clip,height=3.6cm]{ver/speedup-r3.pdf}
+\begin{textblock}{.48}(0.58,0.51)
+\includegraphics[trim = .1cm .1cm 7.9cm .1cm,clip,height=3.6cm]{ver/timer-r3.pdf}\\[-3mm]
+\hspace*{-.5mm}\scalebox{0.7}{\textbf{MINRES+HyperILU} minimizes time to solution}
+\end{textblock}
+\begin{textblock}{.38}(0.72,0.189)
+\includegraphics[trim = 2.9cm .1cm 1.cm .1cm,clip,width=3.cm]{ver/vue2.png}\\[-1mm]
+\hspace*{3mm}\scalebox{0.7}{3D periodic setting}
 \end{textblock}
 \end{frame}
 
 \begin{frame}{Phase-field modelling}
   \begin{block}{Modelling fuel pellet fragmentation during reactor start-up}
+  \scalebox{0.8}{
+    \begin{minipage}{1.28\linewidth}
     \begin{itemize}
-      \item Using phase-field approach
+      \item Implementing phase-field approach
       \begin{itemize}
-      \item Several phase-field models have been tested AT1, AT2, Lorentz...
-      \item Micromorphic damage approach (David Siedel PhD work)
+      \item Some phase-field models have been previously tested:  AT1, AT2, Lorentz
+      \item Micromorphic damage approach used here (David Siedel PhD work - CEA)
       \item Exact treatment of the irreversibility constraint at integration points
       \end{itemize}
       \item $132\ 10^6$\,nodes, $400\ 10^6$ unknowns, \textbf{2500} cores \scalebox{0.8}{(CEA/CCRT computing facility)}
     \end{itemize}
+    \end{minipage}}
   \end{block}
   \begin{block}{Numerical results}
     \hspace*{1cm}\includegraphics[width=0.3\textwidth]{graphics/damag1.png}
