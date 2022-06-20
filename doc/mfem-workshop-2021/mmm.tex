@@ -395,7 +395,10 @@ Example of end-user API}
 \end{textblock}
 \end{frame}
 
-\begin{frame}[fragile]{Motivations for choosing \texttt{MFEM} }
+\begin{frame}[fragile]{Motivations for choosing \texttt{MFEM}}
+\vspace*{2mm}
+\scalebox{0.85}{
+\begin{minipage}{1.15\linewidth}
 \begin{itemize}
 \item Many linear solvers available in \texttt{MFEM}
   \begin{itemize} 
@@ -404,7 +407,7 @@ Example of end-user API}
   \item matrix-free approach
   \item GPU versions proposed
   \end{itemize}
-\vspace*{1mm}
+\vspace*{.5mm}
 \item Highly configurable through \texttt{spack} tool
  \begin{itemize}
   \item ease installation and configuration of the software stack
@@ -412,26 +415,30 @@ Example of end-user API}
   \item opensource and include recent versions of software
   \item bring performance and low maintenance efforts
   \end{itemize}
-\vspace*{1mm}
+\vspace*{.5mm}
 \item Software lifecycle
   \begin{itemize}
   \item the community helps to identify bugs and to propose solutions
   \item maintenance is offered
   \item access to release version (every year) and master version
   \end{itemize}
+\vspace*{.5mm}
 \item Opensource
   \begin{itemize}
-  \item community is large
+  \item community of \texttt{MFEM} is large\\
+  $\rightarrow$ brings extensive community support (github issues)
   \item license is compatible with our usage
-  \item foster collaborations
+  \item foster collaborations\\
+  $\rightarrow$ MFEM workshop (cf s.13), EU project OperaHPC (cf s.14)
   \end{itemize}
 \end{itemize}
+\end{minipage}}
 
-\begin{textblock}{.19}(0.8,0.12)
-    \includegraphics[width=\textwidth]{img/github.png}
+\begin{textblock}{.19}(0.8,0.72)
+    \includegraphics[trim = 0cm 1.5cm 0cm 1.cm,clip,width=\textwidth]{img/github.png}
 \end{textblock}
 
-\begin{textblock}{.24}(0.75,0.5)
+\begin{textblock}{.24}(0.75,0.43)
     \includegraphics[trim = 0cm 1.5cm 0cm 1.5cm,clip,width=\textwidth]{img/spack.jpg}
 \end{textblock}
 
@@ -449,7 +456,7 @@ Example of end-user API}
   \begin{itemize}
   \item Provides classes to retrieve {\bf metadata} from an {\tt MFront} behaviour and
     call the behaviour integration over a time step
-  \item Provides way to \textbf{ease memory management}: internal state variables
+  \item Provides way to \textbf{ease memory management}: deal with internal state variables
   \item Written in \texttt{C++}, bindings exists for
     \texttt{C}, \texttt{Fortran2003}, \texttt{python}, \texttt{Julia}
   \end{itemize}
@@ -463,7 +470,7 @@ Example of end-user API}
 \end{frame}
 
 \begin{frame}[fragile]{The
-    added value of \mmm{}}
+    added value of \mmm{}\\\hspace*{8mm}\scalebox{0.6}{\longmmm{}}}
   \scalebox{0.85}{
     \begin{minipage}{1.2\linewidth}
   \begin{itemize}
@@ -817,33 +824,33 @@ Example of end-user API}
 \end{frame}
 
 
-%\begin{frame}{Periodic
-%    Representative Volume Element (RVE)\\\hspace*{1cm}
-%    Pratical setting}
-%  \begin{block}{Test
-%      case setting - elastic model}
-%    \protect\hypertarget{test-case-setting---elastic-model}{}
-%    \begin{itemize}
-%      \item Two isotropic materials, each one filling half of
-%      a cube
-%      \item Aim : compare against \textbf{\mmm{}}
-%      results against \textbf{analytical} results
-%      \begin{itemize}
-%        \item considering 3 cases with uniaxial strain
-%        \item considering 3 cases with shear test
-%      \end{itemize}
-%    \end{itemize}
-%  \end{block}
-%  \begin{block}{Mesh
-%      and result} \vspace*{-5mm}
-%    \includegraphics[width=0.33\textwidth]{img/cube_2mat.png}
-%    \includegraphics[width=0.49\textwidth]{img/cube_2mat_exx.png}
-%    \vspace*{-1mm}
-%  \end{block}
-%\end{frame}
+\begin{frame}{Periodic
+    Representative Elementary Volume  (REV)\\\hspace*{1cm}
+    Pratical setting}
+  \begin{block}{Test
+      case setting - elastic model}
+    \protect\hypertarget{test-case-setting---elastic-model}{}
+    \begin{itemize}
+      \item Two isotropic materials, each one filling half of
+      a cube
+      \item Aim : compare against \textbf{\mmm{}}
+      results against \textbf{analytical} results
+      \begin{itemize}
+        \item considering 3 cases with uniaxial strain
+        \item considering 3 cases with shear test
+      \end{itemize}
+    \end{itemize}
+  \end{block}
+  \begin{block}{Mesh
+      and result} \vspace*{-5mm}
+    \includegraphics[width=0.33\textwidth]{img/cube_2mat.png}
+    \includegraphics[width=0.49\textwidth]{img/cube_2mat_exx.png}
+    \vspace*{-1mm}
+  \end{block}
+\end{frame}
 
 \begin{frame}{Periodic
-    RVE - Numerical results on 32 cores}
+    REV - Numerical results on 32 cores}
   \begin{block}{Properties}
     \begin{itemize}
       \item 14 million unknowns, elastic modelling
@@ -906,7 +913,7 @@ Example of end-user API}
     \begin{itemize}
       \item Using as input : 3D periodic \texttt{gmsh} meshes\\[-1mm]
       \hspace*{8mm}\scalebox{0.8}{we made a public MFEM contribution to add capabilities} 
-      \item Read/write MED I/O file format \scalebox{0.8}{(private development, not shared)}
+      \item Read/write MED I/O file format \scalebox{0.8}{(development is not publicly disclosed)}
       \item In progress : using \texttt{gmsh} to generate large REV meshes (\texttt{gmsh} format)\\[-1mm]
       \hspace*{8mm}\scalebox{0.8}{including second order meshes} 
     \end{itemize}
@@ -917,6 +924,32 @@ Example of end-user API}
   \end{minipage}}
 \begin{textblock}{.2}(0.73,0.62)
 \includegraphics[width=\textwidth]{img/polydisperse.png}
+\end{textblock}
+\end{frame}
+
+\begin{frame}{Periodic
+    REV\\\hspace*{1cm}{\small Large runs on 65k cores}}
+\begin{textblock}{.92}(0.02,0.11)
+  \scalebox{0.8}{
+    \begin{minipage}{1.2\linewidth}
+  \begin{block}{MFEM iterative solvers and preconditioners}
+    \begin{itemize}
+      \item Investigate several solvers in MFEM\\[-1mm]
+      \hspace*{8mm}\scalebox{0.8}{checking which solvers is most adequate for each test case} \\[-1mm] 
+      \hspace*{8mm}\scalebox{0.8}{is proposing to branch to many MFEM solvers already}
+      \item While direct solvers represent a fallback solution\\[-1mm]
+      \hspace*{8mm}\scalebox{0.8}{iterative solvers deals with largest systems} \\[-1mm] 
+      \hspace*{8mm}\scalebox{0.8}{finding good preconditionners is a key}
+      \item Strong scaling benchmark (CEA/CCRT AMD Milan architecture). $400\ 10^6$ unknowns
+    \end{itemize}
+  \end{block}
+  \end{minipage}}
+\end{textblock}
+\begin{textblock}{.98}(0.0,0.51)
+\includegraphics[height=3.6cm]{ver/timer-r3.pdf}
+\end{textblock}
+\begin{textblock}{.98}(0.58,0.51)
+\includegraphics[trim = .1cm .1cm 7.9cm .1cm,clip,height=3.6cm]{ver/speedup-r3.pdf}
 \end{textblock}
 \end{frame}
 
@@ -970,15 +1003,15 @@ Example of end-user API}
       \item Overall robustness of the code
       \item Setup extensive continuous integration
       \item Prediction and handling of the Dirichlet BC
-      \item Provide more examples
-      \item Checkpoint/restart
       \item Extension to other physical phenomea (non linear
       heat-transfer, diffusion, non local mechanics). \textit{Should be
         easy} using code generation of behaviour integrators
       \item Adaptative mesh refinements (requires new data
-      structures in MGIS)
+      structures in MGIS) - AMR
       \item Additional boundary conditions, including contact
       with friction
+      \item Provide more examples
+      \item Checkpoint/restart
       \item Port to GPUs (requires tremendous work on the
       MFront and MGIS side)
       \item Support for partial assembly (if possible ...)
