@@ -114,7 +114,7 @@ static void setLinearSolver(mfem_mgis::AbstractNonLinearEvolutionProblem& p,
 
 static void setSolverParameters(
     mfem_mgis::AbstractNonLinearEvolutionProblem& problem) {
-  problem.setSolverParameters({{"VerbosityLevel", 0},
+  problem.setSolverParameters({{"VerbosityLevel", 2},
                                {"RelativeTolerance", 1e-12},
                                {"AbsoluteTolerance", 1e-12},
                                {"MaximumNumberOfIterations", 10}});
