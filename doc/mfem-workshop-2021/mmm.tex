@@ -833,12 +833,12 @@ Example of end-user API}
     \begin{minipage}{1.2\linewidth}
   \begin{block}{REV modelling in PLEIADES}
     \begin{itemize}
-    \item Existing capabilities (not in \mmm{} yet)
+    \item Existing capabilities - not in \mmm{} but using previous Cast3m solver
     \begin{itemize}
       \item Microstructural representation:\\\hspace*{7mm} inclusions, polycrystals, coated materials
       \item Application:\\\hspace*{7mm} MOX fuel, Accident-Tolerent-Fuel (ATF), Thermal conductivity at fine scale
       \item Features: Damage, creep, homogenisation, cracking, multi-material, porosity $\ldots$
-      \item Typical scale of computational domain: 200 $\mu{}m$ - 1000 $\mu{}m$
+      \item Typical scale of computational domain: 500 $\mu{}m$
       \item Requirements: Periodic 3D boundary conditions
     \end{itemize}
       \item Aim: port these capabilities into \mmm{}
@@ -857,8 +857,7 @@ Example of end-user API}
 \hspace*{2mm}\includegraphics[trim = .1cm .1cm .1cm .1cm,clip,width=2.5cm]{ver/Maillage_vraiment_periodique1.png}
 \end{frame}
 
-\begin{frame}{Periodic
-    REV - Numerical results on 32 cores}
+\begin{frame}{\scalebox{0.8}{Periodic REV}\\\hspace*{1cm}\scalebox{0.8}{Numerical results on 32 cores for \mmm{}}}
   \begin{block}{Properties}
     \begin{itemize}
       \item 14 million unknowns, elastic modelling
@@ -897,8 +896,7 @@ Example of end-user API}
   \end{block}
 \end{frame}
 
-\begin{frame}{Periodic
-    REV - Strong Scaling}
+\begin{frame}{\scalebox{0.8}{Periodic REV}\\\hspace*{1cm}\scalebox{0.8}{Strong Scaling}}
   \begin{block}{Strong
       scaling}
     \begin{itemize}
@@ -913,8 +911,7 @@ Example of end-user API}
   \end{block}
 \end{frame}
 
-\begin{frame}{Periodic
-    REV - Modelling inclusions}
+\begin{frame}{\scalebox{0.8}{Periodic REV}\\\hspace*{1cm}\scalebox{0.8}{Modelling inclusions}}
   \begin{block}{Modelling inclusions at fuel pellet's microstructure scale}
     \hspace*{2cm}\includegraphics[height=4cm]{img/REV_2000inc.png}
   \end{block}
@@ -959,7 +956,7 @@ Example of end-user API}
 \begin{textblock}{.48}(0.0,0.51)
 \includegraphics[height=3.6cm]{ver/speedup-r3.pdf}\\[-3mm]
 \hspace*{3mm}\scalebox{0.7}{Very good scalability up to \textbf{16k} cores}\\[-1.5mm]
-\hspace*{3mm}\scalebox{0.7}{Even superlinear for HyperPCG-HypreDiagScale}
+\hspace*{3mm}\scalebox{0.7}{Scalability is superlinear for HyperPCG-HypreDiagScale}
 \end{textblock}
 \begin{textblock}{.48}(0.58,0.51)
 \includegraphics[trim = .1cm .1cm 7.9cm .1cm,clip,height=3.6cm]{ver/timer-r3.pdf}\\[-3mm]
@@ -971,7 +968,7 @@ Example of end-user API}
 \end{textblock}
 \end{frame}
 
-\begin{frame}{Phase-field modelling}
+\begin{frame}{\scalebox{0.8}{Fuel pellet scale}\\\hspace*{1cm}\scalebox{0.8}{Phase-field modelling}}
   \begin{block}{Modelling fuel pellet fragmentation during reactor start-up}
   \scalebox{0.8}{
     \begin{minipage}{1.28\linewidth}
@@ -1022,9 +1019,10 @@ Example of end-user API}
     \vspace*{1mm}
     \item What comes next ?
     \begin{itemize}
-      \item Keep the trust of industrial partners (EDF, Framatome) on PLEIADES middleware
-      \item Overall robustness of the code
-      \item Setup extensive continuous integration, tutorials
+      \item Maintain the confidence of industrial partners (EDF, Framatome) on PLEIADES\\
+      \hspace*{1cm}keep the funding
+      \item Overall robustness of the code, tutorials
+      \item Setup extensive continuous integration (github actions + private)
       \item Extension to other physical phenomea (non linear
       heat-transfer, diffusion, non local mechanics). \textit{Should be
         easy} using code generation of behaviour integrators
@@ -1043,7 +1041,7 @@ Example of end-user API}
     \end{minipage}}
   \begin{textblock}{.2}(0.81,0.12)
 %  \includegraphics[width=.94\textwidth]{img/ex1p-np100.png}
-  \includegraphics[trim = 2.9cm .1cm 1.cm .1cm,clip,width=.94\textwidth]{ver/222_spheres.png}
+  \includegraphics[trim = 3.9cm .1cm 4.cm .1cm,clip,width=.94\textwidth]{ver/222_spheres1.png}
   \end{textblock}
 \end{frame}    
 
