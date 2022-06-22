@@ -25,6 +25,7 @@
 #include "mfem/general/optparser.hpp"
 #include "mfem/linalg/solvers.hpp"
 #include "mfem/fem/datacollection.hpp"
+#include <MFEMMGIS/Profiler.hxx>
 #include "MFEMMGIS/MFEMForward.hxx"
 #include "MFEMMGIS/Material.hxx"
 #include "MFEMMGIS/AnalyticalTests.hxx"
@@ -266,6 +267,7 @@ int executeMFEMMGISTest(const TestParameters& p) {
     if (!checkSolution(problem, p.tcase)) {
       return(EXIT_FAILURE);
     }
+    Profiler::timers::print_and_write_timers();
     return(EXIT_SUCCESS);
   }
 }

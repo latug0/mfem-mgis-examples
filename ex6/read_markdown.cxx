@@ -1,6 +1,6 @@
-#include<timer.hpp>
-#include<data_gathering.hxx>
-
+#include<MFEMMGIS/Profiler.hxx>
+#include<common/data_gathering.hxx>
+#include<parameters/test_parameters.hpp>
 
 
 void writeMD(std::vector<gather_information> a_vec, std::string a_name)
@@ -16,7 +16,7 @@ void writeMD(std::vector<gather_information> a_vec, std::string a_name)
 		it.writeMD(a_name, print_banner);
 		print_banner = false;
 	}
-	profiling::output::printMessage("write: ", a_name);
+	Profiler::Utils::Message("write: ", a_name);
 }
 
 using simu_name = std::pair<solver_name,precond_name>;
@@ -131,6 +131,27 @@ class store_speed_up_values : public std::map<simu_name, list_val>
 
 		return line;
 	}
+
+	std::string get_time_values_only(const solver_name a_solv, const precond_name a_precond, list_val a_list)
+	{
+		std::string line = "np.array([";
+		bool first = true;
+		for (auto val : a_list)
+		{
+			if(std::get<2>(val)) // converged
+			{
+				if(!first) line += ",";
+				auto time = std::get<1>(val) * 1e-9; // conversion in second
+				line += std::to_string(time);
+				first = false;
+			}
+		}
+		
+		line += "])";
+
+		return line;
+	}
+
 };
 
 
@@ -147,11 +168,12 @@ void build_speed_up_for_python_partial(store_speed_up_values& a_in)
 
 void build_speed_up_for_python_plot(store_speed_up_values& a_in)
 {
-	std::cout << "import numpy as np" << std::endl;
-	std::cout << "import matplotlib.pyplot as plt" << std::endl;
-	std::cout << "from matplotlib.ticker import FormatStrFormatter" << std::endl;
-	std::cout << "import matplotlib.ticker as ticker" << std::endl;
-	std::cout << "def my_function():" << std::endl;	
+	auto& out=std::cout;
+	out << "import numpy as np" << std::endl;
+	out << "import matplotlib.pyplot as plt" << std::endl;
+	out << "from matplotlib.ticker import FormatStrFormatter" << std::endl;
+	out << "import matplotlib.ticker as ticker" << std::endl;
+	out << "def my_function():" << std::endl;	
 	for(auto it : a_in)
 	{
 		auto key = it.first;
@@ -177,36 +199,39 @@ void build_speed_up_for_python_plot(store_speed_up_values& a_in)
 		line += a_in.get_procs(key.first, key.second, values);
 		line += ",";
 		line += a_in.get_values(key.first, key.second, values);
+		//line += a_in.get_time_values_only(key.first, key.second, values);
 		line += ",";
 		line += a_in.get_label(key.first, key.second);
 		line += ")";
 		std::cout << line << std::endl;
 	}
-	std::cout << "	pass" 	<< std::endl<< std::endl;
-	std::cout << "my_function()"			<< std::endl;
-	std::cout << "legend_outside = plt.legend(loc=\'center left\',bbox_to_anchor=(1, 0.5))" << std::endl;
-	std::cout << "namepdf=\'basic-version.pdf\'" 	<< std::endl;
-	std::cout << "plt.savefig(namepdf, bbox_extra_artists=(legend_outside,), bbox_inches=\'tight\')" << std::endl;
-	std::cout << "fig, ax = plt.subplots()" 	<< std::endl;
-	std::cout << "plt.xscale(\"log\",basex=2)" 	<< std::endl;
-	std::cout << "plt.yscale(\"log\",basey=2)" 	<< std::endl;
-	std::cout << "ax.xaxis.set_major_formatter(ticker.ScalarFormatter())" 	<< std::endl;
-	std::cout << "ax.yaxis.set_major_formatter(ticker.ScalarFormatter())" 	<< std::endl;
-	std::cout << "plt.ticklabel_format(axis=\'x\', style=\'plain\')" 	<< std::endl;
-	std::cout << "plt.ticklabel_format(axis=\'y\', style=\'plain\')" 	<< std::endl;
-	std::cout << "my_function()"			<< std::endl;
-	std::cout << "legend_outside = plt.legend(loc=\'center left\',bbox_to_anchor=(1, 0.5))" << std::endl; 
-	std::cout << "namepdf=\'log-version.pdf\'" 	<< std::endl;
-	std::cout << "plt.savefig(namepdf, bbox_extra_artists=(legend_outside,), bbox_inches=\'tight\')" << std::endl;
+	out << "	pass" 	<< std::endl<< std::endl;
+	out << "my_function()"			<< std::endl;
+	out << "legend_outside = plt.legend(loc=\'center left\',bbox_to_anchor=(1, 0.5))" << std::endl;
+	out << "namepdf=\'basic-version.pdf\'" 	<< std::endl;
+	out << "plt.savefig(namepdf, bbox_extra_artists=(legend_outside,), bbox_inches=\'tight\')" << std::endl;
+	out << "fig, ax = plt.subplots()" 	<< std::endl;
+	out << "plt.xscale(\"log\",basex=2)" 	<< std::endl;
+	out << "plt.yscale(\"log\",basey=2)" 	<< std::endl;
+	out << "ax.xaxis.set_major_formatter(ticker.ScalarFormatter())" 	<< std::endl;
+	out << "ax.yaxis.set_major_formatter(ticker.ScalarFormatter())" 	<< std::endl;
+	out << "plt.ticklabel_format(axis=\'x\', style=\'plain\')" 	<< std::endl;
+	out << "plt.ticklabel_format(axis=\'y\', style=\'plain\')" 	<< std::endl;
+	out << "my_function()"			<< std::endl;
+	out << "plt.grid()"			<< std::endl;
+	out << "legend_outside = plt.legend(loc=\'center left\',bbox_to_anchor=(1, 0.5))" << std::endl; 
+	out << "namepdf=\'log-version.pdf\'" 	<< std::endl;
+	out << "plt.savefig(namepdf, bbox_extra_artists=(legend_outside,), bbox_inches=\'tight\')" << std::endl;
 
 }
 
 int main(int argc, char* argv[]) 
 {
 	mfem_mgis::initialize(argc, argv);
-	profiling::timers::init_timers();
-	const int first = 1;
-	const int last = 16384;
+	Profiler::timers::init_timers();
+	auto parameters = markdown_reader_parameters_with_parse(argc, argv);
+	const int first = parameters.start;
+	const int last = parameters.last;
 	const std::string base_name = "collect_";
 	//const int last = 4096;
 
@@ -240,40 +265,29 @@ int main(int argc, char* argv[])
 			}
 		}
 	}
-	
+
 	//build_speed_up_for_python_partial(storage);
 	build_speed_up_for_python_plot(storage);
 
 
 	// other
-	std::sort (try_classification.begin(), try_classification.end(), [](const std::pair<int,info> a, const std::pair<int,info> b)
+	std::sort (try_classification.begin(), try_classification.end(), 
+			[](const std::pair<int,info> a, const std::pair<int,info> b) 
 			{
-				if(a.second.m_solver < b.second.m_solver) 
-				{
-					return true;
-				}
-				else if (a.second.m_solver == b.second.m_solver)
-				{
-					if(a.second.m_precond < b.second.m_precond)
-					{
-						return true;
-					}
-					else if(a.second.m_precond == b.second.m_precond)
-					{
-						if(a.first < b.first) return true;
-						else return false;
-					}
-					else
-					{
-						return false;
-					}
-				}
-				else 
-				{
-					return false;
-				}
+			if(a.second.m_solver < b.second.m_solver) return true;
+			else if (a.second.m_solver == b.second.m_solver)
+			{
+			if(a.second.m_precond < b.second.m_precond) return true;
+			else if(a.second.m_precond == b.second.m_precond)
+			{
+			if(a.first < b.first) return true;
+			else return false;
+			}
+			else return false;
+			}
+			else return false;
 			});
-	
+
 	//build_speed_up_for_python_full(try_classification, first, last);
 
 	std::ofstream out("all.md", std::ofstream::out);
@@ -302,6 +316,6 @@ int main(int argc, char* argv[])
 	}	
 
 
-	profiling::timers::print_and_write_timers();
+	Profiler::timers::print_and_write_timers();
 	return EXIT_SUCCESS;
 }
