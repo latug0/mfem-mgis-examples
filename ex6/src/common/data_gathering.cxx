@@ -4,7 +4,7 @@ using namespace configuration;
 
 gather_information read(const std::string a_input_file_name, bool& a_exist)
 {
-	START_TIMER("gather_information::read");
+	CatchTimeSection("gather_information::read");
 
 	assert(a_input_file_name != "" && "this file does not exist");
 
@@ -39,12 +39,12 @@ gather_information read(const std::string a_input_file_name, bool& a_exist)
 	if(number_of_lines != 0)
 	{	
 		a_exist = true;
-		profiling::output::printMessage("file ",a_input_file_name,"has been correctly read");
+		Profiler::Utils::Message("file ",a_input_file_name,"has been correctly read");
 	}
 	else 
 	{
 		a_exist = false;
-		profiling::output::printMessage("file ",a_input_file_name," is empty");
+		Profiler::Utils::Message("file ",a_input_file_name," is empty");
 	}
 	return res;
 }

@@ -8,10 +8,10 @@ namespace common
 	template<typename Implementation>
 	void print_mesh_information(Implementation& impl)
 	{
-		START_TIMER("common::print_mesh_information");
+		CatchTimeSection("common::print_mesh_information");
 		
-		using profiling::output::sum;
-		using profiling::output::printMessage;
+		using Profiler::Utils::sum;
+		using Profiler::Utils::Message;
 		
 		//getMesh
 		auto mesh = impl.getFiniteElementSpace().GetMesh();
@@ -32,24 +32,24 @@ namespace common
 		int64_t unknowns_local = fespace.GetTrueVSize(); 
 		int64_t unknowns = sum(unknowns_local);
 
-		printMessage("INFO: number of vertices -> ", numbers_of_vertices);
-		printMessage("INFO: number of elements -> ", numbers_of_elements);
-		printMessage("INFO: element size -> ", h);
-		printMessage("INFO: Number of finite element unknowns: " , unknowns);
+		Message("INFO: number of vertices -> ", numbers_of_vertices);
+		Message("INFO: number of elements -> ", numbers_of_elements);
+		Message("INFO: element size -> ", h);
+		Message("INFO: Number of finite element unknowns: " , unknowns);
 	}
 
 	template<typename Problem, typename T>
 		double solve(Problem& p, double start, double end, T& statistics, std::string string_solver="", std::string string_pc="")
 		{
-			START_TIMER("common::solve");
+			CatchTimeSection("common::solve");
 			// solving the problem
-			double res = profiling::timers::chrono_section( [&](){
+			double res = Profiler::timers::chrono_section( [&](){
 					statistics = p.solve(0, 1);
 					});
 
 			// check status
 			if (!statistics.status) {
-				profiling::output::printMessage("INFO: ", string_solver,"+",string_pc," FAILED");
+				Profiler::Utils::Message("INFO: ", string_solver,"+",string_pc," FAILED");
 			}
 			return res;
 		}
@@ -57,28 +57,28 @@ namespace common
 	template<typename Problem>
 		void add_post_processings(Problem& p, std::string msg)
 		{
-	//		START_TIMER("common::add_postprocessing_and_outputs");
-			using profiling::output::printMessage;
-			printMessage("before AddPost");
+	//		CatchTimeSection("common::add_postprocessing_and_outputs");
+			using Profiler::Utils::Message;
+			Message("before AddPost");
 			p.addPostProcessing(
 					"ParaviewExportResults",
 					{{"OutputFileName", msg}}
 					);
-			printMessage("after AddPost");
+			Message("after AddPost");
 		} // end timer add_postprocessing_and_outputs
 
 	template<typename Problem>
 		void execute_post_processings(Problem& p, double start, double end)
 		{
-			START_TIMER("common::post_processing_step");
+			CatchTimeSection("common::post_processing_step");
 			p.executePostProcessings(start, end);
 		}
 
 	template<typename Solver, typename Pc, typename Statistics>
 		void fill_statistics(gather_information& data, Solver solver, Pc pc, Statistics stats, double time)
 		{
-			START_TIMER("common::fill_statistics");
-			time = profiling::output::reduce_max(time);
+			CatchTimeSection("common::fill_statistics");
+			time = Profiler::Utils::reduce_max(time);
 			// fill info data.
 			data.add(
 					info{	solver,		pc,	

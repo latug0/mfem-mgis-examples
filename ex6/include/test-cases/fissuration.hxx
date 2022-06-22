@@ -1,6 +1,6 @@
 #pragma once
 // thomas example
-#include <common/timer.hpp>
+#include <MFEMMGIS/Profiler.hxx>
 #include <solver/solver_name.hxx>
 #include <solver/precond_name.hxx>
 #include <solver/config_solver.hxx>
@@ -40,7 +40,7 @@ namespace fissuration
 			const MeshParameters mesh_parameters) 
 	{
 
-		START_TIMER("fissuration::buildMechanicalProblem");
+		CatchTimeSection("fissuration::buildMechanicalProblem");
 		auto lparameters = common_problem_parameters;
 		lparameters.insert("UnknownsSize", 3);
 		// building the non linear problem
@@ -97,7 +97,7 @@ namespace fissuration
 	static std::shared_ptr<mfem_mgis::NonLinearEvolutionProblem> buildMicromorphicProblem(
 			const mfem_mgis::Parameters& common_problem_parameters) {
 
-		START_TIMER("fissuration::buildMicromorphicProblem");
+		CatchTimeSection("fissuration::buildMicromorphicProblem");
 		//  1/(2*E)*smax**2*lc = Gc
 		constexpr auto Gc = mfem_mgis::real{5};
 		constexpr auto DGc = mfem_mgis::real{0.5};
@@ -142,6 +142,11 @@ namespace fissuration
 	template<typename Solver, typename Pc>
 		int kernel(const TestParameters& p, const bool use_post_processing, const solver_name a_solv, const precond_name a_precond, gather_information& a_info)
 		{
+			std::string string_solver       = getName(a_solv);
+			std::string string_precond      = getName(a_precond);
+			std::string timer_name          = "run_" + string_solver + "_" + string_precond;
+			CatchTimeSection(timer_name);
+
 			constexpr auto iter_max = mfem_mgis::size_type{5000};
 			static constexpr const auto parallel = true;
 			auto success = true;
@@ -154,6 +159,7 @@ namespace fissuration
 					{"NumberOfUniformRefinements", parallel ? p.refinement : 0},
 					{"Hypothesis", "Tridimensional"},
 					{"Parallel", parallel}};
+
 			const auto mesh_parameters = MeshParameters{};
 			// mechanical problem
 			auto mechanical_problem = buildMechanicalProblem(common_problem_parameters,
@@ -194,100 +200,125 @@ namespace fissuration
 				}
 				return r;
 			}();
-			for (mfem_mgis::size_type i = 0; i != n; ++i) 
-			{
-				START_TIMER("fissuration::main_loop");
-				const auto t0 = times[i];
-				const auto t1 = times[i + 1];
-				const auto dt = t1 - t0;
-				if(mfem_mgis::getMPIrank() == 0) {
-					std::cout << "Time step " << i << " from " << t0 << " to " << t1 << '\n';
-				}
 
-				// update temperature
-				auto Tg = mfem_mgis::PartialQuadratureFunction::evaluate(
-						mechanical_problem->getMaterial("Fuel").getPartialQuadratureSpacePointer(),
-						[&t1, &mesh_parameters](const mfem_mgis::real x,
-							const mfem_mgis::real y,
-							const mfem_mgis::real) {
-						constexpr auto Tref = mfem_mgis::real{600.15};
-						constexpr auto dT = (mfem_mgis::real{1500} - Tref);
-						const auto rp = mesh_parameters.rp;
-						const auto dTe = dT * (t1 - tb) / (te - tb);
-						const auto r = std::sqrt(x * x + y * y) / rp;
-						const auto T = dTe * (1 - r * r) + Tref;
-						return T;
-						});
-				mgis::behaviour::setExternalStateVariable(mechanical_problem->getMaterial("Fuel").s1,
-						"Temperature", Tg->getValues());
-				auto converged = false;
-				auto iter = mfem_mgis::size_type{};
-				auto mechanical_problem_initial_residual = mfem_mgis::real{};
-				auto micromorphic_problem_initial_residual = mfem_mgis::real{};
 
-				// set solver and preconditionner
-				setLinearSolver(*mechanical_problem, a_solv, a_precond, p.verbosity_level, mfem_mgis::real{1e-8}, mfem_mgis::real{1e-6});
-				setLinearSolver(*micromorphic_problem, a_solv, a_precond, p.verbosity_level, mfem_mgis::real{0}, mfem_mgis::real{1e-6});
 
-				// alternate miminisation algorithm
-				while (!converged) {
-					constexpr auto reps = mfem_mgis::real{1e-4};
+			mfem_mgis::NonLinearResolutionOutput solver_statistics;
+			double measure = Profiler::timers::chrono_section([&](){
+					// main loop
+					//
+					mfem_mgis::size_type end = 1; //je n'ai pas honte
+					for (mfem_mgis::size_type i = 0; i != n; ++i) 
+					for (mfem_mgis::size_type i = 0; i != end; ++i) 
+					{
+					CatchTimeSection("fissuration::main_loop");
+					const auto t0 = times[i];
+					const auto t1 = times[i + 1];
+					const auto dt = t1 - t0;
 					if(mfem_mgis::getMPIrank() == 0) {
-						std::cout << "time step " << i  //
-							<< ", alternate minimisation iteration, " << iter << '\n';
-					}
-					if (iter == 0) {
-						mechanical_problem->setSolverParameters({{"AbsoluteTolerance", 1e-10},
-								{"RelativeTolerance", reps}});
-						micromorphic_problem->setSolverParameters({{"AbsoluteTolerance", 1e-10},
-								{"RelativeTolerance", reps}});
-					} else {
-						mechanical_problem->setSolverParameters(
-								{{"AbsoluteTolerance",
-								mechanical_problem_initial_residual * reps},
-								{"RelativeTolerance", reps}});
-						micromorphic_problem->setSolverParameters(
-								{{"AbsoluteTolerance",
-								micromorphic_problem_initial_residual * reps},
-								{"RelativeTolerance", reps}});
+					std::cout << "Time step " << i << " from " << t0 << " to " << t1 << '\n';
 					}
 
-					// solving the mechanical problem
-					auto mechanical_output = mechanical_problem->solve(t0, dt);
-					if (!mechanical_output.status) {
-						mfem_mgis::raise("non convergence of the mechanical problem");
+					// update temperature
+					auto Tg = mfem_mgis::PartialQuadratureFunction::evaluate(
+							mechanical_problem->getMaterial("Fuel").getPartialQuadratureSpacePointer(),
+							[&t1, &mesh_parameters](const mfem_mgis::real x,
+								const mfem_mgis::real y,
+								const mfem_mgis::real) {
+							constexpr auto Tref = mfem_mgis::real{600.15};
+							constexpr auto dT = (mfem_mgis::real{1500} - Tref);
+							const auto rp = mesh_parameters.rp;
+							const auto dTe = dT * (t1 - tb) / (te - tb);
+							const auto r = std::sqrt(x * x + y * y) / rp;
+							const auto T = dTe * (1 - r * r) + Tref;
+							return T;
+							});
+					mgis::behaviour::setExternalStateVariable(mechanical_problem->getMaterial("Fuel").s1,
+							"Temperature", Tg->getValues());
+					auto converged = false;
+					auto iter = mfem_mgis::size_type{};
+					auto mechanical_problem_initial_residual = mfem_mgis::real{};
+					auto micromorphic_problem_initial_residual = mfem_mgis::real{};
+
+					// set solver and preconditionner
+					setLinearSolver(*mechanical_problem, a_solv, a_precond, p.verbosity_level, mfem_mgis::real{1e-8}, mfem_mgis::real{1e-6});
+					setLinearSolver(*micromorphic_problem, a_solv, a_precond, p.verbosity_level, mfem_mgis::real{0}, mfem_mgis::real{1e-6});
+
+					// alternate miminisation algorithm
+					while (!converged && success != EXIT_FAILURE) {
+						constexpr auto reps = mfem_mgis::real{1e-4};
+						if(mfem_mgis::getMPIrank() == 0) {
+							std::cout << "time step " << i  //
+								<< ", alternate minimisation iteration, " << iter << '\n';
+						}
+						if (iter == 0) {
+							mechanical_problem->setSolverParameters({{"AbsoluteTolerance", 1e-10},
+									{"RelativeTolerance", reps}});
+							micromorphic_problem->setSolverParameters({{"AbsoluteTolerance", 1e-10},
+									{"RelativeTolerance", reps}});
+						} else {
+							mechanical_problem->setSolverParameters(
+									{{"AbsoluteTolerance",
+									mechanical_problem_initial_residual * reps},
+									{"RelativeTolerance", reps}});
+							micromorphic_problem->setSolverParameters(
+									{{"AbsoluteTolerance",
+									micromorphic_problem_initial_residual * reps},
+									{"RelativeTolerance", reps}});
+						}
+
+						// solving the mechanical problem
+						auto mechanical_output = mechanical_problem->solve(t0, dt);
+						if (!mechanical_output.status) {
+							Profiler::Utils::Message("non convergence of the mechanical problem");
+							success = EXIT_FAILURE; 
+							break;
+						}
+						// passing the energy release rate to the micromorphic problem
+						Y = mfem_mgis::getInternalStateVariable(
+								mechanical_problem->getMaterial("Fuel"), "EnergyReleaseRate");
+						// solving the micromorphic problem
+						auto micromorphic_output = micromorphic_problem->solve(t0, dt);
+						if (!micromorphic_output.status) {
+							Profiler::Utils::Message("non convergence of the micromorphic problem");
+							success = EXIT_FAILURE; 
+							break;
+						}
+						// passing the damage to the mechanical problem
+						d = mfem_mgis::getInternalStateVariable(
+								micromorphic_problem->getMaterial("Fuel"), "Damage");
+						if (iter == 0) {
+							mechanical_problem_initial_residual =
+								mechanical_output.initial_residual_norm;
+							micromorphic_problem_initial_residual =
+								micromorphic_output.initial_residual_norm;
+						} else {
+							converged = (mechanical_output.iterations == 0) &&
+								(micromorphic_output.iterations == 0);
+						}
+						++iter;
+						// check convergence
+						if ((iter == iter_max) && (!converged)) {
+							Profiler::Utils::Message("non convergence of the fixed-point problem");
+							solver_statistics.status=false;
+							success = EXIT_FAILURE; 
+						}
+						solver_statistics = micromorphic_output; // warning; we keep info for the micromorphic pb
 					}
-					// passing the energy release rate to the micromorphic problem
-					Y = mfem_mgis::getInternalStateVariable(
-							mechanical_problem->getMaterial("Fuel"), "EnergyReleaseRate");
-					// solving the micromorphic problem
-					auto micromorphic_output = micromorphic_problem->solve(t0, dt);
-					if (!micromorphic_output.status) {
-						mfem_mgis::raise("non convergence of the micromorphic problem");
+
+					if(use_post_processing)	common::execute_post_processings(*mechanical_problem, t0, dt);
+					if(use_post_processing)	common::execute_post_processings(*micromorphic_problem, t0, dt);
+
+					mechanical_problem->update();
+					micromorphic_problem->update();
+
 					}
-					// passing the damage to the mechanical problem
-					d = mfem_mgis::getInternalStateVariable(
-							micromorphic_problem->getMaterial("Fuel"), "Damage");
-					if (iter == 0) {
-						mechanical_problem_initial_residual =
-							mechanical_output.initial_residual_norm;
-						micromorphic_problem_initial_residual =
-							micromorphic_output.initial_residual_norm;
-					} else {
-						converged = (mechanical_output.iterations == 0) &&
-							(micromorphic_output.iterations == 0);
-					}
-					++iter;
-					// check convergence
-					if ((iter == iter_max) && (!converged)) {
-						mfem_mgis::raise("non convergence of the fixed-point problem");
-					}
-				}
-				mechanical_problem->executePostProcessings(t0, dt);
-				micromorphic_problem->executePostProcessings(t0, dt);
-				mechanical_problem->update();
-				micromorphic_problem->update();
-			}
+
+			});
+
+			common::fill_statistics(a_info, a_solv, a_precond, solver_statistics, measure); // res for the micromorphic pb
+			common::print_statistics(string_solver, string_precond, measure);
+
 			//
 			return success ? EXIT_SUCCESS : EXIT_FAILURE;
 		}

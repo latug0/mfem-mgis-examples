@@ -10,7 +10,7 @@
 #include "mfem/linalg/petsc.hpp"
 #endif /* MFEM_USE_PETSC */
 
-#include<common/timer.hpp>
+#include<MFEMMGIS/Profiler.hxx>
 #include<solver/solver_name.hxx>
 #include<solver/precond_name.hxx>
 
@@ -20,7 +20,7 @@ using namespace configuration;
 
 void create_petsc_file(const petsc_ksp_type a_solv_name, const petsc_pc_type a_pc_name)
 {
-	START_TIMER("petsc_stuff::create_petsc_file");
+	CatchTimeSection("petsc_stuff::create_petsc_file");
 	// options used
 	std::string solver 	= "-ksp_type ";
 	std::string pc 		= "-pc_type ";
@@ -35,7 +35,7 @@ void create_petsc_file(const petsc_ksp_type a_solv_name, const petsc_pc_type a_p
 	atol 	+= "1e-10";
 	max_it 	+= "10e1";
 
-	profiling::output::printMessage(" creating ... ", name);
+	Profiler::Utils::Message(" creating ... ", name);
 	std::ofstream p(name, std::ofstream::out);
 
 	p 	<< 	solver 	<< std::endl;
@@ -49,11 +49,11 @@ void create_petsc_file(const petsc_ksp_type a_solv_name, const petsc_pc_type a_p
 
 void generate_petsc_files()
 {
-	START_TIMER("petsc_stuff::generate_petsc_files");
+	CatchTimeSection("petsc_stuff::generate_petsc_files");
 	size_t petsc_ksp_type_size = (size_t)petsc_ksp_type::petsc_ksp_type_count;
 	size_t petsc_pc_type_size  = (size_t)petsc_pc_type::petsc_pc_type_count;
-	profiling::output::printMessage("number of solver: ", petsc_ksp_type_size);
-	profiling::output::printMessage("number of preconditioner: ", petsc_pc_type_size);
+	Profiler::Utils::Message("number of solver: ", petsc_ksp_type_size);
+	Profiler::Utils::Message("number of preconditioner: ", petsc_pc_type_size);
 	for(int ksp_type = 0 ; ksp_type < petsc_ksp_type_size ; ksp_type++)
 	{
 		for(int pc_type = 0; pc_type < petsc_pc_type_size ; pc_type++)
@@ -70,11 +70,11 @@ void generate_petsc_files()
 int main(int argc, char* argv[]) 
 {
 	mfem_mgis::initialize(argc, argv);
-	profiling::timers::init_timers();
+	Profiler::timers::init_timers();
 
 	generate_petsc_files();
 
-	profiling::timers::print_and_write_timers();
+	Profiler::timers::print_and_write_timers();
 	return EXIT_SUCCESS;
 }
 

@@ -2,7 +2,7 @@
 
 #include <sys/time.h>
 #include <sys/resource.h>
-#include <common/timer.hpp>
+#include <MFEMMGIS/Profiler.hxx>
 
 namespace common
 {
@@ -51,7 +51,7 @@ namespace common
 		void print_checkpoints(footprint& f)
 		{
 			auto obj = f.reduce();
-			if(profiling::output::is_master())
+			if(Profiler::Utils::is_master())
 			{
 				std::cout << " List (maximum resident size): ";
 				for(auto it : obj)
@@ -68,7 +68,7 @@ namespace common
 			f.add_memory_checkpoint();
 			auto obj = f.reduce();
 			auto last = obj.back() * 1e-6; // conversion kb to Gb
-			profiling::output::printMessage(" memory footprint: ", last, " GB");
+			Profiler::Utils::Message(" memory footprint: ", last, " GB");
 		};
 	};
 };

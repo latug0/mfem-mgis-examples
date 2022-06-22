@@ -1,5 +1,5 @@
 #include <parameters/test_parameters.hpp>
-#include <common/timer.hpp>
+#include <MFEMMGIS/Profiler.hxx>
 #include <solver/solver_name.hxx>
 #include <solver/precond_name.hxx>
 #include <solver/config_solver.hxx>
@@ -36,12 +36,12 @@ int try_several_solvers(TestParameters& p, const bool use_post_processing)
 
 	for(auto solver_iterator : solver_traversal)
 	{
-		START_TIMER(getName(solver_iterator));
+		CatchTimeSection(getName(solver_iterator));
 		for(auto precond_iterator : pc_traversal)
 		{
 			if(match(solver_iterator, precond_iterator, p.refinement))
 			{
-				START_TIMER(getName(precond_iterator));
+				CatchTimeSection(getName(precond_iterator));
 				fun(
 						p,
 						use_post_processing, 
@@ -62,12 +62,12 @@ int try_several_solvers(TestParameters& p, const bool use_post_processing)
 int main(int argc, char* argv[]) 
 {
 	mfem_mgis::initialize(argc, argv);
-	profiling::timers::init_timers();
+	Profiler::timers::init_timers();
 	constexpr bool use_post_processing = false;
 
 	auto p = parseCommandLineOptions(argc, argv);
 	auto res = try_several_solvers(p, use_post_processing);
 
-	profiling::timers::print_and_write_timers();
+	Profiler::timers::print_and_write_timers();
 	return res;
 }

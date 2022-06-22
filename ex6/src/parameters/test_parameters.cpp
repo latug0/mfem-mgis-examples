@@ -32,7 +32,7 @@ void common_parameters(mfem::OptionsParser& args, TestParameters& p)
 
 markdown_reader_parameters markdown_reader_parameters_with_parse(int& argc, char* argv[])
 {
-	START_TIMER("reader_parameters_with_parse");
+	CatchTimeSection("reader_parameters_with_parse");
 
 	mfem::OptionsParser args(argc, argv);
 
@@ -54,7 +54,7 @@ markdown_reader_parameters markdown_reader_parameters_with_parse(int& argc, char
 }
 
 TestParameters parseCommandLineOptions(int& argc, char* argv[]) {
-	START_TIMER("parse_command_line_options");
+	CatchTimeSection("parse_command_line_options");
 	TestParameters p;
 
 	// options treatment
@@ -70,7 +70,7 @@ TestParameters parseCommandLineOptions(int& argc, char* argv[]) {
 
 // legacy
 TestParameters parseCommandLineOptions_one_test(int& argc, char* argv[]) {
-	START_TIMER("parse_command_line_options");
+	CatchTimeSection("parse_command_line_options");
 	TestParameters p;
 
 	// options treatment

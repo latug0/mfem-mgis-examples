@@ -145,7 +145,7 @@ namespace cas_cible_1
 		using namespace mgis::behaviour;
 		using real=mfem_mgis::real;
 
-		START_TIMER("set_mgis_stuff");
+		CatchTimeSection("set_mgis_stuff");
 		problem.addBehaviourIntegrator("Mechanics", 1, p.library, "Elasticity");
 		problem.addBehaviourIntegrator("Mechanics", 2, p.library, "Elasticity");
 		// materials

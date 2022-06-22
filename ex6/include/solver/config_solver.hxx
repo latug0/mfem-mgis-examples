@@ -13,7 +13,7 @@ namespace configuration
 				const mfem_mgis::real a_rel_tol = 1e-12
 				)
 		{
-			START_TIMER("set_linear_solver");
+			CatchTimeSection("set_linear_solver");
 			// pilote
 			const int verbosity 			= v; 			// VerbosityLevel
 			constexpr int defaultMaxNumOfIt	 	= 5000; 		// MaximumNumberOfIterations
@@ -63,13 +63,13 @@ namespace configuration
 
 			auto current_solver_name = getName(a_solver_name);
 			auto current_precond_name = getName(a_precond_name);
-			profiling::output::printMessage("INFO: solver: ", current_solver_name, " and preconditionner: ",current_precond_name);
+			Profiler::Utils::Message("INFO: solver: ", current_solver_name, " and preconditionner: ",current_precond_name);
 			p.setLinearSolver(current_solver_name, solverParameters);
 		}
 
 	static void setSolverParameters(
 			mfem_mgis::AbstractNonLinearEvolutionProblem& problem) {
-		START_TIMER("set_solve_parameters");
+		CatchTimeSection("set_solve_parameters");
 		problem.setSolverParameters({{"VerbosityLevel", 0},
 				{"RelativeTolerance", 1e-12},
 				{"AbsoluteTolerance", 1e-12},

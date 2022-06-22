@@ -3,7 +3,7 @@ namespace common
 {
 	void print_statistics(std::string string_solver, std::string string_pc, double time)
 	{
-		profiling::output::printMessage(
+		Profiler::Utils::Message(
 				"INFO: ",
 				string_solver,
 				"+",
@@ -12,6 +12,6 @@ namespace common
 				time
 				);
 
-		profiling::output::printMessage("");
+		Profiler::Utils::Message("");
 	}
 }

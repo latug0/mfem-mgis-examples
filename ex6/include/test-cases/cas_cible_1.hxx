@@ -1,7 +1,7 @@
 #pragma once
 
 #include <mfem.hpp>
-#include <common/timer.hpp>
+#include <MFEMMGIS/Profiler.hxx>
 #include <parameters/test_parameters.hpp>
 #include <solver/solver_name.hxx>
 #include <solver/precond_name.hxx>
@@ -39,7 +39,7 @@ namespace cas_cible_1
 		std::string string_solver       = getName(a_solv);
 		std::string string_precond      = getName(a_precond);
 		std::string timer_name          = "run_" + string_solver + "_" + string_precond;
-		START_TIMER(timer_name);
+		CatchTimeSection(timer_name);
 
 		// creating the finite element workspace
 		auto fed = std::make_shared<mfem_mgis::FiniteElementDiscretization>(

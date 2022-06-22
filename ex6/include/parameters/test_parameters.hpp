@@ -1,6 +1,6 @@
 #pragma once
 #include <common/mfem_mgis_headers.hxx>
-#include <common/timer.hpp>
+#include <MFEMMGIS/Profiler.hxx>
 #include <solver/solver_name.hxx>
 #include <common/common.hxx>
 #include <vector>

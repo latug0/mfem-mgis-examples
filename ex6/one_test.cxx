@@ -4,7 +4,7 @@
 
 #include <common/mfem_mgis_headers.hxx>
 #include <parameters/test_parameters.hpp>
-#include <common/timer.hpp>
+#include <MFEMMGIS/Profiler.hxx>
 #include <solver/solver_name.hxx>
 #include <solver/precond_name.hxx>
 #include <solver/config_solver.hxx>
@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
 	mfem_mgis::initialize(argc, argv);
 
 	// init timers
-	profiling::timers::init_timers();
+	Profiler::timers::init_timers();
 
 	// get parameters
 	auto p = parseCommandLineOptions_one_test(argc, argv);
@@ -69,6 +69,6 @@ int main(int argc, char* argv[])
 	common::memory::print_memory_footprint();
 
 	// print and write timetable
-	profiling::timers::print_and_write_timers();
+	Profiler::timers::print_and_write_timers();
 	return res;
 }

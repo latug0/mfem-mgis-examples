@@ -1,4 +1,4 @@
-#include<common/timer.hpp>
+#include<MFEMMGIS/Profiler.hxx>
 #include<common/data_gathering.hxx>
 #include<parameters/test_parameters.hpp>
 
@@ -16,7 +16,7 @@ void writeMD(std::vector<gather_information> a_vec, std::string a_name)
 		it.writeMD(a_name, print_banner);
 		print_banner = false;
 	}
-	profiling::output::printMessage("write: ", a_name);
+	Profiler::Utils::Message("write: ", a_name);
 }
 
 using simu_name = std::pair<solver_name,precond_name>;
@@ -228,7 +228,7 @@ void build_speed_up_for_python_plot(store_speed_up_values& a_in)
 int main(int argc, char* argv[]) 
 {
 	mfem_mgis::initialize(argc, argv);
-	profiling::timers::init_timers();
+	Profiler::timers::init_timers();
 	auto parameters = markdown_reader_parameters_with_parse(argc, argv);
 	const int first = parameters.start;
 	const int last = parameters.last;
@@ -316,6 +316,6 @@ int main(int argc, char* argv[])
 	}	
 
 
-	profiling::timers::print_and_write_timers();
+	Profiler::timers::print_and_write_timers();
 	return EXIT_SUCCESS;
 }

@@ -2,7 +2,7 @@
 
 #include<solver/precond_name.hxx>
 #include<solver/solver_name.hxx>
-#include<common/timer.hpp>
+#include<MFEMMGIS/Profiler.hxx>
 
 using namespace configuration;
 
@@ -24,13 +24,13 @@ class gather_information
 
 		void add(info& a_info)
 		{
-			START_TIMER("gather_information::add&");
+			CatchTimeSection("gather_information::add&");
 			m_data.push_back(std::move(a_info));
 		}
 
 		void add(info&& a_info)
 		{
-			START_TIMER("gather_information::add");
+			CatchTimeSection("gather_information::add");
 			m_data.push_back(a_info);
 		}
 
@@ -45,9 +45,9 @@ class gather_information
 
 		void write()
 		{
-			START_TIMER("gather_information::write");
+			CatchTimeSection("gather_information::write");
 
-			if(profiling::output::is_master())
+			if(Profiler::Utils::is_master())
 			{
 				auto name = build_name();
 				std::ofstream file (name, std::ofstream::out);
@@ -78,8 +78,8 @@ class gather_information
 
 		void writeMD(std::string a_name, bool add_banner = true)
 		{
-			START_TIMER("gather_information::writeMD");
-			if(profiling::output::is_master())
+			CatchTimeSection("gather_information::writeMD");
+			if(Profiler::Utils::is_master())
 			{
 				std::ofstream file (a_name, std::ofstream::in | std::ofstream::out | std::ofstream::ate);
 				if(add_banner)
@@ -116,8 +116,8 @@ class gather_information
 
 		void print()
 		{
-			START_TIMER("gather_information::print");
-			profiling::output::printMessage("| solver | ", " preconditionner |"," converged |"," iterations |"," residu |", " time |");
+			CatchTimeSection("gather_information::print");
+			Profiler::Utils::Message("| solver | ", " preconditionner |"," converged |"," iterations |"," residu |", " time |");
 			// improve readability
 			std::string old_solv =" ";
 			std::string old_prec =" ";
@@ -160,7 +160,7 @@ class gather_information
 
 
 				std::string line = "| " + getName(it.m_solver) + " | " + prec + " | " + conv + " | " + ite + " | " + res + " | " + time + " | ";
-				profiling::output::printMessage(line);
+				Profiler::Utils::Message(line);
 			}
 		}
 
