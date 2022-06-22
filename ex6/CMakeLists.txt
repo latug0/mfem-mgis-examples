@@ -38,15 +38,6 @@ if (NOT TARGET mfem-mgis::MFEMMGIS)
 endif(NOT TARGET mfem-mgis::MFEMMGIS)
 
 SET(HEARDERS include)
-# Require timers
-if(MFEM_USE_MPI)
-	add_compile_options(-D__MPI)
-	set(TIMERS src/common/timer.cpp include/common/timer.hpp)
-	add_library(timers SHARED ${TIMERS})
-	target_include_directories(timers PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-	find_package(MPI REQUIRED)
-	target_link_libraries(timers PUBLIC MPI::MPI_CXX)
-endif()
 
 
 
@@ -56,7 +47,6 @@ if(MFEM_USE_MPI)
 	SET(utiles src/parameters/test_parameters.cpp src/solver/solver_name.cxx src/solver/precond_name.cxx src/common/data_gathering.cxx src/common/common.cxx src/parameters/catch_functions.cxx)
 	add_library(labo-tools STATIC ${utiles})
 	target_link_libraries(labo-tools mfem-mgis::MFEMMGIS)
-	target_link_libraries(labo-tools timers)
 	target_include_directories(labo-tools
 		SYSTEM  
 		PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
