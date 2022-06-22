@@ -131,6 +131,27 @@ class store_speed_up_values : public std::map<simu_name, list_val>
 
 		return line;
 	}
+
+	std::string get_time_values_only(const solver_name a_solv, const precond_name a_precond, list_val a_list)
+	{
+		std::string line = "np.array([";
+		bool first = true;
+		for (auto val : a_list)
+		{
+			if(std::get<2>(val)) // converged
+			{
+				if(!first) line += ",";
+				auto time = std::get<1>(val) * 1e-9; // conversion in second
+				line += std::to_string(time);
+				first = false;
+			}
+		}
+		
+		line += "])";
+
+		return line;
+	}
+
 };
 
 
@@ -178,6 +199,7 @@ void build_speed_up_for_python_plot(store_speed_up_values& a_in)
 		line += a_in.get_procs(key.first, key.second, values);
 		line += ",";
 		line += a_in.get_values(key.first, key.second, values);
+		//line += a_in.get_time_values_only(key.first, key.second, values);
 		line += ",";
 		line += a_in.get_label(key.first, key.second);
 		line += ")";

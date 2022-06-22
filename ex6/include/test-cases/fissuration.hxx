@@ -46,6 +46,8 @@ namespace fissuration
 		// building the non linear problem
 		auto problem =
 			std::make_shared<mfem_mgis::NonLinearEvolutionProblem>(lparameters);
+	
+		
 		// materials
 		problem->addBehaviourIntegrator("Mechanics", 
 				"Fuel", 
@@ -88,6 +90,7 @@ namespace fissuration
 				std::make_unique<
 				mfem_mgis::ImposedDirichletBoundaryConditionAtClosestNode>(
 					problem->getFiniteElementDiscretizationPointer(), p3, 1));
+		common::print_mesh_information(problem->getImplementation<true>());
 		return problem;
 	}
 
@@ -131,6 +134,7 @@ namespace fissuration
 		mgis::behaviour::setExternalStateVariable(m.s0, "Temperature", 293.15);
 		mgis::behaviour::setExternalStateVariable(m.s1, "Temperature", 293.15);
 		mgis::behaviour::setExternalStateVariable(m.s0, "EnergyReleaseRate", 0);
+		common::print_mesh_information(problem->getImplementation<true>());
 		return problem;
 	}
 
@@ -222,8 +226,8 @@ namespace fissuration
 				auto micromorphic_problem_initial_residual = mfem_mgis::real{};
 
 				// set solver and preconditionner
-				setLinearSolver(*mechanical_problem, a_solv, a_precond, mfem_mgis::real{1e-8}, mfem_mgis::real{1e-6});
-				setLinearSolver(*micromorphic_problem, a_solv, a_precond, mfem_mgis::real{0}, mfem_mgis::real{1e-6});
+				setLinearSolver(*mechanical_problem, a_solv, a_precond, p.verbosity_level, mfem_mgis::real{1e-8}, mfem_mgis::real{1e-6});
+				setLinearSolver(*micromorphic_problem, a_solv, a_precond, p.verbosity_level, mfem_mgis::real{0}, mfem_mgis::real{1e-6});
 
 				// alternate miminisation algorithm
 				while (!converged) {

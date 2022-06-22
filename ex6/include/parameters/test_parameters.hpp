@@ -24,6 +24,7 @@ struct TestParameters {
 	bool parallel = true;
 	int refinement = 0;
 	int post_processing = 0; // default value : disabled
+	int verbosity_level = 0; // default value : lower level
 };
 
 TestParameters parseCommandLineOptions(int& argc, char* argv[]);

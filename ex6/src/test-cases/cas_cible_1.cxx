@@ -50,7 +50,7 @@ namespace cas_cible_1
 
 	bool match(solver s, pc p, int r)
 	{
-		if(r==2)
+		if(r>=2)
 		{
 			// these possibilities work but are too slow
 			if(s==solver::HypreFGMRES) return false;
@@ -59,7 +59,7 @@ namespace cas_cible_1
 		}
 
 		// too slow 
-		if(r == 3)
+		if(r >= 3)
 		{
 			// these possibilities work but are too slow
 			if(s==solver::HypreFGMRES && p==pc::HypreBoomerAMG) return false;

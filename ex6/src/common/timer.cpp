@@ -9,6 +9,24 @@ namespace profiling
 	namespace output
 	{
 		constexpr int master=0;
+		
+		double sum(double in){
+			double res = 0;
+			MPI_Reduce(&in, &res, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+			return res;
+		}
+
+		int sum(int in){
+			int res = 0;
+			MPI_Reduce(&in, &res, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+			return res;
+		}
+
+		int64_t sum(int64_t in){
+			int64_t res = 0;
+			MPI_Reduce(&in, &res, 1, MPI_INT64_T, MPI_SUM, 0, MPI_COMM_WORLD);
+			return res;
+		};
 
 		bool is_master()
 		{

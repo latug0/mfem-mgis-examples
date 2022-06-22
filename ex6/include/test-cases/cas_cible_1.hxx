@@ -1,5 +1,6 @@
 #pragma once
 
+#include <mfem.hpp>
 #include <common/timer.hpp>
 #include <parameters/test_parameters.hpp>
 #include <solver/solver_name.hxx>
@@ -48,13 +49,14 @@ namespace cas_cible_1
 				{"UnknownsSize", dim},
 				{"NumberOfUniformRefinements", p.parallel ? p.refinement : 0},
 				{"Parallel", p.parallel}});
-
 		mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed);
 		//common::print_mesh_information(problem);
+		
+		
 		common::print_mesh_information(problem.getImplementation<true>());
 		setup_properties(p, problem);
 
-		setLinearSolver(problem, a_solv, a_precond);
+		setLinearSolver(problem, a_solv, a_precond, p.verbosity_level);
 		setSolverParameters(problem);
 
 		if(use_post_processing) common::add_post_processings(problem, "OutputFile-cas_cible_1");

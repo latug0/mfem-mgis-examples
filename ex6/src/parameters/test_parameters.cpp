@@ -10,6 +10,7 @@ void common_parameters(mfem::OptionsParser& args, TestParameters& p)
 	args.AddOption(&p.tcase, "-t", "--test-case", "identifier of the case : cas_cible_1, fissuration : default = cas_cible_1");
 	args.AddOption(&p.refinement, "-r", "--refinement", "refinement level of the mesh, default = 0");
 	args.AddOption(&p.post_processing, "-p", "--post-processing", "run post processing step");
+	args.AddOption(&p.verbosity_level, "-v", "--verbosity-level", "choose the verbosity level");
 	
 	args.Parse();
 

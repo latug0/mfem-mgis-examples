@@ -10,20 +10,32 @@ namespace common
 	{
 		START_TIMER("common::print_mesh_information");
 		
+		using profiling::output::sum;
+		using profiling::output::printMessage;
+		
 		//getMesh
 		auto mesh = impl.getFiniteElementSpace().GetMesh();
+		
 		//get the number of vertices
-		int numbers_of_vertices = mesh->GetNV();
+		int64_t numbers_of_vertices_local = mesh->GetNV();
+		int64_t  numbers_of_vertices = sum(numbers_of_vertices_local);
+
 		//get the number of elements
-		int numbers_of_elements = mesh->GetNE();
+		int64_t numbers_of_elements_local = mesh->GetNE();
+		int64_t numbers_of_elements = sum(numbers_of_elements_local);
+		
 		//get the element size
 		double h = mesh->GetElementSize(0);
-
-		using profiling::output::printMessage;
+		
+		// get n dofs
+		auto& fespace = impl.getFiniteElementSpace();
+		int64_t unknowns_local = fespace.GetTrueVSize(); 
+		int64_t unknowns = sum(unknowns_local);
 
 		printMessage("INFO: number of vertices -> ", numbers_of_vertices);
 		printMessage("INFO: number of elements -> ", numbers_of_elements);
 		printMessage("INFO: element size -> ", h);
+		printMessage("INFO: Number of finite element unknowns: " , unknowns);
 	}
 
 	template<typename Problem, typename T>
@@ -43,7 +55,7 @@ namespace common
 		}
 
 	template<typename Problem>
-		double add_post_processings(Problem& p, std::string msg)
+		void add_post_processings(Problem& p, std::string msg)
 		{
 	//		START_TIMER("common::add_postprocessing_and_outputs");
 			using profiling::output::printMessage;
@@ -52,11 +64,11 @@ namespace common
 					"ParaviewExportResults",
 					{{"OutputFileName", msg}}
 					);
-	//		printMessage("after AddPost");
+			printMessage("after AddPost");
 		} // end timer add_postprocessing_and_outputs
 
 	template<typename Problem>
-		double execute_post_processings(Problem& p, double start, double end)
+		void execute_post_processings(Problem& p, double start, double end)
 		{
 			START_TIMER("common::post_processing_step");
 			p.executePostProcessings(start, end);

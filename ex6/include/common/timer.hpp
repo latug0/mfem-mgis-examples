@@ -10,6 +10,7 @@
 
 // variables 
 #ifdef __MPI
+#include<mpi.h>
 const size_t cWidth =20;
 const size_t nColumns=6;
 const std::string cName[nColumns]={"number Of Calls","min(s)", "mean(s)", "max(s)" ,"part(%)", "imb(%)"}; // [1-Imax/Imean]% 
@@ -32,6 +33,37 @@ namespace profiling
 		bool is_master();
 		double reduce_max(double a_duration);
 
+		/*
+		   template<typename T>
+		   struct sum
+		   {
+		   T operator()(T in);
+		   };
+		   template<>
+		   double sum<double>::operator()(double in){
+		   double res = 0;
+		   MPI_Reduce(&in, &res, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+		   return res;
+		   }
+
+		   template<>
+		   int sum<int>::operator()(int in){
+		   int res = 0;
+		   MPI_Reduce(&in, &res, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+		   return res;
+		   }
+
+		   template<>
+		   int64_t sum<int64_t>::operator()(int64_t in){
+		   int64_t res = 0;
+		   MPI_Reduce(&in, &res, 1, MPI_INT64_T, MPI_SUM, 0, MPI_COMM_WORLD);
+		   return res;
+		   };
+		   */
+		double sum(double in);
+		int sum(int in);
+		int64_t sum(int64_t in);
+		
 		template<typename Arg>
 			void printMessage(Arg a_msg)
 			{
