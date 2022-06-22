@@ -429,3 +429,81 @@ Refinement level 2
 | MINRESSolver | HypreILU | 8192 | &#10004; | 2 | 2.78188e-12 | 8.27313e+08 | 
 | MINRESSolver | HypreILU | 16384 | &#10004; | 2 | 2.82591e-12 | 8.9135e+08 | 
 
+
+Refinement level : 3
+
+ 
+| solver | preconditionner | number of mpi | converged | iterations | residu | time |
+| :-------------|:---------------|:---------------:|:---------------:|:---------------:|:---------------:|---------------:|
+| HyprePCG | HypreDiagScale | 256 | &#10004; | 3 | 5.99451e-14 | 1.80764e+12 | 
+| HyprePCG | HypreDiagScale | 512 | &#10004; | 3 | 5.99392e-14 | 8.47542e+11 | 
+| HyprePCG | HypreDiagScale | 1024 | &#10004; | 3 | 6.17399e-14 | 3.66342e+11 | 
+| HyprePCG | HypreDiagScale | 2048 | &#10004; | 3 | 5.99354e-14 | 1.74938e+11 | 
+| HyprePCG | HypreDiagScale | 4096 | &#10004; | 3 | 6.14796e-14 | 7.67449e+10 | 
+| HyprePCG | HypreDiagScale | 8192 | &#10004; | 3 | 5.99556e-14 | 2.91296e+10 | 
+| HyprePCG | HypreDiagScale | 16384 | &#10004; | 3 | 5.99843e-14 | 1.33259e+10 | 
+| HyprePCG | HypreDiagScale | 32768 | &#10004; | 3 | 5.96553e-14 | 1.08015e+10 | 
+| HyprePCG | HypreDiagScale | 65536 | &#10004; | 3 | 6.16933e-14 | 1.3964e+10 | 
+| HyprePCG | HypreBoomerAMG | 256 | &#10004; | 2 | 5.99598e-14 | 1.54919e+12 | 
+| HyprePCG | HypreBoomerAMG | 512 | &#10004; | 2 | 5.99723e-14 | 7.5246e+11 | 
+| HyprePCG | HypreBoomerAMG | 1024 | &#10004; | 2 | 6.17408e-14 | 3.6757e+11 | 
+| HyprePCG | HypreBoomerAMG | 2048 | &#10004; | 2 | 5.99671e-14 | 1.93026e+11 | 
+| HyprePCG | HypreBoomerAMG | 4096 | &#10004; | 2 | 6.14726e-14 | 9.77932e+10 | 
+| HyprePCG | HypreBoomerAMG | 8192 | &#10004; | 2 | 5.99531e-14 | 4.99741e+10 | 
+| HyprePCG | HypreBoomerAMG | 16384 | &#10004; | 2 | 5.99578e-14 | 3.93017e+10 | 
+| HyprePCG | HypreBoomerAMG | 32768 | &#10004; | 2 | 5.91947e-14 | 3.55983e+10 | 
+| HyprePCG | HypreBoomerAMG | 65536 | &#10004; | 2 | 6.17071e-14 | 4.69211e+10 | 
+| HyprePCG | HypreILU | 256 | &#10004; | 2 | 5.99416e-14 | 1.21189e+12 | 
+| HyprePCG | HypreILU | 512 | &#10004; | 2 | 5.99207e-14 | 6.12919e+11 | 
+| HyprePCG | HypreILU | 1024 | &#10004; | 2 | 6.16857e-14 | 3.0916e+11 | 
+| HyprePCG | HypreILU | 2048 | &#10004; | 2 | 5.99917e-14 | 1.60395e+11 | 
+| HyprePCG | HypreILU | 4096 | &#10004; | 2 | 6.14315e-14 | 9.73826e+10 | 
+| HyprePCG | HypreILU | 8192 | &#10004; | 2 | 5.9959e-14 | 3.75567e+10 | 
+| HyprePCG | HypreILU | 16384 | &#10004; | 2 | 5.99755e-14 | 2.29695e+10 | 
+| HyprePCG | HypreILU | 32768 | &#10004; | 2 | 5.9215e-14 | 9.46843e+09 | 
+| HyprePCG | HypreILU | 65536 | &#10004; | 2 | 6.17121e-14 | 1.8007e+10 | 
+| CGSolver | HypreDiagScale | 256 | &cross; | &cross; | &cross; | &cross; | 
+| CGSolver | HypreDiagScale | 512 | &cross; | &cross; | &cross; | &cross; | 
+| CGSolver | HypreDiagScale | 1024 | &cross; | &cross; | &cross; | &cross; | 
+| CGSolver | HypreDiagScale | 2048 | &cross; | &cross; | &cross; | &cross; | 
+| CGSolver | HypreDiagScale | 4096 | &cross; | &cross; | &cross; | &cross; | 
+| CGSolver | HypreDiagScale | 8192 | &cross; | &cross; | &cross; | &cross; | 
+| CGSolver | HypreDiagScale | 16384 | &cross; | &cross; | &cross; | &cross; | 
+| CGSolver | HypreDiagScale | 32768 | &cross; | &cross; | &cross; | &cross; | 
+| CGSolver | HypreDiagScale | 65536 | &cross; | &cross; | &cross; | &cross; | 
+| BiCGSTABSolver | HypreBoomerAMG | 256 | &#10004; | 1 | 3.47102e-12 | 1.10947e+12 | 
+| BiCGSTABSolver | HypreBoomerAMG | 512 | &#10004; | 1 | 3.03433e-12 | 5.28839e+11 | 
+| BiCGSTABSolver | HypreBoomerAMG | 1024 | &#10004; | 2 | 9.73126e-13 | 3.0943e+11 | 
+| BiCGSTABSolver | HypreBoomerAMG | 2048 | &#10004; | 1 | 2.77819e-12 | 1.42461e+11 | 
+| BiCGSTABSolver | HypreBoomerAMG | 4096 | &#10004; | 1 | 3.60123e-12 | 6.68014e+10 | 
+| BiCGSTABSolver | HypreBoomerAMG | 8192 | &#10004; | 1 | 3.88785e-12 | 3.58955e+10 | 
+| BiCGSTABSolver | HypreBoomerAMG | 16384 | &#10004; | 2 | 8.61773e-13 | 2.90985e+10 | 
+| BiCGSTABSolver | HypreBoomerAMG | 32768 | &#10004; | 2 | 9.83403e-13 | 2.52815e+10 | 
+| BiCGSTABSolver | HypreBoomerAMG | 65536 | &#10004; | 2 | 9.87234e-13 | 3.01919e+10 | 
+| MINRESSolver | HypreDiagScale | 256 | &cross; | &cross; | &cross; | &cross; | 
+| MINRESSolver | HypreDiagScale | 512 | &cross; | &cross; | &cross; | &cross; | 
+| MINRESSolver | HypreDiagScale | 1024 | &cross; | &cross; | &cross; | &cross; | 
+| MINRESSolver | HypreDiagScale | 2048 | &cross; | &cross; | &cross; | &cross; | 
+| MINRESSolver | HypreDiagScale | 4096 | &cross; | &cross; | &cross; | &cross; | 
+| MINRESSolver | HypreDiagScale | 8192 | &cross; | &cross; | &cross; | &cross; | 
+| MINRESSolver | HypreDiagScale | 16384 | &cross; | &cross; | &cross; | &cross; | 
+| MINRESSolver | HypreDiagScale | 32768 | &cross; | &cross; | &cross; | &cross; | 
+| MINRESSolver | HypreDiagScale | 65536 | &cross; | &cross; | &cross; | &cross; | 
+| MINRESSolver | HypreBoomerAMG | 256 | &#10004; | 2 | 1.37001e-12 | 7.80847e+11 | 
+| MINRESSolver | HypreBoomerAMG | 512 | &#10004; | 2 | 1.39195e-12 | 3.778e+11 | 
+| MINRESSolver | HypreBoomerAMG | 1024 | &#10004; | 2 | 1.43441e-12 | 1.82843e+11 | 
+| MINRESSolver | HypreBoomerAMG | 2048 | &#10004; | 2 | 1.39478e-12 | 9.5925e+10 | 
+| MINRESSolver | HypreBoomerAMG | 4096 | &#10004; | 2 | 1.4522e-12 | 4.96601e+10 | 
+| MINRESSolver | HypreBoomerAMG | 8192 | &#10004; | 2 | 1.45188e-12 | 2.31648e+10 | 
+| MINRESSolver | HypreBoomerAMG | 16384 | &#10004; | 2 | 1.48741e-12 | 1.33982e+10 | 
+| MINRESSolver | HypreBoomerAMG | 32768 | &#10004; | 2 | 1.52153e-12 | 1.2014e+10 | 
+| MINRESSolver | HypreBoomerAMG | 65536 | &#10004; | 2 | 1.56258e-12 | 1.25803e+10 | 
+| MINRESSolver | HypreILU | 256 | &#10004; | 2 | 1.39464e-12 | 6.3744e+11 | 
+| MINRESSolver | HypreILU | 512 | &#10004; | 2 | 1.45556e-12 | 3.15677e+11 | 
+| MINRESSolver | HypreILU | 1024 | &#10004; | 2 | 1.52908e-12 | 1.56383e+11 | 
+| MINRESSolver | HypreILU | 2048 | &#10004; | 2 | 1.57832e-12 | 8.42539e+10 | 
+| MINRESSolver | HypreILU | 4096 | &#10004; | 2 | 1.61329e-12 | 5.07457e+10 | 
+| MINRESSolver | HypreILU | 8192 | &#10004; | 2 | 1.75378e-12 | 1.92632e+10 | 
+| MINRESSolver | HypreILU | 16384 | &#10004; | 2 | 1.73013e-12 | 1.01591e+10 | 
+| MINRESSolver | HypreILU | 32768 | &#10004; | 2 | 1.83231e-12 | 7.67382e+09 | 
+| MINRESSolver | HypreILU | 65536 | &#10004; | 2 | 1.8579e-12 | 4.71681e+09 | 
