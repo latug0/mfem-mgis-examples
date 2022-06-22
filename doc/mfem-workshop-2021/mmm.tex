@@ -208,7 +208,9 @@
     \end{itemize}
     \item A wide range of mechanical loadings
   \end{itemize}
-
+% Swelling, densification, relocation
+% Creep, plasticity, fission gaz release
+% Large strain, Contact
 \begin{textblock}{.40}(0.11,0.24)
 \scalebox{.7}{\rotatebox{90}{
     \begin{minipage}{7.cm}
@@ -824,29 +826,35 @@ Example of end-user API}
 \end{frame}
 
 
-\begin{frame}{Periodic
-    Representative Elementary Volume  (REV)\\\hspace*{1cm}
-    Pratical setting}
-  \begin{block}{Test
-      case setting - elastic model}
-    \protect\hypertarget{test-case-setting---elastic-model}{}
+\begin{frame}{\scalebox{0.8}{Periodic
+    Representative Elementary Volume  (REV)}\\\hspace*{1cm}
+    \scalebox{0.8}{Pratical setting}}
+  \scalebox{0.8}{
+    \begin{minipage}{1.2\linewidth}
+  \begin{block}{REV modelling in PLEIADES}
     \begin{itemize}
-      \item Two isotropic materials, each one filling half of
-      a cube
-      \item Aim : compare against \textbf{\mmm{}}
-      results against \textbf{analytical} results
-      \begin{itemize}
-        \item considering 3 cases with uniaxial strain
-        \item considering 3 cases with shear test
-      \end{itemize}
+    \item Existing capabilities (not in \mmm{} yet)
+    \begin{itemize}
+      \item Microstructural representation:\\\hspace*{7mm} inclusions, polycrystals, coated materials
+      \item Application:\\\hspace*{7mm} MOX fuel, Accident-Tolerent-Fuel (ATF), Thermal conductivity at fine scale
+      \item Features: Damage, creep, homogenisation, cracking, multi-material, porosity $\ldots$
+      \item Typical scale of computational domain: 200 $\mu{}m$ - 1000 $\mu{}m$
+      \item Requirements: Periodic 3D boundary conditions
+    \end{itemize}
+      \item Aim: port these capabilities into \mmm{}
     \end{itemize}
   \end{block}
-  \begin{block}{Mesh
-      and result} \vspace*{-5mm}
-    \includegraphics[width=0.33\textwidth]{img/cube_2mat.png}
-    \includegraphics[width=0.49\textwidth]{img/cube_2mat_exx.png}
-    \vspace*{-1mm}
-  \end{block}
+  \end{minipage}}
+
+\vspace*{2mm}
+\hspace*{1cm}\includegraphics[width=2.5cm]{ver/Laguerre_Filamentaire1.png}
+\hspace*{2mm}\includegraphics[width=2.5cm]{ver/Voxels_composites1.png}
+%\includegraphics[width=0.38cm]{ver/Poly_2D.png}
+\hspace*{2mm}\includegraphics[width=2.5cm]{ver/Mask_final1.png}
+\\
+\hspace*{1cm}\includegraphics[width=2.5cm]{ver/Chps_Gauss.png}
+\hspace*{2mm}\includegraphics[width=2.5cm]{ver/Cylinder_3D.png}
+\hspace*{2mm}\includegraphics[trim = .1cm .1cm .1cm .1cm,clip,width=2.5cm]{ver/Maillage_vraiment_periodique1.png}
 \end{frame}
 
 \begin{frame}{Periodic
@@ -907,22 +915,24 @@ Example of end-user API}
 
 \begin{frame}{Periodic
     REV - Modelling inclusions}
-  \scalebox{0.9}{
-    \begin{minipage}{1.1\linewidth}
-  \begin{block}{MFEM contributions \& coupling}
-    \begin{itemize}
-      \item Using as input : 3D periodic \texttt{gmsh} meshes\\[-1mm]
-      \hspace*{8mm}\scalebox{0.8}{we made a public MFEM contribution to add capabilities} 
-      \item Read/write MED I/O file format \scalebox{0.8}{(development is not publicly disclosed)}
-      \item In progress : using \texttt{gmsh} to generate large REV meshes (\texttt{gmsh} format)\\[-1mm]
-      \hspace*{8mm}\scalebox{0.8}{including second order meshes} 
-    \end{itemize}
-  \end{block}
   \begin{block}{Modelling inclusions at fuel pellet's microstructure scale}
     \hspace*{2cm}\includegraphics[height=4cm]{img/REV_2000inc.png}
   \end{block}
+  \scalebox{0.9}{
+    \begin{minipage}{1.1\linewidth}
+  \begin{block}{MFEM contributions}
+    \begin{itemize}
+      \item Using as input : 3D periodic \texttt{gmsh} meshes\\[-1mm]
+      \hspace*{8mm}\scalebox{0.8}{we made a public MFEM contribution to add these capabilities} 
+      \item Read/write MED (Salome platform) I/O file format\\[-1mm]
+      \hspace*{8mm}\scalebox{0.8}{development is not publicly disclosed}\\[-1mm]
+      \hspace*{8mm}\scalebox{0.8}{pull request is delayed, need time to go through}
+%      \item In progress : using \texttt{gmsh} to generate large REV meshes (\texttt{gmsh} format)\\[-1mm]
+%      \hspace*{8mm}\scalebox{0.8}{including second order meshes} 
+    \end{itemize}
+  \end{block}
   \end{minipage}}
-\begin{textblock}{.2}(0.73,0.62)
+\begin{textblock}{.2}(0.73,0.22)
 \includegraphics[width=\textwidth]{img/polydisperse.png}
 \end{textblock}
 \end{frame}
@@ -941,7 +951,7 @@ Example of end-user API}
       \hspace*{8mm}\scalebox{0.8}{iterative solvers deals with largest systems} \\[-1mm] 
       \hspace*{8mm}\scalebox{0.8}{finding good preconditionners is a key}
       \item Strong scaling benchmark \scalebox{0.8}{(CEA/CCRT AMD Milan architecture)} \\[-1mm] 
-      \hspace*{8mm}\scalebox{0.8}{ $400\ 10^6$ unknowns}
+      \hspace*{8mm}\scalebox{0.8}{ $80\ 10^6$ unknowns}
     \end{itemize}
   \end{block}
   \end{minipage}}
@@ -972,7 +982,7 @@ Example of end-user API}
       \item Micromorphic damage approach used here (David Siedel PhD work - CEA)
       \item Exact treatment of the irreversibility constraint at integration points
       \end{itemize}
-      \item $132\ 10^6$\,nodes, $400\ 10^6$ unknowns, \textbf{2500} cores \scalebox{0.8}{(CEA/CCRT computing facility)}
+      \item $22\ 10^6$ unknowns, \textbf{2500} cores \scalebox{0.8}{(CEA/CCRT computing facility)}
     \end{itemize}
     \end{minipage}}
   \end{block}
@@ -993,12 +1003,13 @@ Example of end-user API}
   \begin{itemize}
     \item What was done ?
     \begin{itemize}
+      \item \mmm{} - opensource project thermo-mechanical solver
       \item High level declarative API suitable for
       engineering studies\\\hspace*{1cm} and upcoming integration in the {\tt PLEIADES}
       middleware
       \begin{itemize}
-        \item {\tt MFEM}' API still accessible user a lower
-        level API (not shown here)
+        \item {\tt MFEM} API still accessible user a lower
+        level API
       \end{itemize}
       \item Multi-material support
       \item Ability to handle arbitrary complex small and
@@ -1008,12 +1019,12 @@ Example of end-user API}
         (dynamically loaded libraries)
       \end{itemize}
     \end{itemize}
-    \vspace*{6mm}
+    \vspace*{1mm}
     \item What comes next ?
     \begin{itemize}
+      \item Keep the trust of industrial partners (EDF, Framatome) on PLEIADES middleware
       \item Overall robustness of the code
-      \item Setup extensive continuous integration
-      \item Prediction and handling of the Dirichlet BC
+      \item Setup extensive continuous integration, tutorials
       \item Extension to other physical phenomea (non linear
       heat-transfer, diffusion, non local mechanics). \textit{Should be
         easy} using code generation of behaviour integrators
@@ -1030,8 +1041,9 @@ Example of end-user API}
     \end{itemize}
   \end{itemize}
     \end{minipage}}
-  \begin{textblock}{.2}(0.65,0.42)
-  \includegraphics[width=.94\textwidth]{img/ex1p-np100.png}
+  \begin{textblock}{.2}(0.81,0.12)
+%  \includegraphics[width=.94\textwidth]{img/ex1p-np100.png}
+  \includegraphics[trim = 2.9cm .1cm 1.cm .1cm,clip,width=.94\textwidth]{ver/222_spheres.png}
   \end{textblock}
 \end{frame}    
 
