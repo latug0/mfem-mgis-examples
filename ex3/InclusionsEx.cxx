@@ -267,7 +267,7 @@ int executeMFEMMGISTest(const TestParameters& p) {
     if (!checkSolution(problem, p.tcase)) {
       return(EXIT_FAILURE);
     }
-    Profiler::timers::print_and_write_timers();
+    mfem_mgis::Profiler::timers::print_and_write_timers();
     return(EXIT_SUCCESS);
   }
 }

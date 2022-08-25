@@ -63,7 +63,6 @@ int main(int argc, char** argv) {
 
   // loading the mesh
   {
-  const auto main_timer = mfem_mgis::getTimer("main_timer");
   mfem_mgis::NonLinearEvolutionProblem problem(
       {{"MeshFileName", mesh_file},
        {"FiniteElementFamily", "H1"},
@@ -203,6 +202,6 @@ int main(int argc, char** argv) {
     std::cout << '\n';
   }
   }
-  mfem_mgis::Profiler::getProfiler().print(out);
+  mfem_mgis::Profiler::timers::print_and_write_timers();
   return EXIT_SUCCESS;
 }
