@@ -108,9 +108,11 @@ namespace fissuration
 		lparameters.insert({{"UnknownsSize", 1}});
 		auto problem =
 			std::make_shared<mfem_mgis::NonLinearEvolutionProblem>(lparameters);
-		problem->addBehaviourIntegrator("MicromorphicDamage", "Fuel",
-				"src/libBehaviour.so",
-				"AT1MicromorphicDamage");
+	 	problem->addBehaviourIntegrator("MicromorphicDamage", "Fuel",
+                        	"src/libBehaviour.so",
+//				"AT1MicromorphicDamage");
+                        	"MicromorphicDamageII");
+
 		auto& m = problem->getMaterial("Fuel");
 		// material properties
 		for (const auto& mp :
@@ -149,7 +151,7 @@ namespace fissuration
 
 			constexpr auto iter_max = mfem_mgis::size_type{5000};
 			static constexpr const auto parallel = true;
-			auto success = true;
+			auto success = EXIT_SUCCESS;
 			// building the non linear problems
 			const auto common_problem_parameters = mfem_mgis::Parameters{
 				{"MeshFileName", "Rod3D_Maillage_2.50_.msh"},
@@ -204,20 +206,22 @@ namespace fissuration
 
 
 			mfem_mgis::NonLinearResolutionOutput solver_statistics;
+
+			auto& mechanical_output = solver_statistics; // warning; we keep info for the mechanical pb
+			mfem_mgis::NonLinearResolutionOutput micromorphic_output;
+
 			double measure = Profiler::timers::chrono_section([&](){
 					// main loop
-					//
-					mfem_mgis::size_type end = 1; //je n'ai pas honte
-					for (mfem_mgis::size_type i = 0; i != n; ++i) 
+					mfem_mgis::size_type end = 2; //je n'ai pas honte
+					//for (mfem_mgis::size_type i = 0; i != n; ++i) 
 					for (mfem_mgis::size_type i = 0; i != end; ++i) 
 					{
 					CatchTimeSection("fissuration::main_loop");
 					const auto t0 = times[i];
 					const auto t1 = times[i + 1];
 					const auto dt = t1 - t0;
-					if(mfem_mgis::getMPIrank() == 0) {
-					std::cout << "Time step " << i << " from " << t0 << " to " << t1 << '\n';
-					}
+					
+					Profiler::Utils::Message("Time step ", i, " from ", t0, " to ", t1);
 
 					// update temperature
 					auto Tg = mfem_mgis::PartialQuadratureFunction::evaluate(
@@ -241,16 +245,17 @@ namespace fissuration
 					auto micromorphic_problem_initial_residual = mfem_mgis::real{};
 
 					// set solver and preconditionner
-					setLinearSolver(*mechanical_problem, a_solv, a_precond, p.verbosity_level, mfem_mgis::real{1e-8}, mfem_mgis::real{1e-6});
-					setLinearSolver(*micromorphic_problem, a_solv, a_precond, p.verbosity_level, mfem_mgis::real{0}, mfem_mgis::real{1e-6});
+					const mfem_mgis::real rel_tol = mfem_mgis::real{1e-6};
+					const mfem_mgis::real abs_tol = mfem_mgis::real{1e-8};
+					const int nb_it_max = 100;
+					setLinearSolver(*mechanical_problem, a_solv, a_precond, p.verbosity_level, abs_tol, rel_tol, nb_it_max);
+					setLinearSolver(*micromorphic_problem, a_solv, a_precond, p.verbosity_level, mfem_mgis::real{0}, rel_tol, nb_it_max);
 
 					// alternate miminisation algorithm
-					while (!converged && success != EXIT_FAILURE) {
+					while (!converged && (success != EXIT_FAILURE)) {
 						constexpr auto reps = mfem_mgis::real{1e-4};
-						if(mfem_mgis::getMPIrank() == 0) {
-							std::cout << "time step " << i  //
-								<< ", alternate minimisation iteration, " << iter << '\n';
-						}
+						Profiler::Utils::Message("time step ", i, ", alternate minimisation iteration, ", iter);
+						
 						if (iter == 0) {
 							mechanical_problem->setSolverParameters({{"AbsoluteTolerance", 1e-10},
 									{"RelativeTolerance", reps}});
@@ -268,9 +273,10 @@ namespace fissuration
 						}
 
 						// solving the mechanical problem
-						auto mechanical_output = mechanical_problem->solve(t0, dt);
+						mechanical_output = mechanical_problem->solve(t0, dt);
 						if (!mechanical_output.status) {
 							Profiler::Utils::Message("non convergence of the mechanical problem");
+							solver_statistics.status=false;
 							success = EXIT_FAILURE; 
 							break;
 						}
@@ -278,9 +284,10 @@ namespace fissuration
 						Y = mfem_mgis::getInternalStateVariable(
 								mechanical_problem->getMaterial("Fuel"), "EnergyReleaseRate");
 						// solving the micromorphic problem
-						auto micromorphic_output = micromorphic_problem->solve(t0, dt);
+						micromorphic_output = micromorphic_problem->solve(t0, dt);
 						if (!micromorphic_output.status) {
 							Profiler::Utils::Message("non convergence of the micromorphic problem");
+							solver_statistics.status=false;
 							success = EXIT_FAILURE; 
 							break;
 						}
@@ -302,8 +309,8 @@ namespace fissuration
 							Profiler::Utils::Message("non convergence of the fixed-point problem");
 							solver_statistics.status=false;
 							success = EXIT_FAILURE; 
+							break;
 						}
-						solver_statistics = micromorphic_output; // warning; we keep info for the micromorphic pb
 					}
 
 					if(use_post_processing)	common::execute_post_processings(*mechanical_problem, t0, dt);
@@ -317,9 +324,9 @@ namespace fissuration
 			});
 
 			common::fill_statistics(a_info, a_solv, a_precond, solver_statistics, measure); // res for the micromorphic pb
-			common::print_statistics(string_solver, string_precond, measure);
+			common::print_statistics(solver_statistics.status, string_solver, string_precond, measure);
 
 			//
-			return success ? EXIT_SUCCESS : EXIT_FAILURE;
+			return success;
 		}
 };

@@ -109,8 +109,9 @@ if(MFEM_USE_MPI)
 	
 	add_custom_command(
 		OUTPUT "src/libBehaviour-for-fissuration.so"
-		COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/mfront-law/AT1MicromorphicDamage.mfront ${PROJECT_BINARY_DIR}/mfront-law/MicromorphicDamageI.mfront
-		DEPENDS ${PROJECT_BINARY_DIR}/mfront-law/AT1MicromorphicDamage.mfront ${PROJECT_BINARY_DIR}/mfront-law/MicromorphicDamageI.mfront
+		#COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/mfront-law/AT1MicromorphicDamage.mfront ${PROJECT_BINARY_DIR}/mfront-law/MicromorphicDamageI.mfront
+		COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/mfront-law/AT1MicromorphicDamage.mfront ${PROJECT_BINARY_DIR}/mfront-law/MicromorphicDamageII.mfront ${PROJECT_BINARY_DIR}/mfront-law/MicromorphicDamageI.mfront
+		DEPENDS ${PROJECT_BINARY_DIR}/mfront-law/AT1MicromorphicDamage.mfront ${PROJECT_BINARY_DIR}/mfront-law/MicromorphicDamageI.mfront ${PROJECT_BINARY_DIR}/mfront-law/MicromorphicDamageII.mfront
 		COMMENT "Performing mfront code generation for fissuration")
 
 		add_custom_target(generate-libBehaviour-cas-cible-1 ALL

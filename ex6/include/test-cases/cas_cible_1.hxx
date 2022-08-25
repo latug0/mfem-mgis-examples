@@ -61,7 +61,6 @@ namespace cas_cible_1
 
 		if(use_post_processing) common::add_post_processings(problem, "OutputFile-cas_cible_1");
 
-
 		mfem_mgis::NonLinearResolutionOutput solver_statistics;
 		double measure = 0.;
 
@@ -71,7 +70,7 @@ namespace cas_cible_1
 
 		if(use_post_processing)	common::execute_post_processings(problem, 0,1);
 		common::fill_statistics(a_info, a_solv, a_precond, solver_statistics, measure);
-		common::print_statistics(string_solver, string_precond, measure);
+		common::print_statistics(solver_statistics.status, string_solver, string_precond, measure);
 
 		return(EXIT_SUCCESS);
 	}

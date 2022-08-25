@@ -17,6 +17,7 @@
 // make a petsc file
 //
 using namespace configuration;
+using namespace mfem_mgis;
 
 void create_petsc_file(const petsc_ksp_type a_solv_name, const petsc_pc_type a_pc_name)
 {

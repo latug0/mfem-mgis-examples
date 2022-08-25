@@ -31,11 +31,15 @@ namespace fissuration
 			solver_name::HypreFGMRES,
 			solver_name::HypreGMRES,
 			solver_name::HyprePCG,
-			solver_name::MUMPSSolver,
+#ifdef MFEM_USE_MUMPS
+			//solver_name::MUMPSSolver,
+#endif
 			solver_name::GMRESSolver,
 			solver_name::CGSolver,
 			solver_name::BiCGSTABSolver,
-			solver_name::UMFPackSolver,
+#ifdef MFEM_USE_SUITESPARSE
+			//solver_name::UMFPackSolver,
+#endif
 			solver_name::MINRESSolver,
 			solver_name::SLISolver,
 		};
@@ -87,6 +91,47 @@ namespace fissuration
 
 	bool match(solver s, pc p, int r)
 	{
+		if(r == 0)
+		{
+			r = false;
+			// error
+			if(s == solver_name::HypreFGMRES  && p == precond_name::HypreParaSails) return false;
+			if(s == solver_name::HypreFGMRES  && p == precond_name::HypreEuclid) return false;
+			if(s == solver_name::HypreGMRES  && p == precond_name::HypreParaSails) return false;
+			if(s == solver_name::HypreGMRES  && p == precond_name::HypreEuclid) return false;
+			if(s == solver_name::HyprePCG && p == precond_name::HypreParaSails) return false;
+			if(s == solver_name::HyprePCG && p == precond_name::HypreEuclid) return false;
+			// do not converge
+			// mechanical
+			//
+
+			// micro
+			// if(s == solver_name::  && p == precond_name::) return false;
+			if(s == solver_name::HyprePCG && p == precond_name::HypreILU) return false;
+			if(s == solver_name::HypreFGMRES  && p == precond_name::HypreBoomerAMG) return false; // pb step 2
+			if(s == solver_name::HypreFGMRES  && p == precond_name::HypreILU) return false; //pb step 2
+			if(s == solver_name::HypreFGMRES  && p == precond_name::HypreDiagScale) return false;
+			if(s == solver_name::HypreGMRES  && p == precond_name::HypreBoomerAMG) return false; // pb step 2
+			if(s == solver_name::HypreGMRES  && p == precond_name::HypreILU) return false; //pb step 2
+			if(s == solver_name::HypreGMRES  && p == precond_name::HypreDiagScale) return false;
+		}
+
+		if(s == solver_name::HypreFGMRES) return false;
+		if(s == solver_name::HypreGMRES) return false;
+
+		if(r == 3)
+		{
+			if(s == solver_name::HyprePCG && p == precond_name::HypreParaSails) return false;
+			if(s == solver_name::HyprePCG && p == precond_name::HypreEuclid) return false;
+			if( s == solver_name:: HyprePCG  && p == precond_name:: HypreBoomerAMG  ) return false;
+			if( s == solver_name:: HyprePCG  && p == precond_name:: HypreILU  ) return false;
+			if( s == solver_name:: HyprePCG  && p == precond_name:: HypreDiagScale  ) return false;
+			if( s == solver_name:: GMRESSolver  && p == precond_name:: HypreParaSails  ) return false;
+			if( s == solver_name:: GMRESSolver  && p == precond_name:: HypreBoomerAMG  ) return false;
+			if( s == solver_name:: GMRESSolver  && p == precond_name:: HypreILU  ) return false;
+		}
+
+
 		return true;
 	}
 

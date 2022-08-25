@@ -5,6 +5,7 @@
 #include<MFEMMGIS/Profiler.hxx>
 
 using namespace configuration;
+using namespace mfem_mgis;
 
 struct info
 {
@@ -18,6 +19,7 @@ struct info
 
 class gather_information
 {
+
 	public:
 		gather_information() : m_data() {};
 		~gather_information() {}

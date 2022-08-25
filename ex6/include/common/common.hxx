@@ -88,5 +88,5 @@ namespace common
 				);
 		}
 
-	void print_statistics(std::string string_solver, std::string string_pc, double time);
+	void print_statistics(bool converged, std::string string_solver, std::string string_pc, double time);
 };

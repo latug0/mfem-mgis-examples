@@ -2,6 +2,7 @@
 
 namespace configuration
 {
+	using namespace mfem_mgis;
 
 
 	template<typename Problem>		
@@ -10,13 +11,14 @@ namespace configuration
 				const precond_name a_precond_name,
 				const int v,
 				const mfem_mgis::real a_abs_tol = 1e-12,
-				const mfem_mgis::real a_rel_tol = 1e-12
+				const mfem_mgis::real a_rel_tol = 1e-12,
+				const int default_max_num_of_it = 5000
 				)
 		{
 			CatchTimeSection("set_linear_solver");
 			// pilote
 			const int verbosity 			= v; 			// VerbosityLevel
-			constexpr int defaultMaxNumOfIt	 	= 5000; 		// MaximumNumberOfIterations
+			const int defaultMaxNumOfIt	 	= default_max_num_of_it;// MaximumNumberOfIterations
 			constexpr int adjustMaxNumOfIt 		= 500000; 		// MaximumNumberOfIterations
 			const mfem_mgis::real absTol		= a_abs_tol; 		// AbsoluteTolerance
 			const mfem_mgis::real relTol		= a_rel_tol;		// RelativeTolerance
