@@ -20,6 +20,7 @@ std::function<void(const TestParameters&, const bool, const Solver, const Pc, ga
 	}
 }
 
+std::function<int(const TestParameters&, const bool, const char*, gather_information&)> get_petsc_kernel_with_file(int a_case);
 std::vector<solver_name> get_solvers(int a_case);
 std::vector<petsc_ksp_type> get_solvers_with_petsc(int a_case);
 std::vector<precond_name> get_pc(int a_case);

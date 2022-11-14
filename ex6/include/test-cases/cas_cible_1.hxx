@@ -30,48 +30,68 @@ namespace cas_cible_1
 	bool match_with_petsc(petsc_solver, petsc_pc, int r);
 	
 	void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolutionProblem& problem);
+	int kernel_with_file(const TestParameters& p, const bool use_post_processing, const char* a_pets_file_name, gather_information& a_info);
+
+
+	template<class Problem>
+		double solve_problem(Problem& a_problem, 
+				const bool use_post_processing, 
+				gather_information& a_info, 
+				mfem_mgis::NonLinearResolutionOutput& a_solver_statistics
+				)
+		{
+			CatchTimeSection("cas_cible1::solve_problem");
+
+			if(use_post_processing) common::add_post_processings(a_problem, "OutputFile-cas_cible_1");
+
+			double measure = 0.;
+
+			// main function here
+			measure = common::solve(a_problem, 0, 1, a_solver_statistics);
+
+			return measure;
+		}
 
 	template<typename Solver, typename Pc>
-	int kernel(const TestParameters& p, const bool use_post_processing, const Solver a_solv, const Pc a_precond, gather_information& a_info)
-	{
-		constexpr const auto dim = mfem_mgis::size_type{3};
+		int kernel(const TestParameters& p, const bool use_post_processing, const Solver a_solv, const Pc a_precond, gather_information& a_info)
+		{
+			constexpr const auto dim = mfem_mgis::size_type{3};
 
-		std::string string_solver       = getName(a_solv);
-		std::string string_precond      = getName(a_precond);
-		std::string timer_name          = "run_" + string_solver + "_" + string_precond;
-		CatchTimeSection(timer_name);
+			std::string string_solver       = getName(a_solv);
+			std::string string_precond      = getName(a_precond);
+			std::string timer_name          = "run_" + string_solver + "_" + string_precond;
+			CatchTimeSection(timer_name);
+			
+			/* *** initialisation *** */
+			
+			// creating the finite element workspace
+			auto fed = std::make_shared<mfem_mgis::FiniteElementDiscretization>(
+					mfem_mgis::Parameters{{"MeshFileName", p.mesh_file},
+					{"FiniteElementFamily", "H1"},
+					{"FiniteElementOrder", p.order},
+					{"UnknownsSize", dim},
+					{"NumberOfUniformRefinements", p.parallel ? p.refinement : 0},
+					{"Parallel", p.parallel}});
+			
+			mfem_mgis::NonLinearResolutionOutput solver_statistics;
+			mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed);
+			common::print_mesh_information(problem.getImplementation<true>());
+			setup_properties(p, problem);
 
-		// creating the finite element workspace
-		auto fed = std::make_shared<mfem_mgis::FiniteElementDiscretization>(
-				mfem_mgis::Parameters{{"MeshFileName", p.mesh_file},
-				{"FiniteElementFamily", "H1"},
-				{"FiniteElementOrder", p.order},
-				{"UnknownsSize", dim},
-				{"NumberOfUniformRefinements", p.parallel ? p.refinement : 0},
-				{"Parallel", p.parallel}});
-		mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed);
-		//common::print_mesh_information(problem);
-		
-		
-		common::print_mesh_information(problem.getImplementation<true>());
-		setup_properties(p, problem);
+			setLinearSolver(problem, a_solv, a_precond, p.verbosity_level);
+			setSolverParameters(problem);
 
-		setLinearSolver(problem, a_solv, a_precond, p.verbosity_level);
-		setSolverParameters(problem);
+			/* *** run *** */
+			auto measure = solve_problem(problem, use_post_processing, a_info, solver_statistics);
+			auto success = common::check(solver_statistics, string_solver, string_precond);
 
-		if(use_post_processing) common::add_post_processings(problem, "OutputFile-cas_cible_1");
+			/* *** post processing *** */
+			if(use_post_processing)	common::execute_post_processings(problem, 0,1);
+			common::fill_statistics(a_info, a_solv, a_precond, solver_statistics, measure);
+			common::print_statistics(solver_statistics.status, string_solver, string_precond, measure);
 
-		mfem_mgis::NonLinearResolutionOutput solver_statistics;
-		double measure = 0.;
-
-		// main function here
-		measure = common::solve(problem, 0, 1, solver_statistics, string_solver, string_precond);
+			return success;
+		}
 
 
-		if(use_post_processing)	common::execute_post_processings(problem, 0,1);
-		common::fill_statistics(a_info, a_solv, a_precond, solver_statistics, measure);
-		common::print_statistics(solver_statistics.status, string_solver, string_precond, measure);
-
-		return(EXIT_SUCCESS);
-	}
 };

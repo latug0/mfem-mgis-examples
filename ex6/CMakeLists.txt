@@ -62,6 +62,7 @@ if(MFEM_USE_MPI)
 	function(build_case name)
 		add_library(${name} STATIC src/test-cases/${name}.cxx)
 		target_link_libraries(${name} mfem-mgis::MFEMMGIS)
+		target_link_libraries(${name} labo-tools)
 		target_include_directories(${name}
 			SYSTEM  
 			PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
@@ -74,7 +75,7 @@ if(MFEM_USE_MPI)
 	build_case(fissuration)
 
 
-	# Define the executable to build for this example
+	# Define executables to build for these examples
 	add_executable(perf perf.cxx)
 	target_link_libraries(perf labo-tools)
 	add_case(perf cas_cible_1)
@@ -85,9 +86,13 @@ if(MFEM_USE_MPI)
 
 	add_executable(one_test one_test.cxx)
 	target_link_libraries(one_test labo-tools)
-
 	add_case(one_test cas_cible_1)
 	add_case(one_test fissuration)
+	
+	add_executable(petsc_with_hypre use_petsc_with_hypre.cxx)
+	target_link_libraries(petsc_with_hypre labo-tools)
+	add_case(petsc_with_hypre cas_cible_1)
+	add_case(petsc_with_hypre fissuration)
 
 	add_executable(petsc_file_generation use_petsc.cxx)
 	target_link_libraries(petsc_file_generation labo-tools)

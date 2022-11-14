@@ -1,5 +1,5 @@
 #include <test-cases/cas_cible_1.hxx>
-
+#include <common/common.hxx>
 namespace cas_cible_1
 {
 	using namespace configuration;
@@ -180,4 +180,39 @@ namespace cas_cible_1
 		}
 		problem.setMacroscopicGradientsEvolution([e](const double) { return e; });
 	} 
+
+	int kernel_with_file(const TestParameters& p, const bool use_post_processing, const char* a_pets_file_name, gather_information& a_info)
+	{
+		CatchTimeSection("run_cas_cible1_with_petsc");
+		constexpr const auto dim = mfem_mgis::size_type{3};
+		
+		/* *** initialisation *** */
+		auto fed = std::make_shared<mfem_mgis::FiniteElementDiscretization>(
+				mfem_mgis::Parameters{{"MeshFileName", p.mesh_file},
+				{"FiniteElementFamily", "H1"},
+				{"FiniteElementOrder", p.order},
+				{"UnknownsSize", dim},
+				{"NumberOfUniformRefinements", p.parallel ? p.refinement : 0},
+				{"Parallel", p.parallel}});
+
+		std::string string_solver       = "petsc_solver";
+		std::string string_precond	= "petsc_precond";
+
+		mfem_mgis::setPETSc(a_pets_file_name);
+		mfem_mgis::NonLinearResolutionOutput solver_statistics;
+		mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed);
+		common::print_mesh_information(problem.getImplementation<true>());
+
+		setup_properties(p, problem);
+
+		/* *** run *** */
+		auto measure = solve_problem(problem, use_post_processing, a_info, solver_statistics);
+		auto success = common::check(solver_statistics, string_solver, string_precond);
+
+		/* *** post processing *** */
+		if(use_post_processing)	common::execute_post_processings(problem, 0,1);
+		common::print_statistics(solver_statistics.status, string_solver, string_precond, measure);
+		
+		return success;
+	}
 };

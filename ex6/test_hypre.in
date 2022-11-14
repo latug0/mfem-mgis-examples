@@ -1,0 +1,7 @@
+-pc_type hypre
+-pc_hypre_type boomeramg
+-pc_hypre_boomeramg_nodal_coarsen 1
+-pc_hypre_boomeramg_vec_interp_variant 1
+-pc_hypre_rtol 1e-10
+-pc_hypre_atol 1e-10
+-pc_hypre_max_it 10e1

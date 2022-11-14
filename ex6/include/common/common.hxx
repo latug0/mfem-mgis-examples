@@ -39,20 +39,27 @@ namespace common
 	}
 
 	template<typename Problem, typename T>
-		double solve(Problem& p, double start, double end, T& statistics, std::string string_solver="", std::string string_pc="")
+		double solve(Problem& p, double start, double end, T& statistics)
 		{
 			CatchTimeSection("common::solve");
 			// solving the problem
 			double res = Profiler::timers::chrono_section( [&](){
 					statistics = p.solve(0, 1);
 					});
-
+			return res;
+		}
+	
+	template<typename T>
+		int check(T& statistics, std::string string_solver="", std::string string_pc="")
+		{
+			CatchTimeSection("common::check_solve");
 			// check status
 			if (!statistics.status) {
 				Profiler::Utils::Message("INFO: ", string_solver,"+",string_pc," FAILED");
 			}
-			return res;
+			return statistics.status;
 		}
+
 
 	template<typename Problem>
 		void add_post_processings(Problem& p, std::string msg)

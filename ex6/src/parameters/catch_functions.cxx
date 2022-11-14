@@ -1,5 +1,15 @@
 #include <parameters/catch_functions.hxx>
 
+std::function<int(const TestParameters&, const bool, const char*, gather_information&)> get_petsc_kernel_with_file(int a_case)
+{
+	switch(a_case)
+	{
+		case 1: return cas_cible_1::kernel_with_file;
+	//	case 2: return fissuration::kernel;
+		default: return cas_cible_1::kernel_with_file;
+	}
+}
+
 std::vector<solver_name> get_solvers(int a_case)
 {
 	switch(a_case)
