@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
 	mfem_mgis::initialize(argc, argv);
 
 	// init timers
-	Profiler::timers::init_timers();
+	mfem_mgis::Profiler::timers::init_timers();
 
 	// get parameters
 	auto p = parseCommandLineOptions_one_test(argc, argv);
@@ -69,6 +69,6 @@ int main(int argc, char* argv[])
 	common::memory::print_memory_footprint();
 
 	// print and write timetable
-	Profiler::timers::print_and_write_timers();
+	mfem_mgis::Profiler::timers::print_and_write_timers();
 	return res;
 }

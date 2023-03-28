@@ -63,7 +63,7 @@ namespace configuration
 
 			auto current_solver_name = getName(a_solver_name);
 			auto current_precond_name = getName(a_precond_name);
-			Profiler::Utils::Message("INFO: solver: ", current_solver_name, " and preconditionner: ",current_precond_name);
+			mfem_mgis::Profiler::Utils::Message("INFO: solver: ", current_solver_name, " and preconditionner: ",current_precond_name);
 			p.setLinearSolver(current_solver_name, solverParameters);
 		}
 

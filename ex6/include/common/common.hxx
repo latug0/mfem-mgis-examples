@@ -10,8 +10,8 @@ namespace common
 	{
 		CatchTimeSection("common::print_mesh_information");
 		
-		using Profiler::Utils::sum;
-		using Profiler::Utils::Message;
+		using mfem_mgis::Profiler::Utils::sum;
+		using mfem_mgis::Profiler::Utils::Message;
 		
 		//getMesh
 		auto mesh = impl.getFiniteElementSpace().GetMesh();
@@ -43,13 +43,13 @@ namespace common
 		{
 			CatchTimeSection("common::solve");
 			// solving the problem
-			double res = Profiler::timers::chrono_section( [&](){
+			double res = mfem_mgis::Profiler::timers::chrono_section( [&](){
 					statistics = p.solve(0, 1);
 					});
 
 			// check status
 			if (!statistics.status) {
-				Profiler::Utils::Message("INFO: ", string_solver,"+",string_pc," FAILED");
+				mfem_mgis::Profiler::Utils::Message("INFO: ", string_solver,"+",string_pc," FAILED");
 			}
 			return res;
 		}
@@ -58,7 +58,7 @@ namespace common
 		void add_post_processings(Problem& p, std::string msg)
 		{
 	//		CatchTimeSection("common::add_postprocessing_and_outputs");
-			using Profiler::Utils::Message;
+			using mfem_mgis::Profiler::Utils::Message;
 			Message("before AddPost");
 			p.addPostProcessing(
 					"ParaviewExportResults",
@@ -78,7 +78,7 @@ namespace common
 		void fill_statistics(gather_information& data, Solver solver, Pc pc, Statistics stats, double time)
 		{
 			CatchTimeSection("common::fill_statistics");
-			time = Profiler::Utils::reduce_max(time);
+			time = mfem_mgis::Profiler::Utils::reduce_max(time);
 			// fill info data.
 			data.add(
 					info{	solver,		pc,	

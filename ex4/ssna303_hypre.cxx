@@ -15,7 +15,7 @@
 #include "mfem/fem/datacollection.hpp"
 #include "MGIS/Raise.hxx"
 #include "MFEMMGIS/Material.hxx"
-#include "MFEMMGIS/Profiler.hxx"
+#include <MFEMMGIS/Profiler.hxx>
 #include "MFEMMGIS/UniformDirichletBoundaryCondition.hxx"
 #include "MFEMMGIS/NonLinearEvolutionProblem.hxx"
 #include "MFEMMGIS/NonLinearEvolutionProblemImplementation.hxx"
@@ -63,7 +63,6 @@ int main(int argc, char** argv) {
 
   // loading the mesh
   {
-  const auto main_timer = mfem_mgis::getTimer("main_timer");
   mfem_mgis::NonLinearEvolutionProblem problem(
       {{"MeshFileName", mesh_file},
        {"FiniteElementFamily", "H1"},
@@ -168,6 +167,8 @@ int main(int argc, char** argv) {
   auto t = mfem_mgis::real{0};
   auto iteration = mfem_mgis::size_type{};
   for (mfem_mgis::size_type i = 0; i != nsteps; ++i) {
+		using namespace mfem_mgis;
+		CatchTimeSection("time_loop");		
     std::cout << "iteration " << iteration << " from " << t << " to " << t + dt
               << '\n';
     // resolution
@@ -203,6 +204,6 @@ int main(int argc, char** argv) {
     std::cout << '\n';
   }
   }
-  mfem_mgis::Profiler::getProfiler().print(out);
+  mfem_mgis::Profiler::timers::print_and_write_timers();
   return EXIT_SUCCESS;
 }

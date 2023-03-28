@@ -51,7 +51,7 @@ namespace common
 		void print_checkpoints(footprint& f)
 		{
 			auto obj = f.reduce();
-			if(Profiler::Utils::is_master())
+			if(mfem_mgis::Profiler::Utils::is_master())
 			{
 				std::cout << " List (maximum resident size): ";
 				for(auto it : obj)
@@ -68,7 +68,7 @@ namespace common
 			f.add_memory_checkpoint();
 			auto obj = f.reduce();
 			auto last = obj.back() * 1e-6; // conversion kb to Gb
-			Profiler::Utils::Message(" memory footprint: ", last, " GB");
+			mfem_mgis::Profiler::Utils::Message(" memory footprint: ", last, " GB");
 		};
 	};
 };

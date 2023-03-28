@@ -39,12 +39,12 @@ gather_information read(const std::string a_input_file_name, bool& a_exist)
 	if(number_of_lines != 0)
 	{	
 		a_exist = true;
-		Profiler::Utils::Message("file ",a_input_file_name,"has been correctly read");
+		mfem_mgis::Profiler::Utils::Message("file ",a_input_file_name,"has been correctly read");
 	}
 	else 
 	{
 		a_exist = false;
-		Profiler::Utils::Message("file ",a_input_file_name," is empty");
+		mfem_mgis::Profiler::Utils::Message("file ",a_input_file_name," is empty");
 	}
 	return res;
 }

@@ -47,7 +47,7 @@ class gather_information
 		{
 			CatchTimeSection("gather_information::write");
 
-			if(Profiler::Utils::is_master())
+			if(mfem_mgis::Profiler::Utils::is_master())
 			{
 				auto name = build_name();
 				std::ofstream file (name, std::ofstream::out);
@@ -79,7 +79,7 @@ class gather_information
 		void writeMD(std::string a_name, bool add_banner = true)
 		{
 			CatchTimeSection("gather_information::writeMD");
-			if(Profiler::Utils::is_master())
+			if(mfem_mgis::Profiler::Utils::is_master())
 			{
 				std::ofstream file (a_name, std::ofstream::in | std::ofstream::out | std::ofstream::ate);
 				if(add_banner)
@@ -117,7 +117,7 @@ class gather_information
 		void print()
 		{
 			CatchTimeSection("gather_information::print");
-			Profiler::Utils::Message("| solver | ", " preconditionner |"," converged |"," iterations |"," residu |", " time |");
+			mfem_mgis::Profiler::Utils::Message("| solver | ", " preconditionner |"," converged |"," iterations |"," residu |", " time |");
 			// improve readability
 			std::string old_solv =" ";
 			std::string old_prec =" ";
@@ -160,7 +160,7 @@ class gather_information
 
 
 				std::string line = "| " + getName(it.m_solver) + " | " + prec + " | " + conv + " | " + ite + " | " + res + " | " + time + " | ";
-				Profiler::Utils::Message(line);
+				mfem_mgis::Profiler::Utils::Message(line);
 			}
 		}
 

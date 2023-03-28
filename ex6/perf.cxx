@@ -62,12 +62,12 @@ int try_several_solvers(TestParameters& p, const bool use_post_processing)
 int main(int argc, char* argv[]) 
 {
 	mfem_mgis::initialize(argc, argv);
-	Profiler::timers::init_timers();
+	mfem_mgis::Profiler::timers::init_timers();
 	constexpr bool use_post_processing = false;
 
 	auto p = parseCommandLineOptions(argc, argv);
 	auto res = try_several_solvers(p, use_post_processing);
 
-	Profiler::timers::print_and_write_timers();
+	mfem_mgis::Profiler::timers::print_and_write_timers();
 	return res;
 }

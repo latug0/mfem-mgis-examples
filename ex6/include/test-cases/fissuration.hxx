@@ -204,7 +204,7 @@ namespace fissuration
 
 
 			mfem_mgis::NonLinearResolutionOutput solver_statistics;
-			double measure = Profiler::timers::chrono_section([&](){
+			double measure = mfem_mgis::Profiler::timers::chrono_section([&](){
 					// main loop
 					//
 					mfem_mgis::size_type end = 1; //je n'ai pas honte
@@ -270,7 +270,7 @@ namespace fissuration
 						// solving the mechanical problem
 						auto mechanical_output = mechanical_problem->solve(t0, dt);
 						if (!mechanical_output.status) {
-							Profiler::Utils::Message("non convergence of the mechanical problem");
+							mfem_mgis::Profiler::Utils::Message("non convergence of the mechanical problem");
 							success = EXIT_FAILURE; 
 							break;
 						}
@@ -280,7 +280,7 @@ namespace fissuration
 						// solving the micromorphic problem
 						auto micromorphic_output = micromorphic_problem->solve(t0, dt);
 						if (!micromorphic_output.status) {
-							Profiler::Utils::Message("non convergence of the micromorphic problem");
+							mfem_mgis::Profiler::Utils::Message("non convergence of the micromorphic problem");
 							success = EXIT_FAILURE; 
 							break;
 						}
@@ -299,7 +299,7 @@ namespace fissuration
 						++iter;
 						// check convergence
 						if ((iter == iter_max) && (!converged)) {
-							Profiler::Utils::Message("non convergence of the fixed-point problem");
+							mfem_mgis::Profiler::Utils::Message("non convergence of the fixed-point problem");
 							solver_statistics.status=false;
 							success = EXIT_FAILURE; 
 						}
