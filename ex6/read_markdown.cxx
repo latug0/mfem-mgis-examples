@@ -274,6 +274,11 @@ int main(int argc, char* argv[])
 	std::sort (try_classification.begin(), try_classification.end(), 
 			[](const std::pair<int,info> a, const std::pair<int,info> b) 
 			{
+			if(a.second.m_time < b.second.m_time) return true;
+			else return false;
+
+/*			[](const std::pair<int,info> a, const std::pair<int,info> b) 
+			{
 			if(a.second.m_solver < b.second.m_solver) return true;
 			else if (a.second.m_solver == b.second.m_solver)
 			{
@@ -286,6 +291,7 @@ int main(int argc, char* argv[])
 			else return false;
 			}
 			else return false;
+*/
 			});
 
 	//build_speed_up_for_python_full(try_classification, first, last);
@@ -306,7 +312,7 @@ int main(int argc, char* argv[])
 		streamRes << inf.m_residu;
 
 		std::ostringstream streamTime; // manage precision
-		streamTime << inf.m_time;
+		streamTime << inf.m_time / 1e9; // time in second
 
 		std::string res  = inf.m_converged ? streamRes.str()  : "&cross;";
 		std::string time = inf.m_converged ? streamTime.str() : "&cross;";
