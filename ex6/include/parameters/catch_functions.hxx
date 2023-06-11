@@ -5,6 +5,7 @@
 
 // get test case (kernel, solver, preconditionner and match function)
 #include <test-cases/cas_cible_1.hxx>
+#include <test-cases/check_manta_rev_elastic.hxx>
 #include <test-cases/fissuration.hxx>
 
 
@@ -16,6 +17,7 @@ std::function<void(const TestParameters&, const bool, const Solver, const Pc, ga
 	{
 		case 1: return cas_cible_1::kernel<Solver,Pc>;
 		case 2: return fissuration::kernel<Solver,Pc>;
+		case 3: return check_manta_rev_elastic::kernel<Solver,Pc>;
 		default: return cas_cible_1::kernel<Solver,Pc>;
 	}
 }

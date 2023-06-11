@@ -1,5 +1,6 @@
 #include <parameters/test_parameters.hpp>
 #include <test-cases/cas_cible_1.hxx>
+#include <test-cases/check_manta_rev_elastic.hxx>
 #include <test-cases/fissuration.hxx>
 
 void common_parameters(mfem::OptionsParser& args, TestParameters& p)
@@ -7,7 +8,7 @@ void common_parameters(mfem::OptionsParser& args, TestParameters& p)
 	args.AddOption(&p.mesh_file, "-m", "--mesh", "Mesh file to use.");
 	args.AddOption(&p.library, "-l", "--library", "Material library.");
 	args.AddOption(&p.order, "-o", "--order", "Finite element order (polynomial degree).");
-	args.AddOption(&p.tcase, "-t", "--test-case", "identifier of the case : cas_cible_1, fissuration : default = cas_cible_1");
+	args.AddOption(&p.tcase, "-t", "--test-case", "identifier of the case : cas_cible_1, fissuration, check_manta_rev_elastic : default = cas_cible_1");
 	args.AddOption(&p.refinement, "-r", "--refinement", "refinement level of the mesh, default = 0");
 	args.AddOption(&p.post_processing, "-p", "--post-processing", "run post processing step");
 	args.AddOption(&p.verbosity_level, "-v", "--verbosity-level", "choose the verbosity level");

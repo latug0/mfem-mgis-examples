@@ -72,12 +72,14 @@ if(MFEM_USE_MPI)
 
 	build_case(cas_cible_1)
 	build_case(fissuration)
+	build_case(check_manta_rev_elastic)
 
 
 	# Define the executable to build for this example
 	add_executable(perf perf.cxx)
 	target_link_libraries(perf labo-tools)
 	add_case(perf cas_cible_1)
+	add_case(perf check_manta_rev_elastic)
 	add_case(perf fissuration)
 
 	add_executable(reader read_markdown.cxx)
@@ -87,6 +89,7 @@ if(MFEM_USE_MPI)
 	target_link_libraries(one_test labo-tools)
 
 	add_case(one_test cas_cible_1)
+	add_case(one_test check_manta_rev_elastic)
 	add_case(one_test fissuration)
 
 	add_executable(petsc_file_generation use_petsc.cxx)
@@ -106,6 +109,12 @@ if(MFEM_USE_MPI)
 		COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/mfront-law/Elasticity.mfront
 		DEPENDS ${PROJECT_BINARY_DIR}/mfront-law/Elasticity.mfront
 				COMMENT "Performing mfront code generation for cas cible 1")
+
+	add_custom_command(
+		OUTPUT "src/libBehaviour-SaintVenantKirchhoffElasticity.so"
+		COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/mfront-law/SaintVenantKirchhoffElasticity.mfront
+		DEPENDS ${PROJECT_BINARY_DIR}/mfront-law/SaintVenantKirchhoffElasticity.mfront
+				COMMENT "Performing mfront code generation for cas cible 2")
 	
 	add_custom_command(
 		OUTPUT "src/libBehaviour-for-fissuration.so"
@@ -116,10 +125,12 @@ if(MFEM_USE_MPI)
 		add_custom_target(generate-libBehaviour-cas-cible-1 ALL
 				DEPENDS "src/libBehaviour-elasticity.so")
 
+		add_custom_target(generate-libBehaviour-cas-cible-2 ALL
+				DEPENDS "src/libBehaviour-SaintVenantKirchhoffElasticity.so")
 	add_custom_target(generate-libBehaviour-fissuration ALL
 		DEPENDS "src/libBehaviour-for-fissuration.so")
 	
-	add_dependencies(check perf generate-libBehaviour-fissuration generate-libBehaviour-cas-cible-1)
+	add_dependencies(check perf generate-libBehaviour-fissuration generate-libBehaviour-cas-cible-1 generate-libBehaviour-cas-cible-2)
 
 	# Define a test that will be called during the "make check"
 	function(add_perf)

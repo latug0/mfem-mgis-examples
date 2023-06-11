@@ -13,7 +13,7 @@ namespace common
 			rusage obj;
 			int who;
 			auto res = getrusage(who, &obj);
-			assert(res = 0 && "error: getrusage has failed");
+			assert(res == 0 && "error: getrusage has failed");
 			return obj;
 		};
 
