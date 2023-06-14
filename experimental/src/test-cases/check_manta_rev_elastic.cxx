@@ -151,19 +151,15 @@ namespace check_manta_rev_elastic
 		// materials
 		auto& m1 = problem.getMaterial(1);
 		auto& m2 = problem.getMaterial(2);
-		auto set_properties = [](auto& m, const double yo, const double po, const double ha, const double yi) {
+		auto set_properties = [](auto& m, const double yo, const double po) {
 			setMaterialProperty(m.s0, "YoungModulus", yo);
 			setMaterialProperty(m.s0, "PoissonRatio", po);
-//			setMaterialProperty(m.s0, "HardeningSlope", ha);
-//			setMaterialProperty(m.s0, "YieldStrength", yi);
 			setMaterialProperty(m.s1, "YoungModulus", yo);
 			setMaterialProperty(m.s1, "PoissonRatio", po);
-//			setMaterialProperty(m.s1, "HardeningSlope", ha);
-//			setMaterialProperty(m.s1, "YieldStrength", yi);
 		};
 
-		set_properties(m1, 2.0e11       , 0.3          , 1.5926e4       , 5.0e8 );
-		set_properties(m2, 8.0e11       , 0.3          , 1.5926e4       , 5.0e8 );
+		set_properties(m1, 2.0e11       , 0.3);
+		set_properties(m2, 8.0e11       , 0.3);
 
 		//
 		auto set_temperature = [](auto& m) {
@@ -180,11 +176,6 @@ namespace check_manta_rev_elastic
 		e[0] = 1.1;
 		e[1] = 1.0;
 		e[2] = 1.0;
-/*		if (p.tcase < 3) {
-			e[p.tcase] = 1;
-		} else {
-			e[p.tcase] = 1.41421356237309504880 / 2;
-		}*/
 		problem.setMacroscopicGradientsEvolution([e](const double) { return e; });
 	} 
 };
