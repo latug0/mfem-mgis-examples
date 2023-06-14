@@ -42,6 +42,7 @@ endif(NOT TARGET mfem-mgis::MFEMMGIS)
 file(COPY
   ${PROJECT_SOURCE_DIR}/SaintVenantKirchhoffElasticity.mfront
   ${PROJECT_SOURCE_DIR}/cube_2mat_per.mesh
+  ${PROJECT_SOURCE_DIR}/inclusions_49.geo
   DESTINATION ${PROJECT_BINARY_DIR})
   
   # Use mfront to generate libBehaviour.so
