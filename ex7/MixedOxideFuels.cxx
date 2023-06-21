@@ -106,6 +106,9 @@ void add_post_processings(Problem& p, std::string msg)
 			"ParaviewExportResults",
 			{{"OutputFileName", msg}}
 			);
+	p.addPostProcessing(
+			"MeanThermodynamicForces",
+			{{"OutputFileName", "avgStress"}});
 } // end timer add_postprocessing_and_outputs
 
 	template<typename Problem>
@@ -271,7 +274,6 @@ int main(int argc, char* argv[])
 		problem.update();
 	}
 
-	//if(use_post_processing)	execute_post_processings(problem, 0,1);
 	// print and write timetable
 	mfem_mgis::Profiler::timers::print_and_write_timers();
 	return(EXIT_SUCCESS);
