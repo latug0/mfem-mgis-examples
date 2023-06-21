@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
-project(RevNonLinearElasticExample)
+project(MixedOxideFuelsExample)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -40,31 +40,30 @@ endif(NOT TARGET mfem-mgis::MFEMMGIS)
 
 # Copy needed file for execution
 file(COPY
-  ${PROJECT_SOURCE_DIR}/SaintVenantKirchhoffElasticity.mfront
-  ${PROJECT_SOURCE_DIR}/cube_2mat_per.mesh
-  ${PROJECT_SOURCE_DIR}/inclusions_49.geo
+  ${PROJECT_SOURCE_DIR}/matrixlaw.mfront
+  ${PROJECT_SOURCE_DIR}/inclusion.msh
   DESTINATION ${PROJECT_BINARY_DIR})
   
   # Use mfront to generate libBehaviour.so
 add_custom_command(
   OUTPUT "src/libBehaviour.so"
-  COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/SaintVenantKirchhoffElasticity.mfront
-  DEPENDS ${PROJECT_BINARY_DIR}/SaintVenantKirchhoffElasticity.mfront
+  COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/matrixlaw.mfront
+  DEPENDS ${PROJECT_BINARY_DIR}/matrixlaw.mfront
   COMMENT "Performing mfront code generation")
   
-add_custom_target(generate-libBehaviour-ex6 ALL
+add_custom_target(generate-libBehaviour-ex7 ALL
   DEPENDS "src/libBehaviour.so")
 
-add_executable(rev RevNonLinearElastic.cxx)
-target_link_libraries(rev mfem-mgis::MFEMMGIS)
-target_include_directories(rev
+add_executable(mox2 MixedOxideFuels.cxx)
+target_link_libraries(mox2 mfem-mgis::MFEMMGIS)
+target_include_directories(mox2
   SYSTEM
   PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"   
   PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
     
-add_dependencies(check rev generate-libBehaviour-ex6)
+add_dependencies(check mox2 generate-libBehaviour-ex7)
 
-set(test "RevNonLinearElasticTest")
-add_test(NAME ${test} COMMAND rev --postprocessings 0)
+set(test "MixedOxideFuelsTest")
+add_test(NAME ${test} COMMAND mox2 --postprocessings 0)
 
 
