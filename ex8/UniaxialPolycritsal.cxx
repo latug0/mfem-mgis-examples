@@ -99,9 +99,16 @@ void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolu
 	using real=mfem_mgis::real;
 
 	CatchTimeSection("set_mgis_stuff");
-	problem.addBehaviourIntegrator("Mechanics", 1, p.library, p.behaviour);
+
+	const int nMat = 8;
+
+	for(int i = 0 ; i < nMat ; i++)
+	{
+		problem.addBehaviourIntegrator("Mechanics", i+1, p.library, p.behaviour);
+	}
 	// materials
-	auto& m1 = problem.getMaterial(1);
+
+//	auto& m1 = problem.getMaterial(1);
 	auto set_properties = [](auto& m, 
 			const double yo1,
 			const double yo2,
@@ -159,40 +166,38 @@ void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolu
 		 */
 	};
 
-	set_properties(m1,     
-			222.e9,              222.e9,              222.e9, // youn modulus
-			0.27,                0.27,                0.27, // poission ration
-			54.e9,               54.e9,               54.e9, // shear modulus
-			0.7071067811865475, -0.4086070447619255, -0.5770964243269279, // v1
-			0.7071067811865475,  0.4086070447619256,  0.5770964243269281  // v2
-			);
-
-
-	//
 	auto set_temperature = [](auto& m) {
 		setExternalStateVariable(m.s0, "Temperature", 1600.);
 		setExternalStateVariable(m.s1, "Temperature", 1600.);
 	};
-	set_temperature(m1);
+
+	for(int i = 0 ; i < nMat ; i++)
+	{
+		auto& mat = problem.getMaterial(i+1);
+		set_properties(mat,     
+				222.e9,              222.e9,              (222.e9, // youn modulus
+				0.27,                0.27,                0.27, // poission ration
+				54.e9,               54.e9,               54.e9, // shear modulus
+				0.7071067811865475, -0.4086070447619255, -0.5770964243269279, // v1
+				0.7071067811865475,  0.4086070447619256,  0.5770964243269281  // v2
+				);
+		set_temperature(mat);
+	}
 
 
 	// macroscopic strain
 	std::vector<real> e(9, real{0});
 	const int xx = 1;
-	const int yy = 1;
-	const int zz = 1;
-
-	e[xx] = 1.1;
-	e[yy] = 1;
-	e[zz] = 1;
+	const int yy = 2;
+	const int zz = 3;
 
 
 	/* bar{E} = e33 *(-1/2 E1 x E1 + (-1/2) * E2 x E2 + E3 x E3)*/
-	/*	const double coef = 0.0001;
-			e[xx] = -0.5*coef;
-			e[yy] = -0.5*coef;
-			e[zz] = 1*coef;
-	 */
+	const double coef = 0.1;
+	e[xx] = 1-0.5*coef;
+	e[yy] = 1-0.5*coef;
+	e[zz] = 1+1*coef;
+
 	problem.setMacroscopicGradientsEvolution([e](const double dt) { 
 			auto ret = e;
 			for(auto& it : ret) it *= dt;
@@ -200,12 +205,16 @@ void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolu
 			});
 
 	// no idea of what is dis but I need to declare it
-//	if (m1.b.symmetry == mgis::behaviour::Behaviour::ISOTROPIC) {
-		std::array<mfem_mgis::real, 9u> r = {0, 1, 0,  //
-			1, 0, 0,  //
+	//	if (m1.b.symmetry == mgis::behaviour::Behaviour::ISOTROPIC) {
+	for(int i = 0 ; i < nMat ; i++)
+	{
+		auto& mat = problem.getMaterial(i+1);
+		std::array<mfem_mgis::real, 9u> r = {1, 0, 0,  //
+			0, 1, 0,  //
 			0, 0, 1};
-		m1.setRotationMatrix(mfem_mgis::RotationMatrix3D{r});
-//	}
+		mat.setRotationMatrix(mfem_mgis::RotationMatrix3D{r});
+	}
+	//	}
 } 
 
 
@@ -217,8 +226,7 @@ static void setLinearSolver(Problem& p,
 {
 	CatchTimeSection("set_linear_solver");
 	// pilote
-	constexpr int defaultMaxNumOfIt	 	= 5000; 		// MaximumNumberOfIterations
-	constexpr int adjustMaxNumOfIt 		= 500000; 		// MaximumNumberOfIterations
+	constexpr int defaultMaxNumOfIt	 	= 500; 		// MaximumNumberOfIterations
 	auto solverParameters = mfem_mgis::Parameters{};
 	solverParameters.insert(mfem_mgis::Parameters{{"VerbosityLevel", verbosity}});
 	solverParameters.insert(mfem_mgis::Parameters{{"MaximumNumberOfIterations", defaultMaxNumOfIt}});
@@ -278,6 +286,10 @@ int main(int argc, char* argv[])
 			{"NumberOfUniformRefinements", p.parallel ? p.refinement : 0},
 			{"Parallel", p.parallel}});
 	mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed);
+
+	//	std::vector<mfem_mgis::real> corner1({0.,0.,0.});
+	//	std::vector<mfem_mgis::real> corner2({1., 1., 1.});
+	//	mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed, corner1, corner2);
 
 	// set problem
 	setup_properties(p, problem);
