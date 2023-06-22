@@ -146,9 +146,10 @@ void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolu
 		setMaterialProperty(m.s1, "NortonExponent", no);
 	};
 
-	set_properties(m1, 8.182e9, 0.364, 100.0e6, 3.333333);
-	set_properties(m2, 2*8.182e9, 0.364, 100.0e12, 3.333333);
-	//set_properties(m2, 0. , 0., 0.364, 100.0e+12, 3.333333);
+	// matrix
+	set_properties(m1, 8.182e+9, 0.364, 100.0e+6, 3.333333);
+	// inclusions
+	set_properties(m2, 2*8.182e+9, 0.364, 100.0e+12, 3.333333);
 
 	//
 	auto set_temperature = [](auto& m) {
@@ -170,11 +171,23 @@ void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolu
 	e[xx] = -0.5*eps;
 	e[yy] = -0.5*eps;
 	e[zz] = eps;
-	problem.setMacroscopicGradientsEvolution([e](const double t) { 
+	problem.setMacroscopicEvolution([e](const double dt) { 
 		auto ret = e;
-		for(auto& it : ret) it *= t;
+		for(auto& it : ret) it *= dt;
 		return ret; 
 	});
+/*	problem.setMacroscopicGradientsEvolution([e](const double dt) { 
+		auto ret = e;
+		for(auto& it : ret) it *= dt;
+		return ret; 
+	});
+*/
+/*	e[xx] = -0.5*eps*0.3;
+	e[yy] = -0.5*eps*0.3;
+	e[zz] = eps*0.3;
+	problem.setMacroscopicGradientsEvolution([e](const double) {  return e;
+	});
+*/
 } 
 
 
@@ -191,9 +204,9 @@ static void setLinearSolver(Problem& p,
 	auto solverParameters = mfem_mgis::Parameters{};
 	solverParameters.insert(mfem_mgis::Parameters{{"VerbosityLevel", verbosity}});
 	solverParameters.insert(mfem_mgis::Parameters{{"MaximumNumberOfIterations", defaultMaxNumOfIt}});
-	//solverParameters.insert(mfem_mgis::Parameters{{"AbsoluteTolerance", Tol}});
-	//solverParameters.insert(mfem_mgis::Parameters{{"RelativeTolerance", Tol}});
-	solverParameters.insert(mfem_mgis::Parameters{{"Tolerance", Tol}});
+	solverParameters.insert(mfem_mgis::Parameters{{"AbsoluteTolerance", Tol}});
+	solverParameters.insert(mfem_mgis::Parameters{{"RelativeTolerance", Tol}});
+	//solverParameters.insert(mfem_mgis::Parameters{{"Tolerance", Tol}});
 
 
 	// preconditionner hypreBoomerAMG
@@ -201,8 +214,8 @@ static void setLinearSolver(Problem& p,
 	auto preconditionner = mfem_mgis::Parameters{{"Name","HypreBoomerAMG"}, {"Options",options}};
 	solverParameters.insert(mfem_mgis::Parameters{{"Preconditioner",preconditionner}});
 	// solver HyprePCG
-	p.setLinearSolver("HyprePCG", solverParameters);
-	//p.setLinearSolver("CGSolver", solverParameters);
+	//p.setLinearSolver("HyprePCG", solverParameters);
+	p.setLinearSolver("CGSolver", solverParameters);
 }
 
 	template<typename Problem>
