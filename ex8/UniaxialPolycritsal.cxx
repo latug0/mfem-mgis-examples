@@ -110,21 +110,11 @@ void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolu
 
 //	auto& m1 = problem.getMaterial(1);
 	auto set_properties = [](auto& m, 
-			const double yo1,
-			const double yo2,
-			const double yo3,
-			const double po12,
-			const double po23,
-			const double po13,
-			const double sm12,
-			const double sm23,
-			const double sm13,
-			const double v1x,
-			const double v1y,
-			const double v1z,
-			const double v2x,
-			const double v2y,
-			const double v2z
+			const double yo1 , const double yo2,	const double yo3,
+			const double po12, const double po23, const double po13,
+			const double sm12, const double sm23, const double sm13,
+			const double v1x , const double v1y,	const double v1z,
+			const double v2x , const double v2y,	const double v2z
 			) {
 		setMaterialProperty(m.s0, "YoungModulus1", yo1);
 		setMaterialProperty(m.s0, "YoungModulus2", yo2);
@@ -156,14 +146,14 @@ void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolu
 		setMaterialProperty(m.s1, "ShearModulus23", sm23);
 		setMaterialProperty(m.s1, "ShearModulus13", sm13);
 
-		/*
-			 setMaterialProperty(m.s1, "V1X", v1x);
-			 setMaterialProperty(m.s1, "V1Y", v1y);
-			 setMaterialProperty(m.s1, "V1Z", v1z);
-			 setMaterialProperty(m.s1, "V2X", v2x);
-			 setMaterialProperty(m.s1, "V2Y", v2y);
-			 setMaterialProperty(m.s1, "V2Z", v2z);
-		 */
+/*
+		setMaterialProperty(m.s1, "V1X", v1x);
+		setMaterialProperty(m.s1, "V1Y", v1y);
+		setMaterialProperty(m.s1, "V1Z", v1z);
+		setMaterialProperty(m.s1, "V2X", v2x);
+		setMaterialProperty(m.s1, "V2Y", v2y);
+		setMaterialProperty(m.s1, "V2Z", v2z);
+*/
 	};
 
 	auto set_temperature = [](auto& m) {
@@ -175,7 +165,7 @@ void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolu
 	{
 		auto& mat = problem.getMaterial(i+1);
 		set_properties(mat,     
-				222.e9,              222.e9,              (222.e9, // youn modulus
+				222.e9,              222.e9,              222.e9, // youn modulus
 				0.27,                0.27,                0.27, // poission ration
 				54.e9,               54.e9,               54.e9, // shear modulus
 				0.7071067811865475, -0.4086070447619255, -0.5770964243269279, // v1
