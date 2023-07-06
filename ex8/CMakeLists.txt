@@ -41,14 +41,16 @@ endif(NOT TARGET mfem-mgis::MFEMMGIS)
 # Copy needed file for execution
 file(COPY
   ${PROJECT_SOURCE_DIR}/Mono_UO2_CosH_Jaco.mfront
+  ${PROJECT_SOURCE_DIR}/Elasticity.mfront
+  ${PROJECT_SOURCE_DIR}/SaintVenantKirchhoffElasticity.mfront
   ${PROJECT_SOURCE_DIR}/cube.msh
   DESTINATION ${PROJECT_BINARY_DIR})
   
   # Use mfront to generate libBehaviour.so
 add_custom_command(
   OUTPUT "src/libBehaviour.so"
-  COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/Mono_UO2_CosH_Jaco.mfront
-  DEPENDS ${PROJECT_BINARY_DIR}/Mono_UO2_CosH_Jaco.mfront
+  COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/Mono_UO2_CosH_Jaco.mfront ${PROJECT_BINARY_DIR}/Elasticity.mfront ${PROJECT_BINARY_DIR}/SaintVenantKirchhoffElasticity.mfront
+  DEPENDS ${PROJECT_BINARY_DIR}/Mono_UO2_CosH_Jaco.mfront ${PROJECT_BINARY_DIR}/Elasticity.mfront ${PROJECT_BINARY_DIR}/SaintVenantKirchhoffElasticity.mfront
   COMMENT "Performing mfront code generation")
   
 add_custom_target(generate-libBehaviour-ex8 ALL
@@ -60,10 +62,30 @@ target_include_directories(uniaxial-polycristal
   SYSTEM
   PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"   
   PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
+
+add_executable(uniaxial-elastic UniaxialElastic.cxx)
+target_link_libraries(uniaxial-elastic mfem-mgis::MFEMMGIS)
+target_include_directories(uniaxial-elastic
+    SYSTEM
+    PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"   
+    PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
+
+add_executable(uniaxial-nonlinearelastic UniaxialNonLinearElastic.cxx)
+target_link_libraries(uniaxial-nonlinearelastic mfem-mgis::MFEMMGIS)
+target_include_directories(uniaxial-nonlinearelastic
+  SYSTEM
+  PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"   
+  PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
+
     
-add_dependencies(check uniaxial-polycristal generate-libBehaviour-ex8)
+add_dependencies(check uniaxial-polycristal uniaxial-elastic uniaxial-nonlinearelastic generate-libBehaviour-ex8)
 
 set(test "UniaxialPolycritsalTest")
 add_test(NAME ${test} COMMAND uniaxial-polycristal --postprocessings 0)
 
+set(test "UniaxialElasticTest")
+add_test(NAME ${test} COMMAND uniaxial-elastic --postprocessings 0)
+
+set(test "UniaxialNonLinearElasticTest")
+add_test(NAME ${test} COMMAND uniaxial-nonlinearelastic --postprocessings 0)
 
