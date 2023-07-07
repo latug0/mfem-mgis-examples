@@ -45,7 +45,7 @@
 
 // We need this class for test case sources
 struct TestParameters {
-	const char* mesh_file = "cube.msh";
+	const char* mesh_file = "periodic-cube.msh";
 	const char* behaviour = "Elasticity";
 	const char* library = "src/libBehaviour.so";
 	int order = 1;
@@ -92,15 +92,13 @@ void add_post_processings(Problem& p, std::string msg)
 	p.addPostProcessing(
 			"MeanThermodynamicForces",
 			{{"OutputFileName", "avgStressElastic"}});
-	auto results = std::vector<mfem_mgis::Parameter>{
-      		"Stress", "Strain"};
 	p.addPostProcessing(
 			"ParaviewExportIntegrationPointResultsAtNodes",
 			{
 				{"OutputFileName", "UniaxialElasticTestIntegrationPointOutput"},
-				{"Results", results}
+				{"Results", {"Stress"}}
 			}
-			);	
+			);
 } // end timer add_postprocessing_and_outputs
 
 	template<typename Problem>
@@ -141,18 +139,20 @@ void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolu
 	for(int i = 0 ; i < nMat ; i++)
 	{
 		auto& mat = problem.getMaterial(i+1);
-		set_properties(mat, 200.e9, 0.3 );
+		set_properties(mat, 200.e9, 0.3);
 		set_temperature(mat);
 	}
+	
+	problem.setMacroscopicGradientsEvolution([](const double t) { 
+		const auto eps = 0.02*t/200; // final eps = 0.02
+		auto ret = std::vector<real>(6, real{0});
+		ret[2] = eps;
+		ret[1] = -0.3*eps;
+		ret[0] = ret[1];
+		return ret; 
+	});
 
-	// macroscopic strain
-	std::vector<real> e(6, real{0});
-	const double eps = 0.02;
-	e[0] = -0.3*eps;
-	e[1] = -0.3*eps;
-	e[2] = 1.;
-	problem.setMacroscopicGradientsEvolution([e](const double) { return e; });
-} 
+}
 
 
 	template<typename Problem>		
@@ -225,25 +225,22 @@ int main(int argc, char* argv[])
 			{"Parallel", p.parallel}});
 	
 	mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed);
-	// std::vector<mfem_mgis::real> corner1({0.,0.,0.});
-	// std::vector<mfem_mgis::real> corner2({1., 1., 1.});
-	// mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed, corner1, corner2);
 
 	// set problem
 	setup_properties(p, problem);
 	setLinearSolver(problem, p.verbosity_level);
 
 	problem.setSolverParameters({{"VerbosityLevel", p.verbosity_level},
-			{"RelativeTolerance", 1e-10},
-			{"AbsoluteTolerance", 0.},
-			{"MaximumNumberOfIterations", 6}});
+			{"RelativeTolerance", 1.e-4},
+			{"AbsoluteTolerance", 1.e-4},
+			{"MaximumNumberOfIterations", 15}});
 
 
 	// add post processings
-	if(use_post_processing) add_post_processings(problem, "OutputFile-Uniaxial-Elastic");
+	if(use_post_processing) add_post_processings(problem, "OutputFile-Uniaxial-elastic");
 
 	// main function here
-	int nStep=50;
+	int nStep=1;
 	double start=0;
 	double end=200;
 	const double dt = (end-start)/nStep;

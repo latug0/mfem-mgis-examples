@@ -45,9 +45,8 @@
 
 // We need this class for test case sources
 struct TestParameters {
-	const char* mesh_file = "cube.msh";
+	const char* mesh_file = "periodic-cube.msh";
 	const char* behaviour = "SaintVenantKirchhoffElasticity";
-	// const char* behaviour = "MonoCristal_UO2";
 	const char* library = "src/libBehaviour.so";
 	int order = 1;
 	bool parallel = true;
@@ -93,6 +92,10 @@ void add_post_processings(Problem& p, std::string msg)
 	p.addPostProcessing(
 			"MeanThermodynamicForces",
 			{{"OutputFileName", "avgStressNonLinearElastic"}});
+	p.addPostProcessing(
+			"ParaviewExportIntegrationPointResultsAtNodes",
+			{{"OutputFileName", msg + "IntegrationPointOutput"},
+			 {"Results", {"FirstPiolaKirchhoffStress"}}});
 } // end timer add_postprocessing_and_outputs
 
 	template<typename Problem>
@@ -133,7 +136,7 @@ void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolu
 	for(int i = 0 ; i < nMat ; i++)
 	{
 		auto& mat = problem.getMaterial(i+1);
-		set_properties(mat, 200.e9, 0.3 );
+		set_properties(mat, 200.e9, 0.3);
 		set_temperature(mat);
 	}
 
@@ -141,7 +144,6 @@ void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolu
 	// macroscopic strain
 	problem.setMacroscopicGradientsEvolution([](const double t) { 
 		    auto Fzz = 1.+0.5*(t/200);
-			std::cout << "********** Fzz = " << Fzz << '\n';
 			auto ret = std::vector<real>(9, real{});
 			ret[2] = Fzz;
 			ret[1] = 1./std::sqrt(Fzz);
@@ -222,25 +224,23 @@ int main(int argc, char* argv[])
 			{"Parallel", p.parallel}});
 	
 	mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed);
-	// std::vector<mfem_mgis::real> corner1({0.,0.,0.});
-	// std::vector<mfem_mgis::real> corner2({1., 1., 1.});
-	// mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed, corner1, corner2);
 
 	// set problem
 	setup_properties(p, problem);
 	setLinearSolver(problem, p.verbosity_level);
 
 	problem.setSolverParameters({{"VerbosityLevel", p.verbosity_level},
-			{"RelativeTolerance", 1e-10},
-			{"AbsoluteTolerance", 0.},
-			{"MaximumNumberOfIterations", 6}});
+			{"RelativeTolerance", 1.e-4},
+			{"AbsoluteTolerance", 1.e-4},
+			{"MaximumNumberOfIterations", 15}});
 
 
 	// add post processings
 	if(use_post_processing) add_post_processings(problem, "OutputFile-Uniaxial-NonLinearElastic");
 
+
 	// main function here
-	int nStep=50;
+	int nStep=1;
 	double start=0;
 	double end=200;
 	const double dt = (end-start)/nStep;
