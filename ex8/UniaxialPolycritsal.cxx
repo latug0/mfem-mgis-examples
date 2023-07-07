@@ -1,3 +1,11 @@
+/*!
+ * \file   Mono_UO2_CosH_Jaco.cxx
+ * \brief
+ * This example is modelling ...
+ * \author Raphael Prat, Maxence Wangermez
+ * \date   06/2023
+ */
+
 #include <memory>
 #include <cstdlib>
 #include <iostream>
@@ -37,7 +45,7 @@
 
 // We need this class for test case sources
 struct TestParameters {
-	const char* mesh_file = "cube.msh";
+	const char* mesh_file = "cube_2mat_per.mesh";
 	const char* behaviour = "MonoCristal_UO2";
 	const char* library = "src/libBehaviour.so";
 	int order = 1;
@@ -74,6 +82,14 @@ void common_parameters(mfem::OptionsParser& args, TestParameters& p)
 		args.PrintOptions(std::cout);
 }
 
+auto norm(std::array<mfem_mgis::real, 3u> &u){
+		mfem_mgis::real ret = 0.;
+		for(auto val : u){
+			ret += val*val;
+		}
+		return(std::sqrt(ret));
+	}
+
 	template<typename Problem>
 void add_post_processings(Problem& p, std::string msg)
 {
@@ -83,7 +99,11 @@ void add_post_processings(Problem& p, std::string msg)
 			);
 	p.addPostProcessing(
 			"MeanThermodynamicForces",
-			{{"OutputFileName", "avgStress"}});
+			{{"OutputFileName", "avgStressPolycristal"}});
+	p.addPostProcessing(
+			"ParaviewExportIntegrationPointResultsAtNodes",
+			{{"OutputFileName", msg + "IntegrationPointOutput"},
+			 {"Results", {"FirstPiolaKirchhoffStress"}}});
 } // end timer add_postprocessing_and_outputs
 
 	template<typename Problem>
@@ -100,7 +120,7 @@ void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolu
 
 	CatchTimeSection("set_mgis_stuff");
 
-	const int nMat = 8;
+	const int nMat = 2;
 
 	for(int i = 0 ; i < nMat ; i++)
 	{
@@ -112,9 +132,7 @@ void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolu
 	auto set_properties = [](auto& m, 
 			const double yo1 , const double yo2,	const double yo3,
 			const double po12, const double po23, const double po13,
-			const double sm12, const double sm23, const double sm13,
-			const double v1x , const double v1y,	const double v1z,
-			const double v2x , const double v2y,	const double v2z
+			const double sm12, const double sm23, const double sm13
 			) {
 		setMaterialProperty(m.s0, "YoungModulus1", yo1);
 		setMaterialProperty(m.s0, "YoungModulus2", yo2);
@@ -126,16 +144,6 @@ void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolu
 		setMaterialProperty(m.s0, "ShearModulus23", sm23);
 		setMaterialProperty(m.s0, "ShearModulus13", sm13);
 
-		// dunno why I have to comment these lines
-/*
-		setMaterialProperty(m.s0, "V1X", v1x);
-		setMaterialProperty(m.s0, "V1Y", v1y);
-		setMaterialProperty(m.s0, "V1Z", v1z);
-		setMaterialProperty(m.s0, "V2X", v2x);
-		setMaterialProperty(m.s0, "V2Y", v2y);
-		setMaterialProperty(m.s0, "V2Z", v2z);
-*/
-
 		setMaterialProperty(m.s1, "YoungModulus1", yo1);
 		setMaterialProperty(m.s1, "YoungModulus2", yo2);
 		setMaterialProperty(m.s1, "YoungModulus3", yo3);
@@ -146,19 +154,11 @@ void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolu
 		setMaterialProperty(m.s1, "ShearModulus23", sm23);
 		setMaterialProperty(m.s1, "ShearModulus13", sm13);
 
-/*
-		setMaterialProperty(m.s1, "V1X", v1x);
-		setMaterialProperty(m.s1, "V1Y", v1y);
-		setMaterialProperty(m.s1, "V1Z", v1z);
-		setMaterialProperty(m.s1, "V2X", v2x);
-		setMaterialProperty(m.s1, "V2Y", v2y);
-		setMaterialProperty(m.s1, "V2Z", v2z);
-*/
 	};
 
 	auto set_temperature = [](auto& m) {
-		setExternalStateVariable(m.s0, "Temperature", 1600.);
-		setExternalStateVariable(m.s1, "Temperature", 1600.);
+		setExternalStateVariable(m.s0, "Temperature", 293.15);
+		setExternalStateVariable(m.s1, "Temperature", 293.15);
 	};
 
 	for(int i = 0 ; i < nMat ; i++)
@@ -167,51 +167,68 @@ void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolu
 		set_properties(mat,     
 				222.e9,              222.e9,              222.e9, // youn modulus
 				0.27,                0.27,                0.27, // poission ration
-				54.e9,               54.e9,               54.e9, // shear modulus
-				0.7071067811865475, -0.4086070447619255, -0.5770964243269279, // v1
-				0.7071067811865475,  0.4086070447619256,  0.5770964243269281  // v2
+				54.e9,               54.e9,               54.e9 // shear modulus
 				);
 		set_temperature(mat);
 	}
 
 
 	// macroscopic strain
-	std::vector<real> e(9, real{0});
-	const int xx = 1;
-	const int yy = 2;
-	const int zz = 3;
+	problem.setMacroscopicGradientsEvolution([](const double t) { 
+		    auto Fzz = 1.+0.5*(t/200);
+			auto ret = std::vector<real>(9, real{});
+			ret[2] = Fzz;
+			ret[1] = 1./std::sqrt(Fzz);
+			ret[0] = ret[1];
+			return ret;
+		});
 
+	auto rot = [] (std::array<mfem_mgis::real, 3u> u, 
+					std::array<mfem_mgis::real, 3u> v) {
+		mfem_mgis::real normu = norm(u);
+		mfem_mgis::real normv = norm(v);
+		if(normu < 1.e-16 || normv < 1.e-16) {
+			throw std::invalid_argument("rot : vectors must not be null");
+		}
+		if(abs(normu-1.)>1.e-16) {
+			std::cout << "norme de v1 pas bonne : " << abs(normu-1.) << std::endl;
+			for(auto& comp : u){
+				comp *= 1./normu;
+			}
+		}
+		if(abs(normv-1.)>1e-16) {
+			std::cout << "norme de v2 pas bonne : " << abs(normv-1.) << std::endl;
+			for(auto& comp : v){
+				comp *= 1./normv;
+			}
+		};
+		std::array<mfem_mgis::real, 9u> ret = {u[0], v[0], u[1]*v[2]-u[2]*v[1],
+	 										   u[1], v[1], u[2]*v[0]-u[0]*v[2], 
+	 										   u[2], v[2], u[0]*v[1]-u[1]*v[0]};
+		return ret;
+		};
 
-	/* bar{E} = e33 *(-1/2 E1 x E1 + (-1/2) * E2 x E2 + E3 x E3)*/
-	const double coef = 0.1;
-	e[xx] = 1-0.5*coef;
-	e[yy] = 1-0.5*coef;
-	e[zz] = 1+1*coef;
-
-	problem.setMacroscopicGradientsEvolution([e](const double dt) { 
-			auto ret = e;
-			for(auto& it : ret) it *= dt;
-			return ret; 
-			});
-
-	// no idea of what is dis but I need to declare it
-	//	if (m1.b.symmetry == mgis::behaviour::Behaviour::ISOTROPIC) {
+	std::array<mfem_mgis::real, 3u> v1 = {0.7071067811865475, -0.4086070447619255, -0.5770964243269279};
+	std::array<mfem_mgis::real, 3u> v2 = {0.7071067811865475,  0.4086070447619256,  0.5770964243269281};
+	std::array<mfem_mgis::real, 3u> v3 = {1., 0., 0.};
+	std::array<mfem_mgis::real, 3u> v4 = {0., 1., 0.};
+	
+	std::array<std::array<mfem_mgis::real, 3u>,2*nMat> vectors = {{v1,v2,v3,v4}};
+	
 	for(int i = 0 ; i < nMat ; i++)
 	{
 		auto& mat = problem.getMaterial(i+1);
-		std::array<mfem_mgis::real, 9u> r = {1, 0, 0,  //
-			0, 1, 0,  //
-			0, 0, 1};
-		mat.setRotationMatrix(mfem_mgis::RotationMatrix3D{r});
+		if (mat.b.symmetry == mgis::behaviour::Behaviour::ORTHOTROPIC) {
+			mat.setRotationMatrix(mfem_mgis::RotationMatrix3D{rot(vectors[2*i],vectors[2*i+1])});
+		}
 	}
-	//	}
 } 
 
 
 	template<typename Problem>		
 static void setLinearSolver(Problem& p,
 		const int verbosity = 0,
-		const mfem_mgis::real Tol = 1e-6
+		const mfem_mgis::real Tol = 1e-12
 		)
 {
 	CatchTimeSection("set_linear_solver");
@@ -277,25 +294,21 @@ int main(int argc, char* argv[])
 			{"Parallel", p.parallel}});
 	mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed);
 
-	//	std::vector<mfem_mgis::real> corner1({0.,0.,0.});
-	//	std::vector<mfem_mgis::real> corner2({1., 1., 1.});
-	//	mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed, corner1, corner2);
-
 	// set problem
 	setup_properties(p, problem);
 	setLinearSolver(problem, p.verbosity_level);
 
 	problem.setSolverParameters({{"VerbosityLevel", p.verbosity_level},
-			{"RelativeTolerance", 1e-6},
-			{"AbsoluteTolerance", 0.},
-			{"MaximumNumberOfIterations", 6}});
+			{"RelativeTolerance", 1e-4},
+			{"AbsoluteTolerance", 1e-4},
+			{"MaximumNumberOfIterations", 15}});
 
 
 	// add post processings
 	if(use_post_processing) add_post_processings(problem, "OutputFile-Uniaxial-polycristal");
 
 	// main function here
-	int nStep=1000;
+	int nStep=150;
 	double start=0;
 	double end=200;
 	const double dt = (end-start)/nStep;

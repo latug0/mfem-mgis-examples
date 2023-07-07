@@ -43,7 +43,8 @@ file(COPY
   ${PROJECT_SOURCE_DIR}/Mono_UO2_CosH_Jaco.mfront
   ${PROJECT_SOURCE_DIR}/Elasticity.mfront
   ${PROJECT_SOURCE_DIR}/SaintVenantKirchhoffElasticity.mfront
-  ${PROJECT_SOURCE_DIR}/cube.msh
+  ${PROJECT_SOURCE_DIR}/periodic-cube.msh
+  ${PROJECT_SOURCE_DIR}/cube_2mat_per.mesh
   DESTINATION ${PROJECT_BINARY_DIR})
   
   # Use mfront to generate libBehaviour.so

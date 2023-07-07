@@ -11,7 +11,7 @@
 @Theta 1.;
 @IterMax 100;
 
-@Brick FiniteStrainSingleCrystal;
+@Brick FiniteStrainSingleCrystal{shifted_elastic_deformation_gradient:true};
 @RequireStiffnessTensor;
 
 // Systèmes de glissement de l'UO2
