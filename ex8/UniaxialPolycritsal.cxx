@@ -45,10 +45,10 @@
 
 // We need this class for test case sources
 struct TestParameters {
-	const char* mesh_file = "cube_2mat_per.mesh";
+	const char* mesh_file = "n8-id1.msh";
+	const char* vect_file = "n8-id1-vecteurs.txt";
 	const char* behaviour = "MonoCristal_UO2";
 	const char* library = "src/libBehaviour.so";
-	const char* vect_file = "vecteurs.txt";
 	int order = 1;
 	bool parallel = true;
 	int refinement = 0;
@@ -171,7 +171,7 @@ void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolu
 
 	CatchTimeSection("set_mgis_stuff");
 
-	const int nMat = 2;
+	const int nMat = 8;
 
 	for(int i = 0 ; i < nMat ; i++)
 	{
@@ -343,7 +343,7 @@ int main(int argc, char* argv[])
 	if(use_post_processing) add_post_processings(problem, "OutputFile-Uniaxial-polycristal");
 
 	// main function here
-	int nStep=150;
+	int nStep=2000;
 	double start=0;
 	double end=200;
 	const double dt = (end-start)/nStep;

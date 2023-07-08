@@ -45,7 +45,8 @@ file(COPY
   ${PROJECT_SOURCE_DIR}/SaintVenantKirchhoffElasticity.mfront
   ${PROJECT_SOURCE_DIR}/periodic-cube.msh
   ${PROJECT_SOURCE_DIR}/cube_2mat_per.mesh
-  ${PROJECT_SOURCE_DIR}/vecteurs.txt
+  ${PROJECT_SOURCE_DIR}/n8-id1.msh
+  ${PROJECT_SOURCE_DIR}/n8-id1-vecteurs.txt
   DESTINATION ${PROJECT_BINARY_DIR})
   
   # Use mfront to generate libBehaviour.so
