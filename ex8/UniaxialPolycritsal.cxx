@@ -48,6 +48,7 @@ struct TestParameters {
 	const char* mesh_file = "cube_2mat_per.mesh";
 	const char* behaviour = "MonoCristal_UO2";
 	const char* library = "src/libBehaviour.so";
+	const char* vect_file = "vecteurs.txt";
 	int order = 1;
 	bool parallel = true;
 	int refinement = 0;
@@ -58,6 +59,7 @@ struct TestParameters {
 void common_parameters(mfem::OptionsParser& args, TestParameters& p)
 {
 	args.AddOption(&p.mesh_file, "-m", "--mesh", "Mesh file to use.");
+	args.AddOption(&p.vect_file, "-f", "--vect", "Vector file to use.");
 	args.AddOption(&p.library, "-l", "--library", "Material library.");
 	args.AddOption(&p.order, "-o", "--order", "Finite element order (polynomial degree).");
 	args.AddOption(&p.refinement, "-r", "--refinement", "refinement level of the mesh, default = 0");
@@ -82,13 +84,62 @@ void common_parameters(mfem::OptionsParser& args, TestParameters& p)
 		args.PrintOptions(std::cout);
 }
 
-auto norm(std::array<mfem_mgis::real, 3u> &u){
-		mfem_mgis::real ret = 0.;
-		for(auto val : u){
-			ret += val*val;
-		}
-		return(std::sqrt(ret));
+auto norm(std::array<mfem_mgis::real, 3u> &u)
+{
+	mfem_mgis::real ret = 0.;
+	for (auto val : u)
+	{
+		ret += val * val;
 	}
+	return (std::sqrt(ret));
+}
+
+std::vector<std::array<mfem_mgis::real, 3u>> readVectorsFromFile(const std::string &filename)
+{
+	// TODO: check if vectors size is equal to nMat
+	std::vector<std::array<mfem_mgis::real, 3u>> vectors;
+	std::ifstream inputFile(filename);
+
+	auto checknorm = [](std::array<mfem_mgis::real, 3u> v)
+	{
+		mfem_mgis::real normv = norm(v);
+		if (normv < 1.e-15)
+		{
+			throw std::invalid_argument("checknorm : vectors must not be null");
+		}
+		if (abs(normv - 1.) > 1.e-15)
+		{
+			std::cout << "checknorm : normalizing vector..." << std::endl;
+			for (auto &comp : v)
+			{
+				comp *= 1. / normv;
+			}
+		}
+		return v;
+	};
+
+	if (!inputFile.is_open())
+	{
+		std::cout << "Erreur lors de l'ouverture du fichier " << filename << std::endl;
+		return vectors;
+	}
+
+	std::string line;
+	while (std::getline(inputFile, line))
+	{
+		std::istringstream iss(line);
+		std::array<mfem_mgis::real, 3u> vector;
+		if (!(iss >> vector[0] >> vector[1] >> vector[2]))
+		{
+			std::cout << "Erreur de lecture du vecteur : " << line << std::endl;
+			continue;
+		}
+		vectors.push_back(checknorm(vector));
+	}
+
+	inputFile.close();
+	return vectors;
+}
 
 	template<typename Problem>
 void add_post_processings(Problem& p, std::string msg)
@@ -183,43 +234,27 @@ void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolu
 			return ret;
 		});
 
-	auto rot = [] (std::array<mfem_mgis::real, 3u> u, 
-					std::array<mfem_mgis::real, 3u> v) {
-		mfem_mgis::real normu = norm(u);
-		mfem_mgis::real normv = norm(v);
-		if(normu < 1.e-16 || normv < 1.e-16) {
-			throw std::invalid_argument("rot : vectors must not be null");
-		}
-		if(abs(normu-1.)>1.e-16) {
-			std::cout << "norme de v1 pas bonne : " << abs(normu-1.) << std::endl;
-			for(auto& comp : u){
-				comp *= 1./normu;
-			}
-		}
-		if(abs(normv-1.)>1e-16) {
-			std::cout << "norme de v2 pas bonne : " << abs(normv-1.) << std::endl;
-			for(auto& comp : v){
-				comp *= 1./normv;
-			}
-		};
-		std::array<mfem_mgis::real, 9u> ret = {u[0], v[0], u[1]*v[2]-u[2]*v[1],
-	 										   u[1], v[1], u[2]*v[0]-u[0]*v[2], 
-	 										   u[2], v[2], u[0]*v[1]-u[1]*v[0]};
-		return ret;
-		};
-
-	std::array<mfem_mgis::real, 3u> v1 = {0.7071067811865475, -0.4086070447619255, -0.5770964243269279};
-	std::array<mfem_mgis::real, 3u> v2 = {0.7071067811865475,  0.4086070447619256,  0.5770964243269281};
-	std::array<mfem_mgis::real, 3u> v3 = {1., 0., 0.};
-	std::array<mfem_mgis::real, 3u> v4 = {0., 1., 0.};
-	
-	std::array<std::array<mfem_mgis::real, 3u>,2*nMat> vectors = {{v1,v2,v3,v4}};
-	
-	for(int i = 0 ; i < nMat ; i++)
+	auto rot = [](std::array<mfem_mgis::real, 3u> u,
+				  std::array<mfem_mgis::real, 3u> v)
 	{
-		auto& mat = problem.getMaterial(i+1);
-		if (mat.b.symmetry == mgis::behaviour::Behaviour::ORTHOTROPIC) {
-			mat.setRotationMatrix(mfem_mgis::RotationMatrix3D{rot(vectors[2*i],vectors[2*i+1])});
+		if (std::inner_product(u.begin(), u.end(), v.begin(), 0.) > 1.e-15)
+		{
+			throw std::invalid_argument("rot : vectors are not orthogonals");
+		}
+		std::array<mfem_mgis::real, 9u> ret = {u[0], v[0], u[1] * v[2] - u[2] * v[1],
+											   u[1], v[1], u[2] * v[0] - u[0] * v[2],
+											   u[2], v[2], u[0] * v[1] - u[1] * v[0]};
+		return ret;
+	};
+	
+	std::vector<std::array<mfem_mgis::real, 3u>> vectors = readVectorsFromFile(p.vect_file);
+
+	for (int i = 0; i < nMat; i++)
+	{
+		auto &mat = problem.getMaterial(i + 1);
+		if (mat.b.symmetry == mgis::behaviour::Behaviour::ORTHOTROPIC)
+		{
+			mat.setRotationMatrix(mfem_mgis::RotationMatrix3D{rot(vectors[2 * i], vectors[2 * i + 1])});
 		}
 	}
 } 
