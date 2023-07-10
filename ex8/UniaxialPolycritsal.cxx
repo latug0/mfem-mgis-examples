@@ -171,7 +171,8 @@ void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolu
 
 	CatchTimeSection("set_mgis_stuff");
 
-	const int nMat = 8;
+	// const int nMat = 8;
+	const int nMat = getMaterialsAttributes(*(problem.getFiniteElementDiscretizationPointer())).Max();
 
 	for(int i = 0 ; i < nMat ; i++)
 	{
@@ -248,6 +249,9 @@ void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolu
 	};
 	
 	std::vector<std::array<mfem_mgis::real, 3u>> vectors = readVectorsFromFile(p.vect_file);
+	if (vectors.size()!=2*nMat) {
+		throw std::invalid_argument("setup_properties : incorrect number of vectors in vector file");
+	}
 
 	for (int i = 0; i < nMat; i++)
 	{

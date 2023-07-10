@@ -115,7 +115,8 @@ void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolu
 
 	CatchTimeSection("set_mgis_stuff");
 
-	const int nMat = 1;
+	const int nMat = getMaterialsAttributes(problem.getFiniteElementDiscretizationPointer())->attributes.Max();
+	// const int nMat = 1;
 
 	for(int i = 0 ; i < nMat ; i++)
 	{
