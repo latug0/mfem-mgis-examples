@@ -34,8 +34,8 @@
 		Parameters : 
 
 		start time = 0
-		end time = 10
-		number of time step = 30
+		end time = 5s
+		number of time step = 40
 
 		Strain Gradient matrix : val = 0.012
 		[ - val / 2 ,         0 ,   0 ]
@@ -56,7 +56,7 @@
 		Element :
 
 		Familly H1
-		order 1
+		Order 2
 */
 
 
@@ -65,7 +65,7 @@ struct TestParameters {
 	const char* mesh_file = "inclusion.msh";
 	const char* behaviour = "ImplicitNortonThreshold";
 	const char* library = "src/libBehaviour.so";
-	int order = 1;
+	int order = 2;
 	bool parallel = true;
 	int refinement = 0;
 	int post_processing = 1; // default value : disabled
@@ -129,12 +129,8 @@ void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolu
 	// materials
 	auto& m1 = problem.getMaterial(1);
 	auto& m2 = problem.getMaterial(2);
-	auto set_properties = [](auto& m, 
-			const double yo,
-			const double po,
-			const double st,
-			const double no
-			) {
+	auto set_properties = [](auto& m, const double yo, const double po, const double st, const double no) 
+	{
 		setMaterialProperty(m.s0, "YoungModulus", yo);
 		setMaterialProperty(m.s0, "PoissonRatio", po);
 		setMaterialProperty(m.s0, "StressThreshold", st);
@@ -146,10 +142,9 @@ void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolu
 		setMaterialProperty(m.s1, "NortonExponent", no);
 	};
 
-	// matrix
-	set_properties(m1, 8.182e+9, 0.364, 100.0e+6, 3.333333);
-	// inclusions
-	set_properties(m2, 2*8.182e+9, 0.364, 100.0e+12, 3.333333);
+	set_properties(m1, 8.182e9, 0.364, 100.0e6, 3.333333);
+	set_properties(m2, 2*8.182e9, 0.364, 100.0e12, 3.333333);
+	//set_properties(m2, 0. , 0., 0.364, 100.0e+12, 3.333333);
 
 	//
 	auto set_temperature = [](auto& m) {
@@ -171,23 +166,11 @@ void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolu
 	e[xx] = -0.5*eps;
 	e[yy] = -0.5*eps;
 	e[zz] = eps;
-	problem.setMacroscopicEvolution([e](const double dt) { 
+	problem.setMacroscopicGradientsEvolution([e](const double t) { 
 		auto ret = e;
-		for(auto& it : ret) it *= dt;
+		for(auto& it : ret) it *= t;
 		return ret; 
 	});
-/*	problem.setMacroscopicGradientsEvolution([e](const double dt) { 
-		auto ret = e;
-		for(auto& it : ret) it *= dt;
-		return ret; 
-	});
-*/
-/*	e[xx] = -0.5*eps*0.3;
-	e[yy] = -0.5*eps*0.3;
-	e[zz] = eps*0.3;
-	problem.setMacroscopicGradientsEvolution([e](const double) {  return e;
-	});
-*/
 } 
 
 
@@ -204,9 +187,9 @@ static void setLinearSolver(Problem& p,
 	auto solverParameters = mfem_mgis::Parameters{};
 	solverParameters.insert(mfem_mgis::Parameters{{"VerbosityLevel", verbosity}});
 	solverParameters.insert(mfem_mgis::Parameters{{"MaximumNumberOfIterations", defaultMaxNumOfIt}});
-	solverParameters.insert(mfem_mgis::Parameters{{"AbsoluteTolerance", Tol}});
-	solverParameters.insert(mfem_mgis::Parameters{{"RelativeTolerance", Tol}});
-	//solverParameters.insert(mfem_mgis::Parameters{{"Tolerance", Tol}});
+	//solverParameters.insert(mfem_mgis::Parameters{{"AbsoluteTolerance", Tol}});
+	//solverParameters.insert(mfem_mgis::Parameters{{"RelativeTolerance", Tol}});
+	solverParameters.insert(mfem_mgis::Parameters{{"Tolerance", Tol}});
 
 
 	// preconditionner hypreBoomerAMG
@@ -214,8 +197,7 @@ static void setLinearSolver(Problem& p,
 	auto preconditionner = mfem_mgis::Parameters{{"Name","HypreBoomerAMG"}, {"Options",options}};
 	solverParameters.insert(mfem_mgis::Parameters{{"Preconditioner",preconditionner}});
 	// solver HyprePCG
-	//p.setLinearSolver("HyprePCG", solverParameters);
-	p.setLinearSolver("CGSolver", solverParameters);
+	p.setLinearSolver("HyprePCG", solverParameters);
 }
 
 	template<typename Problem>
@@ -257,9 +239,6 @@ int main(int argc, char* argv[])
 			{"UnknownsSize", dim},
 			{"NumberOfUniformRefinements", p.parallel ? p.refinement : 0},
 			{"Parallel", p.parallel}});
-//	std::vector<mfem_mgis::real> corner1({0.,0.,0.});
-//	std::vector<mfem_mgis::real> corner2({1., 1., 1.});
-//	mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed, corner1, corner2);
 	mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed);
 
 	// set problem
@@ -271,17 +250,18 @@ int main(int argc, char* argv[])
 			{"AbsoluteTolerance", 0.},
 			{"MaximumNumberOfIterations", 6}});
 
-
 	// add post processings
 	if(use_post_processing) add_post_processings(problem, "OutputFile-mixed-oxide-fuels");
 
 	// main function here
-	int nStep=30;
+	int nStep=40;
 	double start=0;
-	double end=10;
+	double end=5;
 	const double dt = (end-start)/nStep;
 	for(int i = 0 ; i < nStep ; i++)
 	{
+		
+		mfem_mgis::Profiler::Utils::Message("Solving: from ", i*dt, " to ", (i+1)*dt);
 		run_solve(problem, i * dt, dt);
 		if(use_post_processing)	execute_post_processings(problem, i * dt, dt);
 		problem.update();
