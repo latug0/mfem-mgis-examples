@@ -1,13 +1,13 @@
-# How to run the simulation "RVE MOX"
+# Representative Volume Element of Combustible Mixed Oxides for Nuclear Applications
 
+This simulation represents an RVE of MOx (Mixed Oxide) material under uniform macroscopic
+deformation. The aim of this simulation is to reproduce and compare the results obtained by
+(Fauque et al., 2021; Masson et al., 2020) who used an FFT method.
 
 ## Problem solved
 
-
-![Illustration of a RVE with 634 spheres after 5 seconds.](./results/order2.png)
-
-```
-    Problem : Rve mox2 phases with an elasto-viscoplastic behavior law
+```text
+    Problem : RVE MOx 2 phases with elasto-viscoplastic behavior laws
 
     Parameters : 
 
@@ -37,24 +37,46 @@
     Order 2
 ```
 
-## How to build the mesh
+![Illustration of a RVE with 634 spheres after 5 seconds.](./results/order2.png){width=50%}
+
+## How to run the simulation "RVE MOX"
+
+## Build the mesh
 
 The mesh is generated with MEROPE and GMSH through the following steps:
-- First step, use MEROPE to generate a `.geo` file using the RSA algorithm. Scripts are in directory `script_merope`. 
-- Second step, use GMSH to mesh the geometry. Files `.geo` are in the directory `file_geo`.
 
-Command lines:
+- First step, use MEROPE to generate a `.geo` file using the RSA algorithm. Scripts are in directory `script_merope`. Command line:
 
-```
+```bash
+# generate .geo file with MEROPE
 python3 script_17percent_minimal.py
+```
+
+- Second step, use GMSH to mesh the geometry. Files `.geo` are in the directory `file_geo`. Command line:
+
+```bash
+# generate the .msh file with GMSH
 gmsh -3 OneSphere.geo 
 ```
 
 ## Run the simulation
 
-## Options:
+### Run the minimal version of this example
 
-Command line | Descritption 
+Run the simulation with the command line:
+```bash
+# run the simulation by specifying the mesh with --mesh option
+./mox2 --mesh OneSphere.msh
+```
+Run the simulation with parralel solver with the command line:
+```bash
+# run the simulation by specifying the mesh with --mesh option
+mpirun -n 12 ./mox2 --mesh 634Spheres.msh
+```
+
+### Available options
+
+Command line | Descritption
 ---|---
 --mesh or -m | specify the mesh ".msh" usedn default = inclusion.msh
 --refinement or -r | refinement level of the mesh, default = 0
@@ -62,16 +84,9 @@ Command line | Descritption
 --verbosity-level or -v | choose the verbosity level, default = 0
 --post-processing or -p | run post processing step, default = 1
 
-### Run the minimal version of this example
-
-```
-./mox2 -o 3 --mesh OneSphere.msh
-mpirun -n 12 ./mox2 -o 1 --mesh 634Spheres.msh
-```
-
 ### CCRT/Topaze
 
-```
+```bash
 ccc_mprun -n 8 -c 1 -p milan ./mox2 -r 0 -o 3 --mesh OneSphere.msh
 ccc_mprun -n 2048 -c 1 -p milan ./mox2 -r 2 -o 1 --mesh 634Sphere.msh
 ```
@@ -82,7 +97,7 @@ Comparison by seeing the value of SZZ in function of the time.
 
 ### Extract data
 
-```
+```bash
 awk '{if(NR>13) print $1 " " 0.83*$4+0.17*$10}' avgStress > res-mfem-mgis.txt
 ```
 
@@ -90,11 +105,11 @@ Reference values can be found in the directory `results`, file res-fft.txt. Expe
 
 ### Display results with gnuplot
 
-```
+```bash
 plot "res-fft.txt" u 1:10 w l title "fft"
 gnuplot> replot "res-mfem-mgis-onesphere-o3.txt" u 1:2 w l title "mfem-mgis"
 ```
 
-## Illusations 
+## Illusations
 
 Illustrations are available in the directory `gif`
