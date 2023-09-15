@@ -3,6 +3,37 @@
 This repository provides user oriented material for the external `mfem-mgis` [repository](https://github.com/thelfer/mfem-mgis).
 You will find here meshes and a collection of use cases for the `mfem-mgis` library.
 
+## How to install
+
+### Installing MFEM-MGIS with Spack
+
+Firstly, get the mfem-mgis spack repository.
+
+```
+git clone https://github.com/thelfer/mfem-mgis
+spack repo add $PWD/mfem-mgis/spack_repo
+```
+
+Secondly, install mfem-mgis
+
+```
+spack install mmm+mpi+suite-sparse
+```
+
+Thirdly, load mfem-mgis
+
+```
+spack load mfem-mgis
+```
+
+Finally, build your examples:
+
+```
+mkdir build
+cd build
+make -j 4
+```
+
 ## Test case description
 
 | Name | Description | Directory
