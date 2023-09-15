@@ -173,6 +173,7 @@ void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolu
 
 	// const int nMat = 8;
 	const int nMat = getMaterialsAttributes(*(problem.getFiniteElementDiscretizationPointer())).Max();
+	mfem_mgis::Profiler::Utils::Message("Nombre de matériaux : ", nMat);
 
 	for(int i = 0 ; i < nMat ; i++)
 	{
@@ -217,8 +218,8 @@ static void setLinearSolver(Problem& p,
 
 	// preconditionner hypreBoomerAMG
 	auto options = mfem_mgis::Parameters{{"VerbosityLevel", verbosity}};
-	auto preconditionner = mfem_mgis::Parameters{{"Name","HypreDiagScale"}, {"Options",options}};
-	// auto preconditionner = mfem_mgis::Parameters{{"Name","HypreBoomerAMG"}, {"Options",options}};
+	// auto preconditionner = mfem_mgis::Parameters{{"Name","HypreDiagScale"}, {"Options",options}};
+	auto preconditionner = mfem_mgis::Parameters{{"Name","HypreBoomerAMG"}, {"Options",options}};
 	solverParameters.insert(mfem_mgis::Parameters{{"Preconditioner",preconditionner}});
 	// solver HyprePCG
 	p.setLinearSolver("HyprePCG", solverParameters);
@@ -474,7 +475,7 @@ int main(int argc, char* argv[])
 	if(use_post_processing) add_post_processings(problem, "OutputFile-Uniaxial-polycristal");
 
 	// main function here
-	int nStep=2000;
+	int nStep=150;
 	double start=0;
 	double end=200;
 	const double dt = (end-start)/nStep;

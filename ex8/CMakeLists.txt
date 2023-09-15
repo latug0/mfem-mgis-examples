@@ -42,6 +42,7 @@ endif(NOT TARGET mfem-mgis::MFEMMGIS)
 file(COPY
   ${PROJECT_SOURCE_DIR}/Mono_UO2_CosH_Jaco.mfront
   ${PROJECT_SOURCE_DIR}/Elasticity.mfront
+  ${PROJECT_SOURCE_DIR}/ElasticityOrtho.mfront
   ${PROJECT_SOURCE_DIR}/SaintVenantKirchhoffElasticity.mfront
   ${PROJECT_SOURCE_DIR}/periodic-cube.msh
   ${PROJECT_SOURCE_DIR}/cube_2mat_per.mesh
@@ -52,8 +53,8 @@ file(COPY
   # Use mfront to generate libBehaviour.so
 add_custom_command(
   OUTPUT "src/libBehaviour.so"
-  COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/Mono_UO2_CosH_Jaco.mfront ${PROJECT_BINARY_DIR}/Elasticity.mfront ${PROJECT_BINARY_DIR}/SaintVenantKirchhoffElasticity.mfront
-  DEPENDS ${PROJECT_BINARY_DIR}/Mono_UO2_CosH_Jaco.mfront ${PROJECT_BINARY_DIR}/Elasticity.mfront ${PROJECT_BINARY_DIR}/SaintVenantKirchhoffElasticity.mfront
+  COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/Mono_UO2_CosH_Jaco.mfront ${PROJECT_BINARY_DIR}/Elasticity.mfront ${PROJECT_BINARY_DIR}/SaintVenantKirchhoffElasticity.mfront ${PROJECT_BINARY_DIR}/ElasticityOrtho.mfront
+  DEPENDS ${PROJECT_BINARY_DIR}/Mono_UO2_CosH_Jaco.mfront ${PROJECT_BINARY_DIR}/Elasticity.mfront ${PROJECT_BINARY_DIR}/SaintVenantKirchhoffElasticity.mfront ${PROJECT_BINARY_DIR}/ElasticityOrtho.mfront
   COMMENT "Performing mfront code generation")
   
 add_custom_target(generate-libBehaviour-ex8 ALL
@@ -80,8 +81,15 @@ target_include_directories(uniaxial-nonlinearelastic
   PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"   
   PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
 
+add_executable(uniaxial-elastic-ortho UniaxialElasticOrtho.cxx)
+target_link_libraries(uniaxial-elastic-ortho mfem-mgis::MFEMMGIS)
+target_include_directories(uniaxial-elastic-ortho
+    SYSTEM
+    PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"   
+    PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
+
     
-add_dependencies(check uniaxial-polycristal uniaxial-elastic uniaxial-nonlinearelastic generate-libBehaviour-ex8)
+add_dependencies(check uniaxial-polycristal uniaxial-elastic uniaxial-elastic-ortho uniaxial-nonlinearelastic generate-libBehaviour-ex8)
 
 set(test "UniaxialPolycritsalTest")
 add_test(NAME ${test} COMMAND uniaxial-polycristal --postprocessings 0)

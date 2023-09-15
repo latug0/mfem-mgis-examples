@@ -1,0 +1,38 @@
+@Author WANGERMEZ M.;
+@Date   27/06/2023;
+@Description{
+    For large deformations, such that elastic deformation is negligible compared to 
+    visco-plastic deformation, it is possible to mimic zero macro stresses on xx and 
+    yy components. For this purpose, the visco-plastic part of the deformation is 
+    considered incompressible (J = det(F) = 1). Thus, FXX = FYY = 1/sqrt(FZZ)
+};
+
+@ModellingHypothesis 'Tridimensional';
+@Behaviour<generic> './src/libBehaviour.so' 'SaintVenantKirchhoffElasticity';
+
+@DeformationGradientEpsilon 2.e-16;
+@StressEpsilon 1.e-4;
+
+// material properties
+@MaterialProperty<constant> 'YoungModulus' 222.e9;
+@MaterialProperty<constant> 'PoissonRatio' 0.27;
+
+// external state variable
+@ExternalStateVariable 'Temperature' 293.15 ;
+
+// Imposed Deformation Gradient
+@ImposedStress 'SXX' 0.;
+@ImposedStress 'SYY' 0.;
+// @ImposedDeformationGradient<evolution> 'FXX' {0:1,200.:0.816496581}; // FXX = 1/sqrt(FZZ)
+// @ImposedDeformationGradient<evolution> 'FYY' {0:1,200.:0.816496581}; // FYY = 1/sqrt(FZZ)
+@ImposedDeformationGradient<evolution> 'FZZ' {0:1,200.:1.5};
+@ImposedDeformationGradient<evolution> 'FXY' {0:0,200.:0};
+@ImposedDeformationGradient<evolution> 'FYX' {0:0,200.:0};
+@ImposedDeformationGradient<evolution> 'FXZ' {0:0,200.:0};
+@ImposedDeformationGradient<evolution> 'FZX' {0:0,200.:0};
+@ImposedDeformationGradient<evolution> 'FYZ' {0:0,200.:0};
+@ImposedDeformationGradient<evolution> 'FZY' {0:0,200.:0};
+
+@Times {0., 200. in 2.};
+
+
