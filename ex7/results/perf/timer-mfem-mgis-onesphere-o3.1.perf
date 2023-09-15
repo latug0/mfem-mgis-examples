@@ -1,0 +1,11 @@
+root 1 110.846 100
+   FiniteElementDiscretization::constructor 1 0.0079285 0.0071527
+      loadMesh 1 0.00565094 0.005098
+   PeriodicNonLinEvPB::constructor_with_bct 1 0.0019784 0.00178482
+   set_mgis_stuff 1 0.00341129 0.0030775
+   set_linear_solver 1 0.000101398 9.14762e-05
+      NonLinearEvolutionProblemImplementationBase::updateLinearSolver 1 5.08e-07 4.58292e-07
+   Solve 40 110.239 99.452
+      NonLinearEvolutionProblem::solve 40 110.239 99.452
+         NonLinearEvolutionProblemImplementationBase::solve 40 110.239 99.4519
+   common::post_processing_step 40 0.553896 0.499697

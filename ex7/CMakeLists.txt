@@ -41,7 +41,9 @@ endif(NOT TARGET mfem-mgis::MFEMMGIS)
 # Copy needed file for execution
 file(COPY
   ${PROJECT_SOURCE_DIR}/matrixlaw.mfront
-  ${PROJECT_SOURCE_DIR}/inclusion.msh
+  ${PROJECT_SOURCE_DIR}/mesh
+  ${PROJECT_SOURCE_DIR}/file_geo
+  ${PROJECT_SOURCE_DIR}/script_merope
   DESTINATION ${PROJECT_BINARY_DIR})
   
   # Use mfront to generate libBehaviour.so
@@ -64,6 +66,6 @@ target_include_directories(mox2
 add_dependencies(check mox2 generate-libBehaviour-ex7)
 
 set(test "MixedOxideFuelsTest")
-add_test(NAME ${test} COMMAND mox2 --postprocessings 0)
+add_test(NAME ${test} COMMAND mox2 --postprocessings 0 --order 1 --mesh mesh/OneSphere.msh)
 
 
