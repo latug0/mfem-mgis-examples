@@ -26,6 +26,20 @@
 #include "MFEMMGIS/ImposedDirichletBoundaryConditionAtClosestNode.hxx"
 #include "MFEMMGIS/NonLinearEvolutionProblem.hxx"
 
+// We need this class for test case sources
+struct TestParameters {
+	const char* mesh_file = "periodic-cube.msh";
+	const char* behaviour = "Elasticity";
+	const char* library = "src/libBehaviour.so";
+	int order = 1;
+	bool parallel = true;
+	int refinement = 0;
+	int post_processing = 1; // default value : disabled
+	int verbosity_level = 0; // default value : lower level
+};
+
+#include <common.hxx>
+
 #ifdef MFEM_USE_PETSC
 #include "mfem/linalg/petsc.hpp"
 #endif /* MFEM_USE_PETSC */
@@ -43,89 +57,6 @@
 */
 
 
-// We need this class for test case sources
-struct TestParameters {
-	const char* mesh_file = "periodic-cube.msh";
-	const char* behaviour = "Elasticity";
-	const char* library = "src/libBehaviour.so";
-	int order = 1;
-	bool parallel = true;
-	int refinement = 0;
-	int post_processing = 1; // default value : disabled
-	int verbosity_level = 0; // default value : lower level
-};
-
-void common_parameters(mfem::OptionsParser& args, TestParameters& p)
-{
-	args.AddOption(&p.mesh_file, "-m", "--mesh", "Mesh file to use.");
-	args.AddOption(&p.library, "-l", "--library", "Material library.");
-	args.AddOption(&p.order, "-o", "--order", "Finite element order (polynomial degree).");
-	args.AddOption(&p.refinement, "-r", "--refinement", "refinement level of the mesh, default = 0");
-	args.AddOption(&p.post_processing, "-p", "--post-processing", "run post processing step");
-	args.AddOption(&p.verbosity_level, "-v", "--verbosity-level", "choose the verbosity level");
-
-	args.Parse();
-
-	if (!args.Good()) {
-		if (mfem_mgis::getMPIrank() == 0)
-			args.PrintUsage(std::cout);
-		mfem_mgis::finalize();
-		exit(0);
-	}
-	if (p.mesh_file == nullptr) {
-		if (mfem_mgis::getMPIrank() == 0)
-			std::cout << "ERROR: Mesh file missing" << std::endl;
-		args.PrintUsage(std::cout);
-		mfem_mgis::abort(EXIT_FAILURE);
-	}
-	if (mfem_mgis::getMPIrank() == 0)
-		args.PrintOptions(std::cout);
-}
-
-	template<typename Problem>
-void add_post_processings(Problem& p, std::string msg)
-{
-	p.addPostProcessing(
-			"ParaviewExportResults",
-			{{"OutputFileName", msg}}
-			);
-	p.addPostProcessing(
-			"MeanThermodynamicForces",
-			{{"OutputFileName", "avgStressElastic"}});
-	p.addPostProcessing(
-			"ParaviewExportIntegrationPointResultsAtNodes",
-			{
-				{"OutputFileName", "UniaxialElasticTestIntegrationPointOutput"},
-				{"Results", {"Stress"}}
-			}
-			);
-} // end timer add_postprocessing_and_outputs
-
-	template<typename Problem>
-void execute_post_processings(Problem& p, double start, double end)
-{
-	CatchTimeSection("common::post_processing_step");
-	p.executePostProcessings(start, end);
-}
-
-void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolutionProblem& problem)
-{
-	using namespace mgis::behaviour;
-	using real=mfem_mgis::real;
-
-	CatchTimeSection("set_mgis_stuff");
-
-	// const int nMat = 1;
-	const int nMat = getMaterialsAttributes(*(problem.getFiniteElementDiscretizationPointer())).Max();
-	mfem_mgis::Profiler::Utils::Message("Nombre de matériaux : ", nMat);
-
-	for(int i = 0 ; i < nMat ; i++)
-	{
-		problem.addBehaviourIntegrator("Mechanics", i+1, p.library, p.behaviour);
-	}
-
-}
-
 
 	template<typename Problem>		
 static void setLinearSolver(Problem& p,
@@ -137,37 +68,23 @@ static void setLinearSolver(Problem& p,
 	// pilote
 	constexpr int defaultMaxNumOfIt	 	= 5000; 		// MaximumNumberOfIterations
 	auto solverParameters = mfem_mgis::Parameters{};
-	// solverParameters.insert(mfem_mgis::Parameters{{"VerbosityLevel", verbosity}});
-	// solverParameters.insert(mfem_mgis::Parameters{{"MaximumNumberOfIterations", defaultMaxNumOfIt}});
-	// // solverParameters.insert(mfem_mgis::Parameters{{"AbsoluteTolerance", Tol}});
-	// // solverParameters.insert(mfem_mgis::Parameters{{"RelativeTolerance", Tol}});
-	// solverParameters.insert(mfem_mgis::Parameters{{"Tolerance", Tol}});
+	 solverParameters.insert(mfem_mgis::Parameters{{"VerbosityLevel", verbosity}});
+	 solverParameters.insert(mfem_mgis::Parameters{{"MaximumNumberOfIterations", defaultMaxNumOfIt}});
+	// solverParameters.insert(mfem_mgis::Parameters{{"AbsoluteTolerance", Tol}});
+	// solverParameters.insert(mfem_mgis::Parameters{{"RelativeTolerance", Tol}});
+	 solverParameters.insert(mfem_mgis::Parameters{{"Tolerance", Tol}});
 
 
 	// // preconditionner hypreBoomerAMG
-	// auto options = mfem_mgis::Parameters{{"VerbosityLevel", verbosity}};
-	// auto preconditionner = mfem_mgis::Parameters{{"Name","HypreDiagScale"}, {"Options",options}};
+	 auto options = mfem_mgis::Parameters{{"VerbosityLevel", verbosity}};
+	 auto preconditionner = mfem_mgis::Parameters{{"Name","HypreDiagScale"}, {"Options",options}};
 	// // auto preconditionner = mfem_mgis::Parameters{{"Name","HypreBoomerAMG"}, {"Options",options}};
-	// solverParameters.insert(mfem_mgis::Parameters{{"Preconditioner",preconditionner}});
+	 solverParameters.insert(mfem_mgis::Parameters{{"Preconditioner",preconditionner}});
 	// solver HyprePCG
-	// p.setLinearSolver("HyprePCG", solverParameters);
-	p.setLinearSolver("MUMPSSolver", solverParameters);
-	// p.setLinearSolver("CGSolver", solverParameters);
+	 p.setLinearSolver("HyprePCG", solverParameters);
+	//p.setLinearSolver("MUMPSSolver", solverParameters);
 }
 
-	template<typename Problem>
-void run_solve(Problem& p, double start, double dt)
-{
-	CatchTimeSection("Solve");
-	mfem_mgis::Profiler::Utils::Message("Solving problem from ",start,"to",start+dt);
-	// solving the problem
-	auto statistics = p.solve(start, dt);
-	// check status
-	if (!statistics.status) {
-		mfem_mgis::Profiler::Utils::Message("INFO: SOLVE FAILED");
-		std::abort();
-	}
-}
 
 template <typename Problem>
 void simulation(Problem &problem, double start, double end, double dt, bool pp)
@@ -325,7 +242,7 @@ int main(int argc, char* argv[])
 
 
 	// add post processings
-	if(use_post_processing) add_post_processings(problem, "OutputFile-Uniaxial-elastic");
+	if(use_post_processing) add_post_processings(problem, "OutputFile-Uniaxial-elastic", "avgStressElastic", "UniaxialElasticOrthoTestIntegrationPointOutput");
 
 	// main function here
 	int nStep=2;
