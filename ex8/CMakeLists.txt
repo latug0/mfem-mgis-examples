@@ -60,34 +60,20 @@ add_custom_command(
 add_custom_target(generate-libBehaviour-ex8 ALL
   DEPENDS "src/libBehaviour.so")
 
-add_executable(uniaxial-polycristal UniaxialPolycritsal.cxx)
-target_link_libraries(uniaxial-polycristal mfem-mgis::MFEMMGIS)
-target_include_directories(uniaxial-polycristal
-  SYSTEM
-  PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"   
-  PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
+function(build_ex8 binFile srcFile)
+	add_executable(${binFile} ${srcFile})
+	target_link_libraries(${binFile} mfem-mgis::MFEMMGIS)
+	target_include_directories(${binFile}
+  	SYSTEM
+  	PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
+  	PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
+	target_include_directories(${binFile} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+endfunction(build_ex8)
 
-add_executable(uniaxial-elastic UniaxialElastic.cxx)
-target_link_libraries(uniaxial-elastic mfem-mgis::MFEMMGIS)
-target_include_directories(uniaxial-elastic
-    SYSTEM
-    PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"   
-    PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
-
-add_executable(uniaxial-nonlinearelastic UniaxialNonLinearElastic.cxx)
-target_link_libraries(uniaxial-nonlinearelastic mfem-mgis::MFEMMGIS)
-target_include_directories(uniaxial-nonlinearelastic
-  SYSTEM
-  PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"   
-  PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
-
-add_executable(uniaxial-elastic-ortho UniaxialElasticOrtho.cxx)
-target_link_libraries(uniaxial-elastic-ortho mfem-mgis::MFEMMGIS)
-target_include_directories(uniaxial-elastic-ortho
-    SYSTEM
-    PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"   
-    PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
-
+build_ex8(uniaxial-polycristal UniaxialPolycritsal.cxx)
+build_ex8(uniaxial-elastic UniaxialElastic.cxx)
+build_ex8(uniaxial-nonlinearelastic UniaxialNonLinearElastic.cxx)
+build_ex8(uniaxial-elastic-ortho UniaxialElasticOrtho.cxx)
     
 add_dependencies(check uniaxial-polycristal uniaxial-elastic uniaxial-elastic-ortho uniaxial-nonlinearelastic generate-libBehaviour-ex8)
 
