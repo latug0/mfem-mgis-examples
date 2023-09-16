@@ -14,6 +14,22 @@
 #include "MFEMMGIS/ImposedDirichletBoundaryConditionAtClosestNode.hxx"
 #include "MFEMMGIS/NonLinearEvolutionProblem.hxx"
 
+/**
+ * @brief Parses common command-line parameters and populates the TestParameters structure.
+ *
+ * This function parses common command-line parameters using the provided `args` object
+ * and populates the `TestParameters` structure `p` with the parsed values. The common
+ * parameters include options for configuring various aspects of the test.
+ *
+ * @param args An instance of the `mfem::OptionsParser` class for parsing command-line arguments.
+ * @param p    A reference to the `TestParameters` structure where parsed values will be stored.
+ *
+ * @note The `TestParameters` structure should be defined prior to calling this function,
+ *       as it will be modified to contain the parsed values.
+ *
+ * @see TestParameters
+ * @see mfem::OptionsParser
+ */
 void common_parameters(mfem::OptionsParser& args, TestParameters& p)
 {
 	args.AddOption(&p.mesh_file, "-m", "--mesh", "Mesh file to use.");
@@ -41,6 +57,24 @@ void common_parameters(mfem::OptionsParser& args, TestParameters& p)
 		args.PrintOptions(std::cout);
 }
 
+/**
+ * @brief Adds post-processing options to a given Problem instance.
+ *
+ * This template function allows you to add post-processing options
+ * to a Problem instance of the specified type. Post-processing can include tasks such
+ * as generating and saving visualizations, stress analysis, and more.
+ *
+ * @tparam Problem              The type of the Problem instance to which post-processing will be added.
+ *
+ * @param p                     A reference to the Problem instance to which post-processing will be added.
+ * @param msg                   Paraview file name (results).
+ * @param stress_output_name    The name or identifier for stress-related output data.
+ * @param paraview_output_name  Paraview file with integration point value.
+ *
+ * @note This function allows you to customize and configure various post-processing options
+ *       specific to the given Problem type. Please refer to the documentation of the Problem
+ *       class for details on available post-processing options and their meanings.
+ */
 	template<typename Problem>
 void add_post_processings(Problem& p, std::string msg, std::string stress_output_name, std::string paraview_output_name)
 {
@@ -54,12 +88,30 @@ void add_post_processings(Problem& p, std::string msg, std::string stress_output
 	p.addPostProcessing(
 			"ParaviewExportIntegrationPointResultsAtNodes",
 			{
-				{"OutputFileName", paraview_output_name},
-				{"Results", {"Stress"}}
+			{"OutputFileName", paraview_output_name},
+			{"Results", {"Stress"}}
 			}
 			);
-} // end timer add_postprocessing_and_outputs
+}
 
+/**
+ * @brief Adds post-processing options to a given Problem instance.
+ *
+ * This template function allows you to add post-processing options
+ * to a Problem instance of the specified type. Post-processing can include tasks such
+ * as generating and saving visualizations, stress analysis, and more.
+ *
+ * @tparam Problem              The type of the Problem instance to which post-processing will be added.
+ *
+ * @param p                     A reference to the Problem instance to which post-processing will be added.
+ * @param msg                   Paraview file name (results).
+ * @param stress_output_name    The name or identifier for stress-related output data.
+ * @param paraview_output_name  Paraview file with integration point value.
+ *
+ * @note This function allows you to customize and configure various post-processing options
+ *       specific to the given Problem type. Please refer to the documentation of the Problem
+ *       class for details on available post-processing options and their meanings.
+ */
 	template<typename Problem>
 void add_post_processings_2(Problem& p, std::string msg, std::string stress_output_name)
 {
@@ -73,9 +125,21 @@ void add_post_processings_2(Problem& p, std::string msg, std::string stress_outp
 	p.addPostProcessing(
 			"ParaviewExportIntegrationPointResultsAtNodes",
 			{{"OutputFileName", msg + "IntegrationPointOutput"},
-			 {"Results", {"FirstPiolaKirchhoffStress"}}});
+			{"Results", {"FirstPiolaKirchhoffStress"}}});
 } // end timer add_postprocessing_and_outputs
-
+/**
+ * @brief Executes post-processing steps for a given Problem instance within a specified time range.
+ *
+ * @tparam Problem  The type of the Problem instance for which post-processing will be executed.
+ *
+ * @param p         A reference to the Problem instance for which post-processing will be executed.
+ * @param start     The starting time of the post-processing range.
+ * @param end       The ending time of the post-processing range.
+ *
+ * @note This function is responsible for executing the defined post-processing steps within the specified time range.
+ *       The specific post-processing steps and their configurations should have been previously added to the Problem
+ *       instance using the `add_post_processings` function or other appropriate methods.
+ */
 	template<typename Problem>
 void execute_post_processings(Problem& p, double start, double end)
 {
@@ -83,6 +147,17 @@ void execute_post_processings(Problem& p, double start, double end)
 	p.executePostProcessings(start, end);
 }
 
+
+/**
+ * @brief Solves a Problem instance within a specified time range and time step.
+ * @param p         A reference to the Problem instance to be solved.
+ * @param start     The starting time for the solution.
+ * @param dt        The time step for the solution.
+ *
+ * @note This function is responsible for solving the Problem instance within the specified
+ *       time range using the provided time step. It also checks the status of the solver
+ *       and aborts if the solve operation fails.
+ */
 	template<typename Problem>
 void run_solve(Problem& p, double start, double dt)
 {
