@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
-project(UniaxialPolycritsalExample)
+project(UniaxialPolycristalExample)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -70,14 +70,14 @@ function(build_ex8 binFile srcFile)
 	target_include_directories(${binFile} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 endfunction(build_ex8)
 
-build_ex8(uniaxial-polycristal UniaxialPolycritsal.cxx)
+build_ex8(uniaxial-polycristal UniaxialPolycristal.cxx)
 build_ex8(uniaxial-elastic UniaxialElastic.cxx)
 build_ex8(uniaxial-nonlinearelastic UniaxialNonLinearElastic.cxx)
 build_ex8(uniaxial-elastic-ortho UniaxialElasticOrtho.cxx)
     
 add_dependencies(check uniaxial-polycristal uniaxial-elastic uniaxial-elastic-ortho uniaxial-nonlinearelastic generate-libBehaviour-ex8)
 
-set(test "UniaxialPolycritsalTest")
+set(test "UniaxialPolycristalTest")
 add_test(NAME ${test} COMMAND uniaxial-polycristal --postprocessings 0)
 
 set(test "UniaxialElasticTest")
