@@ -85,6 +85,22 @@ static void setLinearSolver(Problem& p,
 	//p.setLinearSolver("MUMPSSolver", solverParameters);
 }
 
+void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolutionProblem& problem)
+{
+	using namespace mgis::behaviour;
+	using real=mfem_mgis::real;
+
+	CatchTimeSection("set_mgis_stuff");
+
+	// const int nMat = 1;
+	const int nMat = getMaterialsAttributes(*(problem.getFiniteElementDiscretizationPointer())).Max();
+	mfem_mgis::Profiler::Utils::Message("Nombre de matériaux : ", nMat);
+
+	for(int i = 0 ; i < nMat ; i++)
+	{
+		problem.addBehaviourIntegrator("Mechanics", i+1, p.library, p.behaviour);
+	}
+}
 
 template <typename Problem>
 void simulation(Problem &problem, double start, double end, double dt, bool pp)

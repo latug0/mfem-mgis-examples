@@ -67,23 +67,6 @@ void execute_post_processings(Problem& p, double start, double end)
 	p.executePostProcessings(start, end);
 }
 
-void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolutionProblem& problem)
-{
-	using namespace mgis::behaviour;
-	using real=mfem_mgis::real;
-
-	CatchTimeSection("set_mgis_stuff");
-
-	// const int nMat = 1;
-	const int nMat = getMaterialsAttributes(*(problem.getFiniteElementDiscretizationPointer())).Max();
-	mfem_mgis::Profiler::Utils::Message("Nombre de matériaux : ", nMat);
-
-	for(int i = 0 ; i < nMat ; i++)
-	{
-		problem.addBehaviourIntegrator("Mechanics", i+1, p.library, p.behaviour);
-	}
-}
-
 	template<typename Problem>
 void run_solve(Problem& p, double start, double dt)
 {

@@ -55,32 +55,8 @@ struct TestParameters {
 	int verbosity_level = 0; // default value : lower level
 };
 
-void common_parameters(mfem::OptionsParser& args, TestParameters& p)
-{
-	args.AddOption(&p.mesh_file, "-m", "--mesh", "Mesh file to use.");
-	args.AddOption(&p.library, "-l", "--library", "Material library.");
-	args.AddOption(&p.order, "-o", "--order", "Finite element order (polynomial degree).");
-	args.AddOption(&p.refinement, "-r", "--refinement", "refinement level of the mesh, default = 0");
-	args.AddOption(&p.post_processing, "-p", "--post-processing", "run post processing step");
-	args.AddOption(&p.verbosity_level, "-v", "--verbosity-level", "choose the verbosity level");
+#include <common.hxx>
 
-	args.Parse();
-
-	if (!args.Good()) {
-		if (mfem_mgis::getMPIrank() == 0)
-			args.PrintUsage(std::cout);
-		mfem_mgis::finalize();
-		exit(0);
-	}
-	if (p.mesh_file == nullptr) {
-		if (mfem_mgis::getMPIrank() == 0)
-			std::cout << "ERROR: Mesh file missing" << std::endl;
-		args.PrintUsage(std::cout);
-		mfem_mgis::abort(EXIT_FAILURE);
-	}
-	if (mfem_mgis::getMPIrank() == 0)
-		args.PrintOptions(std::cout);
-}
 
 auto norm(std::array<mfem_mgis::real, 3u> &u)
 {
@@ -139,32 +115,6 @@ std::vector<std::array<mfem_mgis::real, 3u>> readVectorsFromFile(const std::stri
 	return vectors;
 }
 
-	template<typename Problem>
-void add_post_processings(Problem& p, std::string msg)
-{
-	p.addPostProcessing(
-			"ParaviewExportResults",
-			{{"OutputFileName", msg}}
-			);
-	p.addPostProcessing(
-			"MeanThermodynamicForces",
-			{{"OutputFileName", "avgStressElasticOrtho"}});
-	p.addPostProcessing(
-			"ParaviewExportIntegrationPointResultsAtNodes",
-			{
-				{"OutputFileName", "UniaxialElasticOrthoTestIntegrationPointOutput"},
-				{"Results", {"Stress"}}
-			}
-			);
-} // end timer add_postprocessing_and_outputs
-
-	template<typename Problem>
-void execute_post_processings(Problem& p, double start, double end)
-{
-	CatchTimeSection("common::post_processing_step");
-	p.executePostProcessings(start, end);
-}
-
 void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolutionProblem& problem)
 {
 	using namespace mgis::behaviour;
@@ -208,7 +158,6 @@ void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolu
 
 }
 
-
 	template<typename Problem>		
 static void setLinearSolver(Problem& p,
 		const int verbosity = 0,
@@ -235,20 +184,6 @@ static void setLinearSolver(Problem& p,
 	// p.setLinearSolver("HyprePCG", solverParameters);
 	p.setLinearSolver("MUMPSSolver", solverParameters);
 	// p.setLinearSolver("CGSolver", solverParameters);
-}
-
-	template<typename Problem>
-void run_solve(Problem& p, double start, double dt)
-{
-	CatchTimeSection("Solve");
-	mfem_mgis::Profiler::Utils::Message("Solving problem from ",start,"to",start+dt);
-	// solving the problem
-	auto statistics = p.solve(start, dt);
-	// check status
-	if (!statistics.status) {
-		mfem_mgis::Profiler::Utils::Message("INFO: SOLVE FAILED");
-		std::abort();
-	}
 }
 
 template <typename Problem>
@@ -428,7 +363,7 @@ int main(int argc, char* argv[])
 
 
 	// add post processings
-	if(use_post_processing) add_post_processings(problem, "OutputFile-Uniaxial-elastic-ortho");
+	if(use_post_processing) add_post_processings(problem, "OutputFile-Uniaxial-elastic-ortho", "avgStressElasticOrtho", "UniaxialElasticOrthoTestIntegrationPointOutput");
 
 	// main function here
 	int nStep=2;
