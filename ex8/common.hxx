@@ -61,6 +61,22 @@ void add_post_processings(Problem& p, std::string msg, std::string stress_output
 } // end timer add_postprocessing_and_outputs
 
 	template<typename Problem>
+void add_post_processings_2(Problem& p, std::string msg, std::string stress_output_name)
+{
+	p.addPostProcessing(
+			"ParaviewExportResults",
+			{{"OutputFileName", msg}}
+			);
+	p.addPostProcessing(
+			"MeanThermodynamicForces",
+			{{"OutputFileName", stress_output_name}});
+	p.addPostProcessing(
+			"ParaviewExportIntegrationPointResultsAtNodes",
+			{{"OutputFileName", msg + "IntegrationPointOutput"},
+			 {"Results", {"FirstPiolaKirchhoffStress"}}});
+} // end timer add_postprocessing_and_outputs
+
+	template<typename Problem>
 void execute_post_processings(Problem& p, double start, double end)
 {
 	CatchTimeSection("common::post_processing_step");
