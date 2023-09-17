@@ -246,6 +246,7 @@ int main(int argc, char* argv[])
 			{"Parallel", p.parallel}});
 	
 	mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed);
+	print_mesh_information(problem.getImplementation<true>());
 
 	// set problem
 	setup_properties(p, problem);
