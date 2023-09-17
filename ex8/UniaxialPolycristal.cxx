@@ -153,7 +153,7 @@ void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolu
 	template<typename Problem>		
 static void setLinearSolver(Problem& p,
 		const int verbosity = 0,
-		const mfem_mgis::real Tol = 1e-12
+		const mfem_mgis::real Tol = 1e-6
 		)
 {
 	CatchTimeSection("set_linear_solver");
@@ -162,22 +162,199 @@ static void setLinearSolver(Problem& p,
 	auto solverParameters = mfem_mgis::Parameters{};
 	solverParameters.insert(mfem_mgis::Parameters{{"VerbosityLevel", verbosity}});
 	solverParameters.insert(mfem_mgis::Parameters{{"MaximumNumberOfIterations", defaultMaxNumOfIt}});
-	// solverParameters.insert(mfem_mgis::Parameters{{"AbsoluteTolerance", Tol}});
-	// solverParameters.insert(mfem_mgis::Parameters{{"RelativeTolerance", Tol}});
-	solverParameters.insert(mfem_mgis::Parameters{{"Tolerance", Tol}});
+	solverParameters.insert(mfem_mgis::Parameters{{"AbsoluteTolerance", Tol}});
+	solverParameters.insert(mfem_mgis::Parameters{{"RelativeTolerance", Tol}});
+	//solverParameters.insert(mfem_mgis::Parameters{{"Tolerance", Tol}});
 
 
 	// preconditionner hypreBoomerAMG
 	auto options = mfem_mgis::Parameters{{"VerbosityLevel", verbosity}};
-	// auto preconditionner = mfem_mgis::Parameters{{"Name","HypreDiagScale"}, {"Options",options}};
-	auto preconditionner = mfem_mgis::Parameters{{"Name","HypreBoomerAMG"}, {"Options",options}};
+	auto preconditionner = mfem_mgis::Parameters{{"Name","HypreDiagScale"}, {"Options",options}};
+	//auto preconditionner = mfem_mgis::Parameters{{"Name","HypreBoomerAMG"}, {"Options",options}};
 	solverParameters.insert(mfem_mgis::Parameters{{"Preconditioner",preconditionner}});
 	// solver HyprePCG
-	p.setLinearSolver("HyprePCG", solverParameters);
+	//p.setLinearSolver("HyprePCG", solverParameters);
 	// p.setLinearSolver("MUMPSSolver", solverParameters);
-	// p.setLinearSolver("CGSolver", solverParameters);
+	 p.setLinearSolver("CGSolver", solverParameters);
 }
 
+template <typename Problem>
+void simulation(Problem &problem, double start, double end, double dt, bool pp)
+{
+	CatchTimeSection("simulation");
+
+	const int nMat = getMaterialsAttributes(*(problem.getFiniteElementDiscretizationPointer())).Max();
+	// cubic symmetry elasticity
+	const double young1 (222.e9), young2(young1), young3(young1);
+	const double poisson12 (0.27), poisson23(poisson12), poisson13(poisson12);
+	const double shear12(54.e9), shear23(shear12), shear13(shear12);
+
+	// ===========================
+	// effective moduli estimations
+	// ===========================
+	const double C11 = young1 * (poisson12 - 1) / (2 * poisson12 * poisson12 + poisson12 - 1);
+	const double C12 = -(poisson12 * young1) / (2 * poisson12 * poisson12 + poisson12 - 1);
+	const double C44 = shear12;
+	// ---- Bulk Modulus ----
+	const double Keff = 1. / 3. * (C11 + 2 * C12);
+	// ---- Shear Modulus ----
+	// Reuss & Voigt bounds
+	const double aniso = 2 * C44 / (C11 - C12);
+	const double GReuss = 5 * C44 / (3 + 2 * aniso);
+	const double GVoigt = (3 * aniso + 2) / (5 * aniso) * C44;
+	// Hashin–Shtrikman bounds
+	const double Gv = (C11 - C12) / 2;
+	const double beta1 = -3 * (Keff + 2 * Gv) / (5 * Gv * (3 * Keff + 4 * Gv));
+	const double beta2 = -3 * (Keff + 2 * C44) / (5 * C44 * (3 * Keff + 4 * C44));
+	const double GHSl = Gv + 3 * ((C44 - Gv) - 4 * beta1) / 5;
+	const double GHSu = C44 + 3 * ((Gv - C44) - 6 * beta2) / 5;
+	// Kroener
+	double m0, mus;
+	double D1, sD1, D2;
+	double GK = 0.;
+
+	while (fabs(GK - m0) / Keff > 1e-10);
+	{
+		m0 = GK;
+		D1 = Keff + 2 * GK;
+		sD1 = 6 * D1;
+		mus = GK * (9 * Keff + 8 * GK) / sD1;
+		D2 = 5 * mus + 2 * C44 + 3 * Gv;
+		GK = (3 * C44 * mus + 2 * Gv * mus + 5 * Gv * C44) / D2;
+	}
+
+	// Shear modulus choice
+	mfem_mgis::Profiler::Utils::Message("Info mat: GReuss= ", GReuss, ", GVoigt= ", GVoigt, ", GHSl= ", GHSl, ", GHSu= ", GHSu, ", GK= ", GK);
+
+	const double Geff = GK; // GHSu
+	// Young and Poisson effective moduli
+	const double nueff = (3 * Keff - 2 * Geff) / (2 * (3 * Keff + Geff));
+	const double Eeff = 9 * Keff * Geff / (3 * Keff + Geff);
+	// ===========================
+
+	// materials
+	auto set_properties = [](auto &m,
+							 const double yo1, const double yo2, const double yo3,
+							 const double po12, const double po23, const double po13,
+							 const double sm12, const double sm23, const double sm13)
+	{
+		setMaterialProperty(m.s0, "YoungModulus1", yo1);
+		setMaterialProperty(m.s0, "YoungModulus2", yo2);
+		setMaterialProperty(m.s0, "YoungModulus3", yo3);
+		setMaterialProperty(m.s0, "PoissonRatio12", po12);
+		setMaterialProperty(m.s0, "PoissonRatio23", po23);
+		setMaterialProperty(m.s0, "PoissonRatio13", po13);
+		setMaterialProperty(m.s0, "ShearModulus12", sm12);
+		setMaterialProperty(m.s0, "ShearModulus23", sm23);
+		setMaterialProperty(m.s0, "ShearModulus13", sm13);
+
+		setMaterialProperty(m.s1, "YoungModulus1", yo1);
+		setMaterialProperty(m.s1, "YoungModulus2", yo2);
+		setMaterialProperty(m.s1, "YoungModulus3", yo3);
+		setMaterialProperty(m.s1, "PoissonRatio12", po12);
+		setMaterialProperty(m.s1, "PoissonRatio23", po23);
+		setMaterialProperty(m.s1, "PoissonRatio13", po13);
+		setMaterialProperty(m.s1, "ShearModulus12", sm12);
+		setMaterialProperty(m.s1, "ShearModulus23", sm23);
+		setMaterialProperty(m.s1, "ShearModulus13", sm13);
+	};
+
+	auto set_temperature = [](auto &m)
+	{
+		setExternalStateVariable(m.s0, "Temperature", 293.15);
+		setExternalStateVariable(m.s1, "Temperature", 293.15);
+	};
+
+	for (int i = 0; i < nMat; i++)
+	{
+		auto &mat = problem.getMaterial(i + 1);
+		set_properties(mat,
+					   young1, young2, young3,			// young modulus
+					   poisson12, poisson23, poisson13, // poisson ration
+					   shear12, shear23, shear13		// shear modulus
+		);
+		set_temperature(mat);
+	}
+
+	const int nStep = (end - start) / dt;
+	for (int i = 0; i < nStep; i++)
+	{
+		// Transformation gradient components
+		const double FZZ = 1. + 0.5 * ((i + 1.) * dt / end);
+		double FXX = 1. / std::sqrt(FZZ);
+		double FYY = 1. / std::sqrt(FZZ);
+
+		// init macro cauchy stress components
+		double SIGXX = 0.;
+		double SIGYY = 0.;
+
+		// init volume var
+		double vol = 0;
+
+		// init MPI vars
+		double SIG[2] = {SIGXX, SIGYY};
+
+		// Fixed-Point param
+		double tolFP = 1.e4;
+		double oldRes = 1.e5;
+		double newRes = std::sqrt(SIGXX * SIGXX + SIGYY * SIGYY);
+		int itFP = 0;
+		int maxitFP = 100;
+		while ((abs(oldRes - newRes) > tolFP) && (itFP <= maxitFP))
+		{
+			problem.setMacroscopicGradientsEvolution([&FXX, &FYY, FZZ, SIGXX, SIGYY, Eeff, nueff](const double t){ 
+				auto ret = std::vector<mfem_mgis::real>(9, mfem_mgis::real{});
+				ret[2] = FZZ;
+				ret[0] = FXX + ((nueff*nueff-1)*SIGXX)/Eeff+(nueff*(nueff+1)*SIGYY)/Eeff;
+				ret[1] = FYY + ((nueff*nueff-1)*SIGYY)/Eeff+(nueff*(nueff+1)*SIGXX)/Eeff;
+				FXX = ret[0];
+				FYY = ret[1];
+				mfem_mgis::Profiler::Utils::Message("Info newton: FXX= ", FXX, " , FYY= ", FYY, " , FZZ= ", FZZ);
+				return ret; });
+
+			run_solve(problem, i * dt, dt);
+			auto [tf_integrals, volumes] = mfem_mgis::computeMeanThermodynamicForcesValues<true>(problem.template getImplementation<true>());
+
+			vol = 0.;
+			for (const auto &mi : problem.getAssignedMaterialsIdentifiers())
+			{
+				vol += volumes[mi];
+			}
+			MPI_Allreduce(MPI_IN_PLACE, &vol, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+			for(int dim = 0 ; dim < 2 ; dim++) { SIG[dim] = 0.0; }
+			for (const auto &mi : problem.getAssignedMaterialsIdentifiers())
+			{
+				for(int dim = 0 ; dim < 2 ; dim++) // dim x and dim y
+				{
+					SIG[dim] += tf_integrals[mi][dim] / vol;
+				}
+			}
+
+			MPI_Allreduce(MPI_IN_PLACE, SIG, 2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+			SIGXX = SIG[0];
+			SIGYY = SIG[1];
+
+			mfem_mgis::Profiler::Utils::Message("SIGXX =", SIGXX, " SIGYY =", SIGYY);
+
+			oldRes = newRes;
+			newRes = std::sqrt(SIGXX * SIGXX + SIGYY * SIGYY);
+
+			mfem_mgis::Profiler::Utils::Message("FIXED POINT iteration", itFP, ": |res| =", abs(oldRes - newRes));
+
+			itFP += 1;
+		}
+
+		if (itFP >= maxitFP)
+			mfem_mgis::Profiler::Utils::Message("warning: maximum number of iterations for the fixed-point algorithm attained, before the requested tolerance is reached");
+
+		problem.update();
+		if (pp)
+			execute_post_processings(problem, i * dt, dt);
+	}
+}
+
+/*
 template <typename Problem>
 void simulation(Problem &problem, double start, double end, double dt, bool pp)
 {
@@ -368,6 +545,7 @@ void simulation(Problem &problem, double start, double end, double dt, bool pp)
 			execute_post_processings(problem, i * dt, dt);
 	}
 }
+*/
 
 int main(int argc, char* argv[]) 
 {

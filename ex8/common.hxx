@@ -162,12 +162,46 @@ void execute_post_processings(Problem& p, double start, double end)
 void run_solve(Problem& p, double start, double dt)
 {
 	CatchTimeSection("Solve");
-	mfem_mgis::Profiler::Utils::Message("Solving problem from ",start,"to",start+dt);
+	mfem_mgis::Profiler::Utils::Message("Solving problem from: ",start," to: ",start+dt);
 	// solving the problem
 	auto statistics = p.solve(start, dt);
 	// check status
 	if (!statistics.status) {
-		mfem_mgis::Profiler::Utils::Message("INFO: SOLVE FAILED");
+		mfem_mgis::Profiler::Utils::Message("Info solver: solving step has failed");
 		std::abort();
 	}
+}
+
+
+	template<typename Implementation>
+void print_mesh_information(Implementation& impl)
+{
+	CatchTimeSection("common::print_mesh_information");
+
+	using mfem_mgis::Profiler::Utils::sum;
+	using mfem_mgis::Profiler::Utils::Message;
+
+	//getMesh
+	auto mesh = impl.getFiniteElementSpace().GetMesh();
+
+	//get the number of vertices
+	int64_t numbers_of_vertices_local = mesh->GetNV();
+	int64_t  numbers_of_vertices = sum(numbers_of_vertices_local);
+
+	//get the number of elements
+	int64_t numbers_of_elements_local = mesh->GetNE();
+	int64_t numbers_of_elements = sum(numbers_of_elements_local);
+
+	//get the element size
+	double h = mesh->GetElementSize(0);
+
+	// get n dofs
+	auto& fespace = impl.getFiniteElementSpace();
+	int64_t unknowns_local = fespace.GetTrueVSize(); 
+	int64_t unknowns = sum(unknowns_local);
+
+	Message("Info problem: number of vertices -> ", numbers_of_vertices);
+	Message("Info problem: number of elements -> ", numbers_of_elements);
+	Message("Info prolbem: element size -> ", h);
+	Message("Info porblem: Number of finite element unknowns: " , unknowns);
 }
