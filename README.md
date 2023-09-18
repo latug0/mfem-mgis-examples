@@ -24,6 +24,7 @@ Thirdly, load mfem-mgis
 
 ```
 spack load mfem-mgis
+export MFEMMGIS_DIR=`spack location -i mmm`/share/mfem-mgis/cmake/
 ```
 
 Finally, build your examples:
@@ -31,6 +32,7 @@ Finally, build your examples:
 ```
 mkdir build
 cd build
+cmake ..
 make -j 4
 ```
 
