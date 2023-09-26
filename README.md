@@ -7,6 +7,12 @@ You will find here meshes and a collection of use cases for the `mfem-mgis` libr
 
 ### Installing MFEM-MGIS with Spack
 
+```
+git clone https://github.com/spack/spack.git
+export SPACK_ROOT=$PWD/spack
+source ${SPACK_ROOT}/share/spack/setup-env.sh
+```
+
 Firstly, get the mfem-mgis spack repository.
 
 ```
