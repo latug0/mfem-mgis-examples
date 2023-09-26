@@ -29,15 +29,15 @@ spack install mmm+mpi+suite-sparse
 Thirdly, load mfem-mgis
 
 ```
-spack load mfem-mgis
+spack load mmm
 export MFEMMGIS_DIR=`spack location -i mmm`/share/mfem-mgis/cmake/
 ```
 
 Finally, build your examples:
 
 ```
-mkdir build
-cd build
+cd mfem-mgis-examples
+mkdir build && cd build
 cmake ..
 make -j 4
 ```
