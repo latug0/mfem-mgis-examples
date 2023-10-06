@@ -1,0 +1,45 @@
+@Author HELFER Thomas 202608;
+@Date   09/07/2019;
+@Description{
+
+};
+
+@ModellingHypothesis 'Tridimensional';
+@Behaviour<generic> './src/libBehaviour.so' 'MonoCristal_UO2';
+
+@DeformationGradientEpsilon 2.e-16;
+@StressEpsilon 1.e-4;
+
+// @RotationMatrix {{0.7071067811865475, 0.7071067811865475, -2.7755575615628914e-17},
+//                  {0.4086070447619255, -0.4086070447619256, 0.81613759008016},
+//                  {0.5770964243269279, -0.5770964243269281, -0.5778576243835054}};
+@RotationMatrix<Direction> {{0.7071067811865475, 0.4086070447619255, 0.5770964243269279},
+                            {0.7071067811865475, -0.4086070447619256, -0.5770964243269281}};
+
+
+// material properties
+@MaterialProperty<constant> 'YoungModulus1' 222.e9;
+@MaterialProperty<constant> 'YoungModulus2' 222.e9;
+@MaterialProperty<constant> 'YoungModulus3' 222.e9;
+@MaterialProperty<constant> 'PoissonRatio12' 0.27;
+@MaterialProperty<constant> 'PoissonRatio23' 0.27;
+@MaterialProperty<constant> 'PoissonRatio13' 0.27;
+@MaterialProperty<constant> 'ShearModulus12' 54.e9;
+@MaterialProperty<constant> 'ShearModulus23' 54.e9;
+@MaterialProperty<constant> 'ShearModulus13' 54.e9;
+
+// external state variable
+@ExternalStateVariable 'Temperature' 293.15 ;
+@ImposedStress 'SXX' 0.;
+@ImposedStress 'SYY' 0.;
+// @ImposedDeformationGradient<evolution> 'FXX' {0:1,200.:0.817061};
+// @ImposedDeformationGradient<evolution> 'FYY' {0:1,200.:0.816662};
+@ImposedDeformationGradient<evolution> 'FZZ' {0:1,200.:1.5};
+@ImposedDeformationGradient<evolution> 'FXY' {0:0,200.:0};
+@ImposedDeformationGradient<evolution> 'FYX' {0:0,200.:0};
+@ImposedDeformationGradient<evolution> 'FXZ' {0:0,200.:0};
+@ImposedDeformationGradient<evolution> 'FZX' {0:0,200.:0};
+@ImposedDeformationGradient<evolution> 'FYZ' {0:0,200.:0};
+@ImposedDeformationGradient<evolution> 'FZY' {0:0,200.:0};
+
+@Times {0., 200. in 150};

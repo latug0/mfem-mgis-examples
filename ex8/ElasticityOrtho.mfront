@@ -1,0 +1,8 @@
+@DSL Implicit;
+@Behaviour OrthotropicElastic;
+@Algorithm NewtonRaphson;
+@OrthotropicBehaviour;
+@Brick StandardElasticity;
+@Theta 1.0; 
+@Epsilon 1e-14;
+@RequireStiffnessTensor<UnAltered>;
