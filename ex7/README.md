@@ -25,7 +25,7 @@ deformation. The aim of this simulation is to reproduce and compare the results 
     Preconditionner : HypreBoomerAMG
 
     Moduli and Norton behavior law parameters :
-    [ parameters       , matrix   , inclusions ]
+    [ parameters       , inclusions   , matrix ]
     [ Young Modulus    , 8.182e9  , 2*8.182e9  ];
     [ Poisson Ratio    , 0.364    , 0.364      ];
     [ Stress Threshold , 100.0e6  , 100.0e12   ];
