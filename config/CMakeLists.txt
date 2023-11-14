@@ -26,5 +26,6 @@ endif()
 # Specific setup for preparing the exemples
 include(ex1.cmake)
 include(ex2.cmake)
-include(ex3.cmake)
+#include(ex3.cmake)
+
 
