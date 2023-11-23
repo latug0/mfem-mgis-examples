@@ -185,10 +185,14 @@ void add_post_processings(Problem& p, std::string msg)
 	p.addPostProcessing(
 			"MeanThermodynamicForces",
 			{{"OutputFileName", "avgStressPolycristal"}});
-	p.addPostProcessing(
-			"ParaviewExportIntegrationPointResultsAtNodes",
-			{{"OutputFileName", msg + "IntegrationPointOutput"},
-			 {"Results", {"FirstPiolaKirchhoffStress"}}});
+	// p.addPostProcessing(
+	// 		"ParaviewExportIntegrationPointResultsAtNodes",
+	// 		{{"OutputFileName", msg + "IntegrationPointOutputPKI"},
+	// 		 {"Results", {"FirstPiolaKirchhoffStress"}}});
+	// p.addPostProcessing(
+	// 		"ParaviewExportIntegrationPointResultsAtNodes",
+	// 		{{"OutputFileName", msg + "IntegrationPointOutputDG"},
+	// 		 {"Results", {"DeformationGradient"}}});
 } // end timer add_postprocessing_and_outputs
 
 	template<typename Problem>
@@ -366,8 +370,8 @@ void simulation(Problem &problem, double start, double end, double dt, bool pp)
 
 	auto set_temperature = [](auto &m)
 	{
-		setExternalStateVariable(m.s0, "Temperature", 293.15);
-		setExternalStateVariable(m.s1, "Temperature", 293.15);
+		setExternalStateVariable(m.s0, "Temperature", 1600.);
+		setExternalStateVariable(m.s1, "Temperature", 1600.);
 	};
 
 	for (int i = 0; i < nMat; i++)
@@ -391,9 +395,6 @@ void simulation(Problem &problem, double start, double end, double dt, bool pp)
 				ret[0] = FXX;
 				ret[1] = FYY;
 				ret[2] = FZZ;
-				// mfem_mgis::Profiler::Utils::Message("FXX", FXX);
-				// mfem_mgis::Profiler::Utils::Message("FYY", FYY);
-				// mfem_mgis::Profiler::Utils::Message("FZZ", FZZ);
 				return ret; });
 
 	const int nStep = (end - start) / dt;
@@ -419,7 +420,7 @@ void simulation(Problem &problem, double start, double end, double dt, bool pp)
 		double oldRes = 1.e6;
 		double newRes = std::sqrt(SIGXX * SIGXX + SIGYY * SIGYY);
 		int itFP = 0;
-		int maxitFP = 20;
+		int maxitFP = 50;
 		while ((abs(oldRes - newRes) > tolFP) && (itFP <= maxitFP))
 		{
 			//compute correction
@@ -456,6 +457,10 @@ void simulation(Problem &problem, double start, double end, double dt, bool pp)
 				SIGYY += tf_integrals[mi][1] / vol;
 			}
 
+			// PKI to VM
+			SIGXX = SIGXX*FXX/(FXX*FYY*FZZ);
+			SIGYY = SIGYY*FYY/(FXX*FYY*FZZ);
+
 			SIG_local[0] = SIGXX;
 			SIG_local[1] = SIGYY;
 			MPI_Allreduce(SIG_local, SIG_global, 2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
@@ -481,6 +486,18 @@ void simulation(Problem &problem, double start, double end, double dt, bool pp)
 
 		if (pp)
 			execute_post_processings(problem, i * dt, dt);
+		
+		if (mfem_mgis::getMPIrank() == 0) {
+			std::ofstream fichier("OutputFile-Uniaxial-polycristal-GradTrans.txt", std::ios::app);
+			if (fichier.is_open()) {
+				fichier << (i+1) * dt << " " << FXX << " " << FYY << " " << FZZ << "\n";
+				fichier.close();
+				std::cout << "Les valeurs ont été écrites dans le fichier." << std::endl;
+			} else {
+				std::cerr << "Erreur lors de l'ouverture du fichier." << std::endl;
+			}
+		}
+		
 	}
 }
 
@@ -528,7 +545,7 @@ int main(int argc, char* argv[])
 	if(use_post_processing) add_post_processings(problem, "OutputFile-Uniaxial-polycristal");
 
 	// main function here
-	int nStep=50;
+	int nStep=600;
 	double start=0;
 	double end=200;
 	const double dt = (end-start)/nStep;
