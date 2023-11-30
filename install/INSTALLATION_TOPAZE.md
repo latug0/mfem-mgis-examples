@@ -21,7 +21,7 @@ git clone https://github.com/spack/spack.git
 export SPACK_ROOT=$PWD/spack
 ```
 
-Before proceeding, make sure to source Spack and empty (warning).
+Before proceeding, make sure to source Spack and clear your local ~/.spack repository (warning).
 
 ```
 rm -r ~/.spack
@@ -37,7 +37,7 @@ git clone https://github.com/thelfer/mfem-mgis
 spack repo add $PWD/mfem-mgis/spack_repo
 ```
 
-Now, you will create a spack mirror and boostrap directory.
+Now, you will create a spack mirror and a boostrap directory.
 
 ```
 spack bootstrap mirror --binary-packages my_bootstrap
@@ -54,6 +54,7 @@ spack mirror create -d mirror-mmm -D mmm+mpi+suite-sparse zlib ca-certificates-m
 
 You'll need to copy the following files to Topaze:
 - spack
+  spack
 - mfem-mgis
 - mfem-mgis-example
 
@@ -120,7 +121,7 @@ spack repo add $PWD/mfem-mgis/spack_repo/
 spack mirror add MMM $PWD/mirror-mmm/
 ```
 
-Run installation
+Run installation:
 
 ```
 module load gnu/11.1.0 mpi hwloc cmake
