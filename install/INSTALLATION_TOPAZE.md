@@ -28,7 +28,7 @@ rm -r ~/.spack
 source ${SPACK_ROOT}/share/spack/setup-env.sh
 ```
 
-## Create a Spack Mirror on Your Host Machine
+## Create a Spack Mirror on Your Machine (Local)
 
 Firstly, you need to get the mmm spack repository.
 
