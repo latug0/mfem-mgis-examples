@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
-project(RevNonLinearElasticExample)
+project(RveNonLinearElasticExample)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -55,16 +55,16 @@ add_custom_command(
 add_custom_target(generate-libBehaviour-ex6 ALL
   DEPENDS "src/libBehaviour.so")
 
-add_executable(rev RevNonLinearElastic.cxx)
-target_link_libraries(rev mfem-mgis::MFEMMGIS)
-target_include_directories(rev
+add_executable(rve RveNonLinearElastic.cxx)
+target_link_libraries(rve mfem-mgis::MFEMMGIS)
+target_include_directories(rve
   SYSTEM
   PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"   
   PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
     
-add_dependencies(check rev generate-libBehaviour-ex6)
+add_dependencies(check rve generate-libBehaviour-ex6)
 
-set(test "RevNonLinearElasticTest")
-add_test(NAME ${test} COMMAND rev --postprocessings 0)
+set(test "RveNonLinearElasticTest")
+add_test(NAME ${test} COMMAND rve --postprocessings 0)
 
 

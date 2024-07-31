@@ -198,7 +198,7 @@ int main(int argc, char* argv[])
 	setLinearSolver(problem, p.verbosity_level);
 
 	// add post processings
-	if(use_post_processing) add_post_processings(problem, "OutputFile-rev-non-linear-elastic");
+	if(use_post_processing) add_post_processings(problem, "OutputFile-rve-non-linear-elastic");
 
 	// main function here
 	run_solve(problem, 0, 1);
