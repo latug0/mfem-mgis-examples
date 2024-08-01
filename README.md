@@ -16,8 +16,8 @@ source ${SPACK_ROOT}/share/spack/setup-env.sh
 Firstly, get the mfem-mgis spack repository.
 
 ```
-git clone https://github.com/thelfer/mfem-mgis
-spack repo add $PWD/mfem-mgis/spack_repo
+git clone https://github.com/rprat-pro/spack-repo-mfem-mgis.git
+spack repo add $PWD/spack-repo-mfem-mgis
 ```
 
 Secondly, install mfem-mgis
