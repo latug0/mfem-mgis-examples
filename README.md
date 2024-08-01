@@ -23,7 +23,7 @@ spack repo add $PWD/spack-repo-mfem-mgis
 Secondly, install mfem-mgis
 
 ```
-spack install mmm+mpi+suite-sparse
+spack install mfem-mgis+mpi+suite-sparse
 ```
 
 Thirdly, load mfem-mgis

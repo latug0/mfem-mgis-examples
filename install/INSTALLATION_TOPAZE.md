@@ -30,24 +30,24 @@ source ${SPACK_ROOT}/share/spack/setup-env.sh
 
 ## Create a Spack Mirror on Your Machine (Local)
 
-Firstly, you need to get the mmm spack repository.
+Firstly, you need to get the mfem-mgis spack repository.
 
 ```
-git clone https://github.com/thelfer/mfem-mgis
-spack repo add $PWD/mfem-mgis/spack_repo
+git clone https://github.com/rprat-pro/spack-repo-mfem-mgis.git
+spack repo add $PWD/spack-repo-mfem-mgis
 ```
 
 Now, you will create a spack mirror and a boostrap directory.
 
 ```
 spack bootstrap mirror --binary-packages my_bootstrap
-spack mirror create -d mirror-mmm -D mmm+mpi+suite-sparse%gcc@11.1.0
+spack mirror create -d mirror-mfem-mgis -D mfem-mgis+mpi+suite-sparse%gcc@11.1.0
 ```
 
 It's possible that you will need some packages in your mirror, you can specify them with the following command:
 
 ```
-spack mirror create -d mirror-mmm -D mmm+mpi+suite-sparse zlib ca-certificates-mozilla zlib-ng util-macros pkgconf findutils libpciaccess libedit libxcrypt bison libevent numactl
+spack mirror create -d mirror-mfem-mgis -D mfem-mgis+mpi+suite-sparse zlib ca-certificates-mozilla zlib-ng util-macros pkgconf findutils libpciaccess libedit libxcrypt bison libevent numactl
 ```
 
 ## Copy Data to Topaze
@@ -62,7 +62,7 @@ Create an archive for these files:
 
 ```
 cd $MY_DIR
-tar cvf archive.tar.gz mfem-mgis/ mfem-mgis-examples/ mirror-mmm/ spack/ my_bootstrap/
+tar cvf archive.tar.gz mfem-mgis/ mfem-mgis-examples/ mirror-mfem-mgis/ spack/ my_bootstrap/
 scp archive.tar.gz $MY_LOG@topaze.ccc.cea.fr:$MY_DEST/
 ```
 
@@ -118,7 +118,7 @@ export OMPI_FC='gfortran'
 
 ```
 spack repo add $PWD/mfem-mgis/spack_repo/
-spack mirror add MMM $PWD/mirror-mmm/
+spack mirror add MMM $PWD/mirror-mfem-mgis/
 ```
 
 Run installation:
@@ -130,7 +130,7 @@ spack external find hwloc
 spack external find cmake
 spack external find openssh
 spack external find openmpi
-spack install mmm+mpi+suite-sparse%gcc@11.1.0
+spack install mfem-mgis+mpi+suite-sparse%gcc@11.1.0
 ```
 
 ### Install MFEM-MGIS-example on Topaze
@@ -140,8 +140,8 @@ Follow these steps to install mfem-mgis-example on Topaze:
 ```
 cd mfem-mgis-example
 mkdir build && cd build
-spack load mmm
-export MFEMMGIS_DIR=`spack location -i mmm`/share/mfem-mgis/cmake/
+spack load mfem-mgis
+export MFEMMGIS_DIR=`spack location -i mfem-mgis`/share/mfem-mgis/cmake/
 cmake ..
 make -j 10
 ctest
