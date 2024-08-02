@@ -23,14 +23,14 @@ spack repo add $PWD/spack-repo-mfem-mgis
 Secondly, install mfem-mgis
 
 ```
-spack install mfem-mgis+mpi+suite-sparse
+spack install mfem-mgis
 ```
 
 Thirdly, load mfem-mgis
 
 ```
-spack load mmm
-export MFEMMGIS_DIR=`spack location -i mmm`/share/mfem-mgis/cmake/
+spack load mfem-mgis
+export MFEMMGIS_DIR=`spack location -i mfem-mgis`/share/mfem-mgis/cmake/
 ```
 
 Finally, build your examples:

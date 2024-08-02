@@ -41,13 +41,13 @@ Now, you will create a spack mirror and a boostrap directory.
 
 ```
 spack bootstrap mirror --binary-packages my_bootstrap
-spack mirror create -d mirror-mfem-mgis -D mfem-mgis+mpi+suite-sparse%gcc@11.1.0
+spack mirror create -d mirror-mfem-mgis -D mfem-mgis%gcc@11.1.0
 ```
 
 It's possible that you will need some packages in your mirror, you can specify them with the following command:
 
 ```
-spack mirror create -d mirror-mfem-mgis -D mfem-mgis+mpi+suite-sparse zlib ca-certificates-mozilla zlib-ng util-macros pkgconf findutils libpciaccess libedit libxcrypt bison libevent numactl
+spack mirror create -d mirror-mfem-mgis -D mfem-mgis zlib ca-certificates-mozilla zlib-ng util-macros pkgconf findutils libpciaccess libedit libxcrypt bison libevent numactl
 ```
 
 ## Copy Data to Topaze
@@ -130,7 +130,7 @@ spack external find hwloc
 spack external find cmake
 spack external find openssh
 spack external find openmpi
-spack install mfem-mgis+mpi+suite-sparse%gcc@11.1.0
+spack install mfem-mgis%gcc@11.1.0
 ```
 
 ### Install MFEM-MGIS-example on Topaze
