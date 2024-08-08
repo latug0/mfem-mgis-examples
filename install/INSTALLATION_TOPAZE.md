@@ -96,7 +96,7 @@ spack bootstrap disable --scope=site github-actions-v0.5
 spack bootstrap disable --scope=site github-actions-v0.4
 spack bootstrap disable --scope=site spack-install
 spack bootstrap root $PWD/spack/bootstrap
-spack repo add mfem-mgis/spack_repo/
+spack repo add spack-repo-mfem-mgis/
 spack bootstrap now
 spack bootstrap status
 ```
@@ -117,7 +117,8 @@ export OMPI_FC='gfortran'
 ### Install MFEM-MGIS
 
 ```
-spack repo add $PWD/mfem-mgis/spack_repo/
+spack repo add $PWD/spack-repo-mfem-mgis
+
 spack mirror add MMM $PWD/mirror-mfem-mgis/
 ```
 
