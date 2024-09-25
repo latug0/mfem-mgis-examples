@@ -65,6 +65,7 @@ struct TestParameters {
 	const char* mesh_file = "inclusion.msh";
 	const char* behaviour = "ImplicitNortonThreshold";
 	const char* library = "src/libBehaviour.so";
+  const char* petscrc_file = "petscsrc";
 	int order = 2;
 	bool parallel = true;
 	int refinement = 0;
@@ -97,6 +98,11 @@ void common_parameters(mfem::OptionsParser& args, TestParameters& p)
 	}
 	if (mfem_mgis::getMPIrank() == 0)
 		args.PrintOptions(std::cout);
+
+  std::cout << " USE_PETSc = " << mfem_mgis::usePETSc() << std::endl;
+  if (mfem_mgis::usePETSc())
+    mfem_mgis::setPETSc(petscrc_file);
+
 }
 
 	template<typename Problem>
@@ -243,7 +249,10 @@ int main(int argc, char* argv[])
 
 	// set problem
 	setup_properties(p, problem);
-	setLinearSolver(problem, p.verbosity_level);
+  if( !mfem_mgis::usePETSc())
+  {
+	  setLinearSolver(problem, p.verbosity_level);
+  }
 
 	problem.setSolverParameters({{"VerbosityLevel", 1},
 			{"RelativeTolerance", 1e-6},
