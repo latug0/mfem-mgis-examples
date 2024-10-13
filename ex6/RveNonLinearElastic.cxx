@@ -50,7 +50,7 @@ void common_parameters(mfem::OptionsParser& args, TestParameters& p)
 	args.AddOption(&p.library, "-l", "--library", "Material library.");
 	args.AddOption(&p.order, "-o", "--order", "Finite element order (polynomial degree).");
 	args.AddOption(&p.refinement, "-r", "--refinement", "refinement level of the mesh, default = 0");
-	args.AddOption(&p.post_processing, "-p", "--post-processing", "run post processing step");
+	args.AddOption(&p.post_processing, "-pp", "--post-processing", "run post processing step");
 	args.AddOption(&p.verbosity_level, "-v", "--verbosity-level", "choose the verbosity level");
 
 	args.Parse();

@@ -44,6 +44,7 @@ file(COPY
   ${PROJECT_SOURCE_DIR}/mesh
   ${PROJECT_SOURCE_DIR}/file_geo
   ${PROJECT_SOURCE_DIR}/script_merope
+  petscrc
   DESTINATION ${PROJECT_BINARY_DIR})
   
   # Use mfront to generate libBehaviour.so
@@ -66,6 +67,9 @@ target_include_directories(mox2
 add_dependencies(check mox2 generate-libBehaviour-ex7)
 
 set(test "MixedOxideFuelsTest")
-add_test(NAME ${test} COMMAND mox2 --postprocessings 0 --order 1 --mesh mesh/OneSphere.msh)
+add_test(NAME ${test} COMMAND mox2 --post-processing 0 --order 1 --mesh mesh/OneSphere.msh)
 
+if(MFEM_USE_PETSC)
+	add_test(NAME ${test}_PETSC COMMAND mox2 --post-processing 0 --order 1 --mesh mesh/OneSphere.msh --use-petsc true --petsc-configuration-file petscrc) 
+endif()
 

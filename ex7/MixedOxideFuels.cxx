@@ -65,7 +65,9 @@ struct TestParameters {
 	const char* mesh_file = "inclusion.msh";
 	const char* behaviour = "ImplicitNortonThreshold";
 	const char* library = "src/libBehaviour.so";
+  const char* petscsrc_file = "petscsrc";
 	int order = 2;
+  bool use_petsc = false;
 	bool parallel = true;
 	int refinement = 0;
 	int post_processing = 1; // default value : disabled
@@ -80,6 +82,8 @@ void common_parameters(mfem::OptionsParser& args, TestParameters& p)
 	args.AddOption(&p.refinement, "-r", "--refinement", "refinement level of the mesh, default = 0");
 	args.AddOption(&p.post_processing, "-p", "--post-processing", "run post processing step");
 	args.AddOption(&p.verbosity_level, "-v", "--verbosity-level", "choose the verbosity level");
+	args.AddOption(&p.petscsrc_file, "--use-petsc", "--use-petsc", " use petsc");
+	args.AddOption(&p.petscsrc_file, "--petsc-configuration-file", "--petsc-configuration-file", "petsc configuration file");
 
 	args.Parse();
 
@@ -93,10 +97,17 @@ void common_parameters(mfem::OptionsParser& args, TestParameters& p)
 		if (mfem_mgis::getMPIrank() == 0)
 			std::cout << "ERROR: Mesh file missing" << std::endl;
 		args.PrintUsage(std::cout);
-		mfem_mgis::abort(EXIT_FAILURE);
+		//mfem_mgis::abort(EXIT_FAILURE);
 	}
 	if (mfem_mgis::getMPIrank() == 0)
 		args.PrintOptions(std::cout);
+
+  mfem_mgis::declareDefaultOptions(args);
+
+  std::cout << " USE_PETSc = " << mfem_mgis::usePETSc() << std::endl;
+  if (mfem_mgis::usePETSc())
+    mfem_mgis::setPETSc(p.petscsrc_file);
+
 }
 
 	template<typename Problem>
@@ -243,7 +254,10 @@ int main(int argc, char* argv[])
 
 	// set problem
 	setup_properties(p, problem);
-	setLinearSolver(problem, p.verbosity_level);
+  if( !mfem_mgis::usePETSc())
+  {
+	  setLinearSolver(problem, p.verbosity_level);
+  }
 
 	problem.setSolverParameters({{"VerbosityLevel", 1},
 			{"RelativeTolerance", 1e-6},
