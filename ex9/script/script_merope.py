@@ -48,7 +48,9 @@ multiInclusions = merope.MultiInclusions_3D()
 multiInclusions.setInclusions(cylinderInclusions)
 multiInclusions.changePhase(multiInclusions.getAllIdentifiers(), [2 for i in multiInclusions.getAllIdentifiers()])
 multiInclusions.setMatrixPhase(1)
-multiInclusions.addLayer(multiInclusions.getAllIdentifiers(), 3, 0.15)
+#multiInclusions.setInclusionsPhase(1)
+
+#multiInclusions.addLayer(multiInclusions.getAllIdentifiers(), 3, 0.15)
 #multiInclusions.addLayer(multiInclusions.getAllIdentifiers(), 4, 0.15)
 
 ### voxellize it
@@ -63,10 +65,10 @@ my_printer.printVTK(grid, "Zone.vtk")
 ### mesh it
 
 meshGenerator = merope.mesh.MeshGenerator()
-meshGenerator.setMeshOrder(2)
+meshGenerator.setMeshOrder(1)
 meshGenerator.setMeshSize(0.5 * mindist)
 meshGenerator.setMultiInclusions(multiInclusions)
-meshGenerator.do_not_mesh([2])
+#meshGenerator.do_not_mesh([2])
 meshGenerator.set_nameOutput(["cylinders.vtk"])
-meshGenerator.write("mesh_cylinders.geo")
+meshGenerator.write("cermet.geo")
 

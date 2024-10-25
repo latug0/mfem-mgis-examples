@@ -41,7 +41,7 @@ struct TestParameters {
 	bool parallel = true;
 	int refinement = 0;
 	int post_processing = 1; // default value : disabled
-	int verbosity_level = 1; // default value : lower level
+	int verbosity_level = 0; // default value : lower level
 };
 
 void common_parameters(mfem::OptionsParser& args, TestParameters& p)
@@ -105,8 +105,8 @@ void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolu
 		setMaterialProperty(m.s1, "PoissonRatio", po);
 	};
 
-	set_properties(m1, 2.0e11       , 0.3);
-	set_properties(m2, 8.0e11       , 0.3);
+	set_properties(m1, 5e11       , 0.31);
+	set_properties(m2, 3e11       , 0.31);
 
 	//
 	auto set_temperature = [](auto& m) {
@@ -119,10 +119,12 @@ void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolu
 
 
 	// macroscopic strain
+  //const double eps = 0.012;
+  const double eps = 0.1;
 	std::vector<real> e(9, real{0});
-	e[0] = 1.1;
-	e[1] = 1.0;
-	e[2] = 1.0;
+	e[0] = 1.0 - 0.5 * eps;
+	e[1] = 1.0 - 0.5 * eps;
+	e[2] = 1.0 + eps;
 	problem.setMacroscopicGradientsEvolution([e](const double) { return e; });
 } 
 
@@ -198,7 +200,7 @@ int main(int argc, char* argv[])
 	setLinearSolver(problem, p.verbosity_level);
 
 	// add post processings
-	if(use_post_processing) add_post_processings(problem, "OutputFile-rve-non-linear-elastic");
+	if(use_post_processing) add_post_processings(problem, "OutputFile-cermet-elastic");
 
 	// main function here
 	run_solve(problem, 0, 1);
