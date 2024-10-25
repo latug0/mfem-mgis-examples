@@ -4,7 +4,7 @@
 
 TODO : ADD Description
 
-![Cermet simulation](/img/cermet-elasticity-test1.png)
+![Cermet simulation](img/cermet-elasticity-test1.png)
 
 
 ## From Merope To MESH
