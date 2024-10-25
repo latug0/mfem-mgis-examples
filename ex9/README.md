@@ -1,8 +1,9 @@
-# CERMET SIMULATION
+# Cermet : Under CONSTRUCTION
 
 ## Description
 
 TODO : ADD Description
+TODO : Add real mesh
 
 ![Cermet simulation](img/cermet-elasticity-test1.png)
 
