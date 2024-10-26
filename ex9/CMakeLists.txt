@@ -41,7 +41,6 @@ endif(NOT TARGET mfem-mgis::MFEMMGIS)
 # Copy needed file for execution
 file(COPY
   ${PROJECT_SOURCE_DIR}/SaintVenantKirchhoffElasticity.mfront
-  ${PROJECT_SOURCE_DIR}/mesh
   ${PROJECT_SOURCE_DIR}/geo
   ${PROJECT_SOURCE_DIR}/script
   DESTINATION ${PROJECT_BINARY_DIR})
