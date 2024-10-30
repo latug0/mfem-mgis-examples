@@ -16,7 +16,7 @@ import numpy as np
 L = [5, 5, 5]
 
 seed = 0
-mindist = 0.2
+mindist = 0.01
 
 theSpheres = sac_de_billes.throwSpheres_3D(sac_de_billes.TypeAlgo.RSA, sac_de_billes.NameShape.Tore, L, seed, [[1, 1]], [1], mindist)
 
@@ -26,16 +26,17 @@ def create_cylinder_inc(pt1, pt2, radius):
     cylinderInc = merope.microInclusion.CylinderInclusions(cylinder)
     return cylinderInc
 
-radius = 0.4
-height = np.sqrt(1-radius*radius)
+radius = 1
+height = 0.1 #np.sqrt(1-radius*radius)
 
 random.seed(seed)
 list_cylinders = []
 
+orient = [random.random() for i in range(3)]
+norm = np.sqrt(orient[0] * orient[0] + orient[1] * orient[1] + orient[2] * orient[2])
+orient = [orient[i] / norm for i in range(3)]
+
 for s in theSpheres:
-    orient = [random.random() for i in range(3)]
-    norm = np.sqrt(orient[0] * orient[0] + orient[1] * orient[1] + orient[2] * orient[2])
-    orient = [orient[i] / norm for i in range(3)]
     pt1 = [s.center[i] + 0.5 * height * orient[i] for i in range(3)]
     pt2 = [s.center[i] - 0.5 * height * orient[i] for i in range(3)]
     list_cylinders.append(create_cylinder_inc(pt1, pt2, radius))
