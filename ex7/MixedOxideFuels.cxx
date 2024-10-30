@@ -110,6 +110,59 @@ void common_parameters(mfem::OptionsParser& args, TestParameters& p)
 
 }
 
+  template<typename Implementation>
+void print_mesh_information(Implementation& impl)
+{
+
+  using mfem_mgis::Profiler::Utils::sum;
+  using mfem_mgis::Profiler::Utils::Message;
+  Message("INFO: print_mesh_information");
+
+  //getMesh
+  auto mesh = impl.getFiniteElementSpace().GetMesh();
+
+  //get the number of vertices
+  int64_t numbers_of_vertices_local = mesh->GetNV();
+  int64_t  numbers_of_vertices = sum(numbers_of_vertices_local);
+
+  //get the number of elements
+  int64_t numbers_of_elements_local = mesh->GetNE();
+  int64_t numbers_of_elements = sum(numbers_of_elements_local);
+
+  //get the element size
+  double h = mesh->GetElementSize(0);
+
+  // get n dofs
+  auto& fespace = impl.getFiniteElementSpace();
+  int64_t unknowns_local = fespace.GetTrueVSize();
+  int64_t unknowns = sum(unknowns_local);
+
+  Message("INFO: number of vertices -> ", numbers_of_vertices);
+  Message("INFO: number of elements -> ", numbers_of_elements);
+  Message("INFO: element size -> ", h);
+  Message("INFO: Number of finite element unknowns: " , unknowns);
+}
+
+long get_memory_checkpoint()
+{
+  rusage obj;
+  int who = 0;
+  [[maybe_unused]] auto test = getrusage(who, &obj);
+  assert((test = -1) && "error: getrusage has failed");
+  long res;
+  MPI_Reduce(&(obj.ru_maxrss), &(res), 1, MPI_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+
+  return res;
+};
+
+void print_memory_footprint(std::string msg)
+{
+  long mem = get_memory_checkpoint();
+  double m = double(mem) * 1e-6; // conversion kb to Gb
+  mfem_mgis::Profiler::Utils::Message(msg, " memory footprint: ", m, " GB");
+}
+
+
 	template<typename Problem>
 void add_post_processings(Problem& p, std::string msg)
 {
@@ -247,13 +300,17 @@ int main(int argc, char* argv[])
 			mfem_mgis::Parameters{{"MeshFileName", p.mesh_file},
 			{"FiniteElementFamily", "H1"},
 			{"FiniteElementOrder", p.order},
+	                {"MeshReadMode", "Scratch"},
 			{"UnknownsSize", dim},
 			{"NumberOfUniformRefinements", p.parallel ? p.refinement : 0},
 			{"Parallel", p.parallel}});
 	mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed);
-
+	print_mesh_information(problem.getImplementation<true>());
+	print_memory_footprint();
+	
 	// set problem
 	setup_properties(p, problem);
+
   if( !mfem_mgis::usePETSc())
   {
 	  setLinearSolver(problem, p.verbosity_level);
@@ -282,6 +339,7 @@ int main(int argc, char* argv[])
 	}
 
 	// print and write timetable
+        print_memory_footprint();
 	mfem_mgis::Profiler::timers::print_and_write_timers();
 	return(EXIT_SUCCESS);
 }
