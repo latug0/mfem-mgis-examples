@@ -93,7 +93,7 @@ source $PWD/spack/share/spack/setup-env.sh
 spack bootstrap reset -y
 spack bootstrap add --scope=site --trust local-binaries $PWD/my_bootstrap/metadata/binaries/
 spack bootstrap disable --scope=site github-actions-v0.5
-spack bootstrap disable --scope=site github-actions-v0.4
+spack bootstrap disable --scope=site github-actions-v0.6
 spack bootstrap disable --scope=site spack-install
 spack bootstrap root $PWD/spack/bootstrap
 spack repo add spack-repo-mfem-mgis/
