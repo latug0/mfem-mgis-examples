@@ -42,6 +42,8 @@ cmake ..
 make -j 4
 ```
 
+For an installation on a supercomputer without internet please follow the procedure described here for MFEM-MGIS installation: https://thelfer.github.io/mfem-mgis/installation_guide/installation_guide.html#installation-guide-on-topaze-ccrt-of-mfem-mgis-examples
+
 ## Test case description
 
 | Name | Description | Directory
