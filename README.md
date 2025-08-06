@@ -30,7 +30,6 @@ Thirdly, load mfem-mgis
 
 ```
 spack load mfem-mgis
-export MFEMMGIS_DIR=`spack location -i mfem-mgis`/share/mfem-mgis/cmake/
 ```
 
 Finally, build your examples:
