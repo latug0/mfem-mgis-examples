@@ -27,7 +27,7 @@ jobs:
           git clone https://github.com/rprat-pro/spack-repo-mfem-mgis.git
           spack repo add spack-repo-mfem-mgis
           spack install mfem-mgis
-      - name: Configure OperaHpc Test Cases
+      - name: Configure Test Cases
         shell: spack-sh {0}
         run: |
           spack load mfem
