@@ -1,0 +1,51 @@
+name: Spack And Test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for dockerenv file
+        run: (ls /.dockerenv && echo Found dockerenv) || (echo No dockerenv)
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Spack
+        uses: spack/setup-spack@v2
+        with:
+          ref: v1.1.0     # Spack version (examples: develop, releases/v0.21)
+          buildcache: true  # Configure oci://ghcr.io/spack/github-actions-buildcache
+          color: true       # Force color output (SPACK_COLOR=always)
+          path: spack       # Where to clone Spack
+      - name: Install MFEM MGIS
+        run: |
+          git clone https://github.com/rprat-pro/spack-repo-mfem-mgis.git
+          spack repo add spack-repo-mfem-mgis
+          spack install mfem-mgis
+      - name: Configure Test Cases
+        shell: spack-sh {0}
+        run: |
+          spack load mfem
+          spack load mfem-mgis
+          cmake -B ${{github.workspace}}/release -DCMAKE_PREFIX_PATH=`spack location -i tfel`/share/tfel/cmake
+      - name: Build Test Cases
+        shell: spack-sh {0}
+        run: |
+          spack load tfel
+          spack load mfem
+          spack load mfem-mgis
+          cmake --build ${{github.workspace}}/release --config Release 
+      - name: Run examples
+        working-directory: ${{github.workspace}}/release
+        shell: spack-sh {0}
+        run: |
+          spack load tfel
+          spack load mfem        
+          spack load mfem-mgis
+          make -j
+          ctest
