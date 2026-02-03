@@ -24,6 +24,8 @@ else(CMAKE_CONFIGURATION_TYPES)
    endif(NOT TARGET check)
 endif(CMAKE_CONFIGURATION_TYPES)
 
+find_package(OpenMP)
+
 add_subdirectory(config)
 add_subdirectory(ex1)
 add_subdirectory(ex2)
