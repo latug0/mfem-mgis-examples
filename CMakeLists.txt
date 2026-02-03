@@ -1,11 +1,10 @@
-
 cmake_minimum_required(VERSION 3.13)
 project(Mfem-mgis-examples)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules)
+find_package(MFEMMGIS REQUIRED)
 
 include(CTest)
 # testing

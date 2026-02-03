@@ -4,16 +4,6 @@ project(Config)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Require MFEM
-if (NOT TARGET mfem)
-  find_package(MFEM REQUIRED)
-endif(NOT TARGET mfem)
-
-# Require MGIS
-if (NOT TARGET mgis::MFrontGenericInterface)
-  find_package(MFrontGenericInterface REQUIRED)
-endif(NOT TARGET mgis::MFrontGenericInterface)
-
 # Require MFEM-MGIS
 if (NOT TARGET mfem-mgis::MFEMMGIS)
   find_package(MFEMMGIS REQUIRED)
