@@ -48,4 +48,4 @@ jobs:
           spack load mfem        
           spack load mfem-mgis
           make -j
-          ctest --rerun-failed --output-on-failure
+          ctest -V --rerun-failed --output-on-failure
