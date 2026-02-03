@@ -37,7 +37,7 @@ Finally, build your examples:
 ```
 cd mfem-mgis-examples
 mkdir build && cd build
-cmake ..
+cmake .. -DCMAKE_PREFIX_PATH=`spack location -i tfel`/share/tfel/cmake
 make -j 4
 ```
 
