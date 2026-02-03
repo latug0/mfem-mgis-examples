@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 project(Ssna303Example)
 
-
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -21,16 +20,6 @@ else(CMAKE_CONFIGURATION_TYPES)
       ${CMAKE_CTEST_COMMAND} -T test )
    endif(NOT TARGET check)
 endif(CMAKE_CONFIGURATION_TYPES)
-
-# Require MFEM
-if (NOT TARGET mfem)
-  find_package(MFEM REQUIRED)
-endif(NOT TARGET mfem)
-
-# Require MGIS
-if (NOT TARGET mgis::MFrontGenericInterface)
-  find_package(MFrontGenericInterface REQUIRED)
-endif(NOT TARGET mgis::MFrontGenericInterface)
 
 # Require MFEM-MGIS
 if (NOT TARGET mfem-mgis::MFEMMGIS)
