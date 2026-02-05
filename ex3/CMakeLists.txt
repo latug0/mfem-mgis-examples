@@ -59,7 +59,7 @@ if(MFEM_USE_MPI)
   # Define a test that will be called during the "make check"
   function(add_inclusions_ex)
     set(test "InclusionsEx")
-    add_test(NAME ${test} COMMAND mpirun -n 4 InclusionsEx)
+    add_test(NAME ${test} COMMAND InclusionsEx)
   endfunction(add_inclusions_ex)
 
   add_inclusions_ex()
