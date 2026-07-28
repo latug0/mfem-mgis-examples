@@ -1,0 +1,31 @@
+@DSL DefaultModel;
+@Material U3SI2;
+@Model _SolidSwelling;
+@Author RIGAL Julien;
+@Date 05/2026;
+
+@ExternalStateVariable real Pow;
+Pow.setGlossaryName("PowerDensity");
+
+@StateVariable strain S;
+S.setGlossaryName("SolidSwelling");
+
+// It is more convenient to keep a single state variable per integration point.
+// Otherwise, the swelling field must be processed before being passed to
+// m_mc as an external state variable.
+// @StateVariable real fd;
+// fd.setGlossaryName("FissionDensity");
+
+@Parameter real fe = 200; // Average energy released per fission (MeV)
+fe.setEntryName("FissionEnergy");
+
+// The swelling coefficient is not considered here.
+// A dedicated SwellingCoefficient file could be implemented if needed.
+// @Parameter strain k_sw = 0.01;
+// k_sw.setEntryName("SwellingCoefficient");
+
+@Integrator {
+  S += 6.2e-29 * (((2 * Pow + dPow) / 2) / (fe * 1.60218e-13)) * dt;
+  // ((2 * Pow + dPow) / 2): average power density over the time step
+  // assuming a linear variation during the increment.
+}  // end of compute

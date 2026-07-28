@@ -1,0 +1,21 @@
+@Parser MaterialLaw;
+@Material ALFENI;
+@Law PoissonRatio;
+@Author FAUQUE Jules;
+@Date 06/25;
+
+// output of law
+@Output nu;
+nu.setGlossaryName("PoissonRatio");
+
+// input of law
+
+// variables bounds
+
+// constants
+
+// parameters
+
+@Function {
+  nu = 0.35;
+}  // end of Function

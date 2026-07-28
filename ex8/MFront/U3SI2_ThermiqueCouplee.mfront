@@ -1,0 +1,60 @@
+@DSL DefaultGenericBehaviour;
+@Material U3SI2;
+@Behaviour _ThermiqueCouplee;
+@Author RIGAL Julien;
+@Date 04/26;
+
+@Gradient TemperatureGradient gT;
+gT.setGlossaryName("TemperatureGradient");
+
+@Flux HeatFlux j;
+j.setGlossaryName("HeatFlux");
+
+@ExternalStateVariable DeformationGradientTensor F;
+F.setGlossaryName("DeformationGradient");
+
+@AdditionalTangentOperatorBlock dj_ddT;
+
+@Parameter A = 4.996;
+@Parameter B = 0.0118;
+
+@LocalVariable tmatrix<N,N,real> Keff;
+
+@PhysicalBounds T in [0:*[;
+@Bounds T in [293.15:673.15];
+
+
+@ProvidesTangentOperator;
+@Integrator{
+
+  const auto as_matrix = [](const Stensor& s){
+    constexpr auto icste = Cste<real>::isqrt2;
+    if constexpr (N==1){
+      return tmatrix<1u,1u, real>{s[0]};
+    } else if constexpr (N==2){
+      return tmatrix<2u,2u, real>{s[0], s[3]*icste,
+                                  s[3]*icste, s[1]};
+    } else {
+      return tmatrix<3u,3u, real>{
+        s[0], s[3]*icste, s[4]*icste,
+        s[3]*icste, s[1], s[5]*icste,
+        s[4]*icste, s[5]*icste, s[2]};
+    }
+  };
+
+  const auto C  = computeRightCauchyGreenTensor(F + dF);
+  const auto iC = invert(C);
+  const auto J  = - det(F + dF);
+
+  const auto k0 = A + B * (T + dT - 273.15);
+
+  Keff = k0 * J * as_matrix(iC);
+
+  dj_ddgT = -Keff;
+  j = -Keff * (gT + dgT);
+
+  dj_ddT = - (B * J * as_matrix(iC)) * (gT + dgT);
+
+  static_cast<void>(computeTangentOperator_);
+  static_cast<void>(smt);
+}

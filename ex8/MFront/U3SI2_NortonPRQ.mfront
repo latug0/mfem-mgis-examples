@@ -1,0 +1,38 @@
+@Parser IsotropicMisesCreep;
+@Material U3SI2;
+@Behaviour _NortonPRQ;
+@Author Germain Allan;
+@Date 28/11/2025;
+
+@StrainMeasure Hencky;
+
+@ElasticMaterialProperties {"U3SI2_YoungModulus.mfront", "U3SI2_PoissonRatio.mfront"};
+
+@Parameter A = 500E-37; // Creep coefficient: 500e-25 × 1e6 (conversion from MPa to Pa)
+@Parameter Ef = 3.204e-11; // Energy released per fission (J/fission)
+
+@ExternalStateVariable real Pow;
+Pow.setGlossaryName("PowerDensity");
+
+@ExternalStateVariable real sw;
+sw.setGlossaryName("Swelling");
+
+@Swelling<Volume> sw;
+
+// Export swelling through a dummy plastic strain variable for post-processing
+@AuxiliaryStateVariable strain SwellingExport;
+SwellingExport.setEntryName("SwellingExport");
+@AuxiliaryStateVariable real p_dummy;
+p_dummy.setGlossaryName("EquivalentPlasticStrain");
+
+@FlowRule{
+  const auto fr = Pow / Ef;
+  const auto tmp = A*fr;
+  f       = tmp*seq;
+  df_dseq = tmp;
+}
+
+@UpdateAuxiliaryStateVariables{
+  SwellingExport = sw;
+  p_dummy = 0.0;
+}

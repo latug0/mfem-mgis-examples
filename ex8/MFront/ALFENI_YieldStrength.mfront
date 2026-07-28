@@ -1,0 +1,28 @@
+@Parser MaterialLaw;
+@Material ALFENI;
+@Law YieldStrength;
+@Author RIGAL Julien;
+@Date 06/25;
+
+@Output Sig0;
+Sig0.setGlossaryName("YieldStrength");
+
+@Input T;
+T.setGlossaryName("Temperature");
+
+@Function {
+  // Cold yield strength
+  const real Sig0_ref = 200e6; 
+  
+  if (T < 573.15) {
+    Sig0 = Sig0_ref;
+  } else {
+    // In this region, the material exhibits linear softening.
+    // This assumption should be validated by material characterization.
+    Sig0 = Sig0_ref - 200e3 * (T - 573.15); 
+  }
+  
+  if (Sig0 < 10e6) {
+    Sig0 = 10e6; // Minimum value
+  }
+}

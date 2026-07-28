@@ -1,0 +1,108 @@
+@DSL Default;
+@Behaviour _IsotropicLinearHardeningPlasticity;
+@Material ALFENI;
+@Author Thomas Helfer;
+@Date 04/06/2026;
+@Description {
+    Plasticité Von Mises (Analytique) avec Hencky et Thermique
+}
+
+@Includes {
+    #include "ALFENI_HardeningModulus.hxx" 
+}
+
+@StrainMeasure Hencky;
+
+@MaterialLaw{"ALFENI_YoungModulus.mfront"};
+@MaterialLaw{"ALFENI_PoissonRatio.mfront"};
+@MaterialLaw{"ALFENI_YieldStrength.mfront"};
+
+@ComputeThermalExpansion{
+  thermal_expansion : 15e-6,
+  reference_temperature : 293.15
+};
+
+@StateVariable StrainStensor eel;
+eel.setGlossaryName("ElasticStrain");
+
+@StateVariable strain p;
+p.setGlossaryName("EquivalentPlasticStrain");
+
+@LocalVariable stress lambda, mu, young, Sig0, H;
+
+// Mtest profiling
+@AuxiliaryStateVariable real T_echo; 
+T_echo.setEntryName("Temperature_Output");
+
+@AuxiliaryStateVariable stress Sig0_echo;
+Sig0_echo.setEntryName("Yield_Output");
+
+@AuxiliaryStateVariable stress H_echo;
+H_echo.setEntryName("Hardening_Output");
+
+@AuxiliaryStateVariable real SwellingExport;
+SwellingExport.setEntryName("SwellingExport");
+
+@InitLocalVariables{
+  young = ALFENI_YoungModulus();
+  real nu = ALFENI_PoissonRatio();
+  Sig0 = ALFENI_YieldStrength(T+dT);
+  H = computeHardeningModulus(T+dT);
+  lambda = computeLambda(young, nu);
+  mu = computeMu(young, nu);
+}
+
+@PredictionOperator {
+  static_cast<void>(smt);
+  Dt = lambda * Stensor4::IxI() + 2 * mu * Stensor4::Id();
+}
+
+@ProvidesSymmetricTangentOperator;
+
+@Integrator {
+  eel += deto; 
+  const auto se = 2 * mu * deviator(eel);
+  const auto seq_e = sigmaeq(se);
+  
+  // Load criterion evaluation
+  const auto b = seq_e - Sig0 - H * p > stress{0};
+  
+  if (b) {
+    // Plasticity
+    const auto iseq_e = 1 / seq_e;
+    const auto n = eval(3 * se / (2 * seq_e));
+    const auto cste = 1 / (H + 3 * mu);
+    
+    const auto dp_val = (seq_e - Sig0 - H * p) * cste; 
+    
+    // Update
+    p += dp_val;
+    eel -= dp_val * n;
+    
+    // Exact tangent matrix (CTO)
+    if (computeTangentOperator_) {
+      if (smt == CONSISTENTTANGENTOPERATOR) {
+        Dt = (lambda * Stensor4::IxI() + 2 * mu * Stensor4::Id() -
+              4 * mu * mu *
+                  (dp_val * iseq_e * (Stensor4::M() - (n ^ n)) + cste * (n ^ n)));
+      } else {
+        Dt = lambda * Stensor4::IxI() + 2 * mu * Stensor4::Id();
+      }
+    }
+  } else {
+    // Elasticity
+    if (computeTangentOperator_) {
+      Dt = lambda * Stensor4::IxI() + 2 * mu * Stensor4::Id();
+    }
+  }
+  
+  sig = lambda * trace(eel) * Stensor::Id() + 2 * mu * eel;
+  
+  T_echo = T + dT;
+  Sig0_echo = Sig0;
+  H_echo = H;
+}
+
+@UpdateAuxiliaryStateVariables {
+  SwellingExport = 0.0;
+}

@@ -1,0 +1,26 @@
+@Parser MaterialLaw;
+@Material U3SI2;
+@Law YoungModulus;
+@Author FAUQUE Jules;
+@Date 06/25;
+
+@Description {
+  Module de Young venant de "AIEA TECDOC SERIES Analysis of Options and Experimental Examination of Fuels for Water Cooled Reactors with Increased Accident Tolerance (ACTOF) - Final Report of a Coordinated Research Project"
+  voir https://www-pub.iaea.org/MTCD/Publications/PDF/TE-1921web.pdf
+}
+
+// output of law
+@Output E;
+E.setGlossaryName("YoungModulus");
+
+// input of law
+
+// variables bounds
+
+// constants
+
+// parameters
+
+@Function {
+  E = 96.e9;
+}  // end of Function

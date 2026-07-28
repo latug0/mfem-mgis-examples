@@ -1,0 +1,21 @@
+@Parser MaterialLaw;
+@Material ALFENI;
+@Law YoungModulus;
+@Author FAUQUE Jules;
+@Date 06/25;
+
+// output of law
+@Output E;
+E.setGlossaryName("YoungModulus");
+
+// input of law
+
+// variables bounds
+
+// constants
+
+// parameters
+
+@Function {
+  E = 75.e9;
+}  // end of Function
