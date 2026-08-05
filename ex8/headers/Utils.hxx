@@ -71,7 +71,8 @@ template<typename Problem>
 inline void add_post_processings(Problem& p, std::string msg) {
   p.addPostProcessing("ParaviewExportResults", {
       {"OutputDirectory", "Resultats"},
-      {"OutputFileName", msg}
+      {"OutputFileName", msg},
+      {"Output", msg}
   });
 }
 

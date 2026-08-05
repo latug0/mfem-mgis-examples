@@ -19,11 +19,9 @@ sw.setGlossaryName("Swelling");
 
 @Swelling<Volume> sw;
 
-// Export swelling through a dummy plastic strain variable for post-processing
+// Export swelling for post-processing
 @AuxiliaryStateVariable strain SwellingExport;
 SwellingExport.setEntryName("SwellingExport");
-@AuxiliaryStateVariable real p_dummy;
-p_dummy.setGlossaryName("EquivalentPlasticStrain");
 
 @FlowRule{
   const auto fr = Pow / Ef;
@@ -33,6 +31,5 @@ p_dummy.setGlossaryName("EquivalentPlasticStrain");
 }
 
 @UpdateAuxiliaryStateVariables{
-  SwellingExport = sw;
-  p_dummy = 0.0;
+  SwellingExport = sw + dsw;
 }

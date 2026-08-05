@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Patch
 
-df = pd.read_csv("aggregation_SvPc_mech.csv")
+df = pd.read_csv("aggregation_SvPc_mech_5e4.csv")
 
 df["preconditioner"] = df["preconditioner"].fillna("Aucun")
 
@@ -58,9 +58,9 @@ if not df_meca.empty:
     ax.legend(handles=legend_elements, title="Preconditionner", fontsize=10, title_fontsize=11, loc="upper right")
     
     plt.tight_layout()
-    plt.savefig("Profiling_SvPc_Mechanics.png", dpi=300, bbox_inches="tight")
+    plt.savefig("Profiling_SvPc_Mechanics_5e4.png", dpi=300, bbox_inches="tight")
     plt.close()
     
-    print("Graph has been generated : Profiling_SvPc_Mechanics.png")
+    print("Graph has been generated : Profiling_SvPc_Mechanics_5e4.png")
 else:
     print("No valid 'Mechanics' data was found in the CSV.")

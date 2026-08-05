@@ -161,8 +161,8 @@ int main(int argc, char *argv[]) {
   setLinearSolver(ctx, mechanics, "mechanics", p, p.verbosity_level);
 
   if (p.post_processing == 1){
-    add_post_processings(mechanics, "Results/Mécanique");
-    add_post_processings(heat_transfer, "Results/Thermique");
+    add_post_processings(mechanics, "Results/Mechanics");
+    add_post_processings(heat_transfer, "Results/Thermal");
     
     // // Exportation du swelling + déformation plastique
     // mfem_mgis::Parameters params_plast = {
@@ -171,11 +171,11 @@ int main(int argc, char *argv[]) {
     // };
     // mechanics.addPostProcessing("ParaviewExportIntegrationPointResultsAtNodes", params_plast);
 
-    // mfem_mgis::Parameters params_swell = {
-    //     {"Results", "SwellingExport"},
-    //     {"OutputFileName", "Resultats/MFront_Gonflement"}
-    // };
-    // mechanics.addPostProcessing("ParaviewExportIntegrationPointResultsAtNodes", params_swell);
+    mfem_mgis::Parameters params_swell = {
+        {"Results", "SwellingExport"},
+        {"OutputFileName", "Results/Swelling"}
+    };
+    mechanics.addPostProcessing("ParaviewExportIntegrationPointResultsAtNodes", params_swell);
   }
   
   auto ps = construct<PhysicalSystem>(ctx, mesh) | or_die;
@@ -186,7 +186,7 @@ int main(int argc, char *argv[]) {
   c->setMaximumNumberOfIterations(ctx, 10);
   c->addConvergenceCriterion(ctx, criterion);
 
-  auto updater_model = std::make_shared<FieldUpdaterModel>(mesh, setup.fields[0].Pow_s1_sw, power_history);
+  auto updater_model = std::make_shared<FieldUpdaterModel>(mesh, setup.fields[0].Pow_s0_sw, setup.fields[0].Pow_s1_sw, power_history);
 
   c->addModel(ctx, heat_transfer_model) | or_die;
   c->addModel(ctx, updater_model) | or_die;
@@ -209,6 +209,45 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
   print_memory_footprint("After Solving:");
+
+  auto m_comb_opt_debug = mechanics.getMaterial(ctx, "comb", 0);
+  if (!mgis::isInvalid(m_comb_opt_debug)) {
+      auto swell_opt_debug = mfem_mgis::getInternalStateVariable(ctx, *m_comb_opt_debug, "SwellingExport");
+      if (swell_opt_debug) {
+          const auto& vals = swell_opt_debug->getValues();
+          
+          double local_min = std::numeric_limits<double>::max();
+          double local_max = -std::numeric_limits<double>::max();
+          
+          // Recherche du min/max local sur le processeur
+          for (int i = 0; i < vals.size(); ++i) {
+              if (vals[i] < local_min) local_min = vals[i];
+              if (vals[i] > local_max) local_max = vals[i];
+          }
+
+          double global_min = local_min;
+          double global_max = local_max;
+
+          #ifdef MFEM_USE_MPI
+          if (p.parallel) {
+              MPI_Comm comm = mechanics_fed->getFiniteElementSpace<true>().GetComm();
+              MPI_Allreduce(&local_min, &global_min, 1, MPI_DOUBLE, MPI_MIN, comm);
+              MPI_Allreduce(&local_max, &global_max, 1, MPI_DOUBLE, MPI_MAX, comm);
+          }
+          #endif
+
+          if (mfem_mgis::getMPIrank() == 0) {
+              if (global_min == std::numeric_limits<double>::max()) {
+                  global_min = 0.0;
+                  global_max = 0.0;
+              }
+              std::cout << " DEBUG MFRONT : SwellingExport (Points d'Intégration)" << std::endl;
+              std::cout << "   -> MIN global : " << global_min << std::endl;
+              std::cout << "   -> MAX global : " << global_max << std::endl;
+          }
+      }
+  }
+
   mfem_mgis::Profiler::OutputManager::printTimeTable(/*ctx*/);
   return EXIT_SUCCESS;
 }

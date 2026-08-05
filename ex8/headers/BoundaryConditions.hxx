@@ -24,16 +24,18 @@ void apply_boundary_conditions(
 // constitutive model responsible for swelling.
 class FieldUpdaterModel : public mfem_mgis::ModelBase {
 private:
+    std::shared_ptr<std::vector<mgis::real>> Pow_s0;
     std::shared_ptr<std::vector<mgis::real>> Pow_s1;
     std::function<double(double)> power_history;
     std::string name;
 
 public:
     FieldUpdaterModel(const mfem_mgis::MeshDiscretization& mesh,
-                      std::shared_ptr<std::vector<mgis::real>> pow_array,
+                      std::shared_ptr<std::vector<mgis::real>> pow0,
+                      std::shared_ptr<std::vector<mgis::real>> pow1,
                       std::function<double(double)> history_func)
         : mfem_mgis::ModelBase(mesh), 
-          Pow_s1(pow_array), 
+          Pow_s0(pow0), Pow_s1(pow1), 
           power_history(history_func), 
           name("FieldUpdater")
     {}
@@ -45,14 +47,15 @@ public:
     std::pair<mfem_mgis::ExitStatus, std::optional<mfem_mgis::ComputeNextStateOutput>>
     computeNextState(mfem_mgis::Context& ctx, const mfem_mgis::TimeStep& ts) noexcept override {
         
-        double current_time = ts.end;
-
-        double current_power = power_history(current_time);
+        double p0 = power_history(ts.begin);
+        double p1 = power_history(ts.end);
         
-        for (auto& val : *Pow_s1) {
-            val = current_power;
-        }
+        for (auto& val : *Pow_s0) val = p0;
+        for (auto& val : *Pow_s1) val = p1;
 
         return {mfem_mgis::ExitStatus::success, mfem_mgis::ComputeNextStateOutput{}};
     }
+
+    [[nodiscard]] bool update(mfem_mgis::Context&) noexcept override { return true; }
+    [[nodiscard]] bool revert(mfem_mgis::Context&) noexcept override { return true; }
 };
