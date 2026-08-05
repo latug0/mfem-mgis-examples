@@ -67,6 +67,8 @@ void common_parameters(mfem::OptionsParser &args, TestParameters &p) {
                  "run post processing step");
   args.AddOption(&p.verbosity_level, "-v", "--verbosity-level",
                  "choose the verbosity level");
+  args.AddOption(&p.debug, "-d", "--debug", "-nd", "--nodebug",
+                 "Enable physics statistics debug output.");
 
   args.Parse();
 
@@ -246,6 +248,10 @@ int main(int argc, char *argv[]) {
               std::cout << "   -> MAX global : " << global_max << std::endl;
           }
       }
+  }
+
+  if (p.debug) {
+      debug_print_physics_stats(ctx, heat_transfer, mechanics, p.parallel);
   }
 
   mfem_mgis::Profiler::OutputManager::printTimeTable(/*ctx*/);

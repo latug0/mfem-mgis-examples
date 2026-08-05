@@ -21,6 +21,7 @@ struct TestParameters {
   const char *precond_meca = "HypreBoomerAMG";
   int order = 1;
   bool parallel = true;
+  bool debug = false;
   int refinement = 0;
   int post_processing = 1; // default value : disabled
   int verbosity_level = 0; // default value : lower level
