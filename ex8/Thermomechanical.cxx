@@ -50,6 +50,7 @@
 #include "headers/BoundaryConditions.hxx"
 #include "headers/Setup.hxx"
 #include "headers/Utils.hxx"
+#include "headers/Debug.hxx"
 
 void common_parameters(mfem::OptionsParser &args, TestParameters &p) {
   args.AddOption(&p.mesh_file, "-m", "--mesh", "Mesh file to use.");
@@ -173,10 +174,13 @@ int main(int argc, char *argv[]) {
     // };
     // mechanics.addPostProcessing("ParaviewExportIntegrationPointResultsAtNodes", params_plast);
 
-    mfem_mgis::Parameters params_swell = {
-        {"Results", "SwellingExport"},
-        {"OutputFileName", "Results/Swelling"}
-    };
+    mfem_mgis::Parameters params_swell;
+    params_swell.insert("Results", "SwellingExport");
+    params_swell.insert("OutputFileName", "Results/Swelling");
+    
+    std::vector<mfem_mgis::Parameter> mat_filter = {"comb"};
+    params_swell.insert("Materials", mat_filter);
+
     mechanics.addPostProcessing("ParaviewExportIntegrationPointResultsAtNodes", params_swell);
   }
   

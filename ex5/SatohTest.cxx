@@ -56,6 +56,8 @@ static void dumpPartialQuadratureFunction(
  * analytical profile.
  */
 int main(int argc, char** argv) {
+
+  auto ctx = mgis::Context{};
   //
   static constexpr const auto parallel = false;
   // options treatment
@@ -118,7 +120,7 @@ int main(int argc, char** argv) {
        {"Results", results}});
   // solving the problem on 1 time step
   auto r = problem.solve(0, 1);
-  problem.executePostProcessings(0, 1);
+  problem.executePostProcessings(ctx, 0, 1);
   //
   std::ofstream output("HydrostaticPressure.txt");
   const auto pr = getInternalStateVariable(

@@ -1,0 +1,30 @@
+@DSL DefaultGenericBehaviour;
+@Behaviour StationaryLinearHeatTransfer;
+@Author Thomas Helfer;
+@Date 15/02/2019;
+
+@Gradient TemperatureGradient gT;
+gT.setGlossaryName("TemperatureGradient");
+
+@Flux HeatFlux j;
+j.setGlossaryName("HeatFlux");
+
+@AdditionalTangentOperatorBlock dj_ddT;
+
+@PredictionOperator {
+  static_cast<void>(smt);    // removing compiler warning
+  const auto k = 3;
+  dj_ddgT = -k * tmatrix<N, N, real>::Id();
+  dj_ddT = TVector::zero();
+}
+
+@Integrator{
+  const auto k = 10;
+  j = -k * (gT + dgT);
+} // end of @Integrator
+
+@TangentOperator {
+  static_cast<void>(smt); // removing compiler warning 
+  dj_ddgT = -10 * tmatrix<N, N, real>::Id();
+  dj_ddT = TVector::zero();
+} // end of @TangentOperator 

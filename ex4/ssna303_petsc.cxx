@@ -33,6 +33,7 @@
 
 int main(int argc, char** argv) {
 
+  auto ctx = mgis::Context{};
   mfem_mgis::initialize(argc, argv);
   constexpr const auto dim = mfem_mgis::size_type{3};
   const char* mesh_file = "ssna303_3d.msh";
@@ -173,7 +174,7 @@ int main(int argc, char** argv) {
         }
       }
     }
-    problem.executePostProcessings(t, dt);
+    problem.executePostProcessings(ctx, t, dt);
     t += dt;
     ++iteration;
     std::cout << '\n';

@@ -81,18 +81,18 @@ void add_post_processings(Problem& p, std::string msg)
 } // end timer add_postprocessing_and_outputs
 
 	template<typename Problem>
-void execute_post_processings(Problem& p, double start, double end)
+void execute_post_processings(Context& ctx, Problem& p, double start, double end)
 {
-	CatchTimeSection("common::post_processing_step");
-	p.executePostProcessings(start, end);
+	CatchTimeSection(ctx, "common::post_processing_step");
+	p.executePostProcessings(ctx, start, end);
 }
 
-void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolutionProblem& problem)
+void setup_properties(Context& ctx, const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolutionProblem& problem)
 {
 	using namespace mgis::behaviour;
 	using real=mfem_mgis::real;
 
-	CatchTimeSection("set_mgis_stuff");
+	CatchTimeSection(ctx, "set_mgis_stuff");
 	problem.addBehaviourIntegrator("Mechanics", 1, p.library, p.behaviour);
 	problem.addBehaviourIntegrator("Mechanics", 2, p.library, p.behaviour);
 	// materials
@@ -128,12 +128,12 @@ void setup_properties(const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolu
 
 
 	template<typename Problem>		
-static void setLinearSolver(Problem& p,
+static void setLinearSolver(Context& ctx, Problem& p,
 		const int verbosity = 0,
 		const mfem_mgis::real Tol = 1e-12
 		)
 {
-	CatchTimeSection("set_linear_solver");
+	CatchTimeSection(ctx, "set_linear_solver");
 	// pilote
 	constexpr int defaultMaxNumOfIt	 	= 5000; 		// MaximumNumberOfIterations
 	constexpr int adjustMaxNumOfIt 		= 500000; 		// MaximumNumberOfIterations
@@ -152,26 +152,26 @@ static void setLinearSolver(Problem& p,
 }
 
 	template<typename Problem>
-void run_solve(Problem& p, double start, double end)
+void run_solve(Context& ctx, Problem& p, double start, double end)
 {
-	CatchTimeSection("Solve");
+	CatchTimeSection(ctx, "Solve");
 	// solving the problem
 	auto statistics = p.solve(0, 1);
 
 	// check status
 	if (statistics.status) {
-		mfem_mgis::Profiler::Utils::Message("INFO: FAILED");
-    std::exit(EXIT_FAILURE);
+		ctx.log() << "INFO: FAILED\n";
+    	ctx.abort();
   }
 }
 
 int main(int argc, char* argv[]) 
 {
+
+	auto ctx = mgis::Context{};
+	ctx.enableProfiling(true);
 	// mpi initialization here 
 	mfem_mgis::initialize(argc, argv);
-
-	// init timers
-	mfem_mgis::Profiler::timers::init_timers();
 
 	// get parameters
 	TestParameters p;
@@ -196,17 +196,17 @@ int main(int argc, char* argv[])
 
 	// set problem
 	setup_properties(p, problem);
-	setLinearSolver(problem, p.verbosity_level);
+	setLinearSolver(ctx, problem, p.verbosity_level);
 
 	// add post processings
 	if(use_post_processing) add_post_processings(problem, "OutputFile-rve-non-linear-elastic");
 
 	// main function here
-	run_solve(problem, 0, 1);
+	run_solve(ctx, problem, 0, 1);
 
-	if(use_post_processing)	execute_post_processings(problem, 0,1);
+	if(use_post_processing)	execute_post_processings(ctx, problem, 0,1);
 
 	// print and write timetable
-	mfem_mgis::Profiler::timers::print_and_write_timers();
+	mfem_mgis::Profiler::OutputManager::printTimeTable(ctx);
 	return(EXIT_SUCCESS);
 }

@@ -246,6 +246,7 @@ void translateMesh(mfem_mgis::FiniteElementDiscretization &fed, std::vector<doub
 }
 
 int executeMFEMMGISTest(const TestParameters& p) {
+  auto ctx = mgis::Context{};
   constexpr const auto dim = mfem_mgis::size_type{3};
   const auto params = mfem_mgis::Parameters {{"MeshFileName", p.mesh_file},
                             {"FiniteElementFamily", "H1"},
@@ -359,7 +360,7 @@ int executeMFEMMGISTest(const TestParameters& p) {
     if (!problem.solve(0, 1)) {
       mfem_mgis::abort(EXIT_FAILURE);
     }
-    problem.executePostProcessings(0, 1);
+    problem.executePostProcessings(ctx, 0, 1);
 #define POSTCHECK
 #ifdef POSTCHECK
     if (!checkSolution(problem, p.tcase,

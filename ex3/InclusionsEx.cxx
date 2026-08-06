@@ -262,7 +262,7 @@ int executeMFEMMGISTest(const TestParameters& p) {
     if (!problem.solve(0, 1)) {
       mfem_mgis::abort(EXIT_FAILURE);
     }
-    problem.executePostProcessings(0, 1);
+    problem.executePostProcessings(ctx, 0, 1);
     //
     if (!checkSolution(problem, p.tcase)) {
       return(EXIT_FAILURE);
