@@ -192,11 +192,11 @@ TestParameters parseCommandLineOptions(int& argc, char* argv[]) {
   return p;
 }
 
-int executeMFEMMGISTest(const TestParameters& p) {
+int executeMFEMMGISTest(mgis::Context& ctx, const TestParameters& p) {
   constexpr const auto dim = mfem_mgis::size_type{3};
   // creating the finite element workspace
 
-  auto fed = std::make_shared<mfem_mgis::FiniteElementDiscretization>(
+  auto fed = std::make_shared<mfem_mgis::FiniteElementDiscretization>(ctx,
       mfem_mgis::Parameters{{"MeshFileName", p.mesh_file},
                             {"FiniteElementFamily", "H1"},
                             {"FiniteElementOrder", p.order},
@@ -211,7 +211,7 @@ int executeMFEMMGISTest(const TestParameters& p) {
 
     std::vector<mfem_mgis::real> corner1({0.,0.,0.});
     std::vector<mfem_mgis::real> corner2({p.xmax, p.ymax, p.zmax});
-    mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed, corner1, corner2);
+    mfem_mgis::PeriodicNonLinearEvolutionProblem problem(ctx, fed, corner1, corner2);
 
 
     //    const mfem::Mesh &m = fed->getMesh<true>();
@@ -268,12 +268,13 @@ int executeMFEMMGISTest(const TestParameters& p) {
       return(EXIT_FAILURE);
     }
     return(EXIT_SUCCESS);
-    mfem_mgis::Profiler::timers::print_and_write_timers();
+    mfem_mgis::Profiler::OutputManager::printTimeTable(ctx);
   }
 }
 
 int main(int argc, char* argv[]) {
+  auto ctx = mgis::Context{};
   mfem_mgis::initialize(argc, argv);
   const auto p = parseCommandLineOptions(argc, argv);
-  return(executeMFEMMGISTest(p));
+  return(executeMFEMMGISTest(ctx, p));
 }

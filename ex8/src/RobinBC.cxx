@@ -92,14 +92,22 @@ namespace mfem_mgis {
   RobinBC::RobinBC(std::shared_ptr<mfem_mgis::FiniteElementDiscretization> fed, int tag, double h, double T_inf, mfem::GridFunction* u_disp)
       : nfi(new RobinNonlinearFormIntegrator(h, T_inf, u_disp)) {
       
-  #ifdef MFEM_USE_MPI
-      auto& fes = fed->getFiniteElementSpace<true>();
-  #else
-      auto& fes = fed->getFiniteElementSpace<false>();
-  #endif
+      int local_max = 0;
       
-      auto* mesh = fes.GetMesh();
-      int local_max = (mesh->bdr_attributes.Size() > 0) ? mesh->bdr_attributes.Max() : 0;
+      if (fed->describesAParallelComputation()) {
+  #ifdef MFEM_USE_MPI
+          auto& fes = fed->getFiniteElementSpace<true>();
+          auto* mesh = fes.GetMesh();
+          local_max = (mesh->bdr_attributes.Size() > 0) ? mesh->bdr_attributes.Max() : 0;
+  #else
+          mfem_mgis::raise("RobinBC: unsupported parallel computations");
+  #endif
+      } else {
+            auto& fes = fed->getFiniteElementSpace<false>();
+            auto* mesh = fes.GetMesh();
+            local_max = (mesh->bdr_attributes.Size() > 0) ? mesh->bdr_attributes.Max() : 0;
+      }
+
       bdr_marker.SetSize(std::max(local_max, tag));
       bdr_marker = 0;
       bdr_marker[tag - 1] = 1;

@@ -34,6 +34,7 @@
 int main(int argc, char** argv) {
 
   auto ctx = mgis::Context{};
+  //ctx.enableProfiling(true);
   mfem_mgis::initialize(argc, argv);
   constexpr const auto dim = mfem_mgis::size_type{3};
   const char* mesh_file = "ssna303_3d.msh";
@@ -60,7 +61,7 @@ int main(int argc, char** argv) {
   args.PrintOptions(std::cout);
 
   // loading the mesh
-  mfem_mgis::NonLinearEvolutionProblem problem(
+  mfem_mgis::NonLinearEvolutionProblem problem(ctx,
       {{"MeshFileName", mesh_file},
        {"FiniteElementFamily", "H1"},
        {"FiniteElementOrder", order},
@@ -154,5 +155,6 @@ int main(int argc, char** argv) {
     ++iteration;
     std::cout << '\n';
   }
+  //mfem_mgis::Profiler::OutputManager::printTimeTable(ctx);
   return EXIT_SUCCESS;
 }

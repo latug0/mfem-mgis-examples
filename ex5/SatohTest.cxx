@@ -58,13 +58,14 @@ static void dumpPartialQuadratureFunction(
 int main(int argc, char** argv) {
 
   auto ctx = mgis::Context{};
+  //ctx.enableProfiling(true);
   //
   static constexpr const auto parallel = false;
   // options treatment
   mfem_mgis::initialize(argc, argv);
   auto success = true;
   // building the non linear problem
-  mfem_mgis::NonLinearEvolutionProblem problem(
+  mfem_mgis::NonLinearEvolutionProblem problem(ctx, 
       {{"MeshFileName", "./cube.msh"},
        {"Materials", mfem_mgis::Parameters{{"plate", 1}}},
        {"Boundaries", mfem_mgis::Parameters{{"left", 2}, {"right", 4}}},
@@ -127,5 +128,6 @@ int main(int argc, char** argv) {
       static_cast<const mfem_mgis::Material&>(m1), "HydrostaticPressure");
   dumpPartialQuadratureFunction<parallel>(output, pr);
   //
+  //mfem_mgis::Profiler::OutputManager::printTimeTable(ctx);
   return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }

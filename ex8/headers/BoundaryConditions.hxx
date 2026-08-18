@@ -30,11 +30,12 @@ private:
     std::string name;
 
 public:
-    FieldUpdaterModel(const mfem_mgis::MeshDiscretization& mesh,
+    FieldUpdaterModel(mgis::Context& ctx,
+                      const mfem_mgis::MeshDiscretization& mesh,
                       std::shared_ptr<std::vector<mgis::real>> pow0,
                       std::shared_ptr<std::vector<mgis::real>> pow1,
                       std::function<double(double)> history_func)
-        : mfem_mgis::ModelBase(mesh), 
+        : mfem_mgis::ModelBase(ctx, mesh), 
           Pow_s0(pow0), Pow_s1(pow1), 
           power_history(history_func), 
           name("FieldUpdater")

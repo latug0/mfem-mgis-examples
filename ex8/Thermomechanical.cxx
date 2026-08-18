@@ -88,10 +88,9 @@ int main(int argc, char *argv[]) {
   using namespace mfem_mgis;
   using namespace mfem;
   initialize(argc, argv);
-  Profiler::timers::init_timers();
 
-  auto ctx = Context{};
-  //ctx.enableProfiling(true);
+  auto ctx = mgis::Context{};
+  ctx.enableProfiling(true);
   auto or_die = ctx.getFatalFailureHandler();
 
   TestParameters p;
@@ -186,13 +185,15 @@ int main(int argc, char *argv[]) {
   
   auto ps = construct<PhysicalSystem>(ctx, mesh) | or_die;
 
-  auto c = make_shared<IterativeCouplingScheme>(ctx, mesh) | or_die;
+  IterativeCouplingScheme test_bidon(ctx, mesh);
+
+  auto c = std::make_shared<IterativeCouplingScheme>(ctx, mesh) | or_die;
   auto criterion = std::make_shared<FirstIterationConvergenceCriterion>();
 
   c->setMaximumNumberOfIterations(ctx, 10);
   c->addConvergenceCriterion(ctx, criterion);
 
-  auto updater_model = std::make_shared<FieldUpdaterModel>(mesh, setup.fields[0].Pow_s0_sw, setup.fields[0].Pow_s1_sw, power_history);
+  auto updater_model = std::make_shared<FieldUpdaterModel>(ctx, mesh, setup.fields[0].Pow_s0_sw, setup.fields[0].Pow_s1_sw, power_history);
 
   c->addModel(ctx, heat_transfer_model) | or_die;
   c->addModel(ctx, updater_model) | or_die;
@@ -203,13 +204,13 @@ int main(int argc, char *argv[]) {
   // declaring the simulation
   int nsteps = 1;
   const auto times =
-      mfem_mgis::construct<mfem_mgis::Simulation::TimesDescription>(
+      construct<Simulation::TimesDescription>(
           ctx, 0, p.duree, nsteps) |
       or_die;
-  auto s = mfem_mgis::construct<mfem_mgis::Simulation>(ctx, ps, times) | or_die;
+  auto s = construct<Simulation>(ctx, ctx, ps, times) | or_die; // mgis::construct could be implemented such that it uses/transfers the first context we give
   // running the simulation
   const auto [status, output] = s.run(ctx);
-  if (status != mfem_mgis::ExitStatus::success) {
+  if (status != ExitStatus::success) {
     std::cerr << "simulation failed: " << ctx.getErrorMessage() << '\n';
     print_memory_footprint("After Solving:");
     return EXIT_FAILURE;
@@ -218,7 +219,7 @@ int main(int argc, char *argv[]) {
 
   auto m_comb_opt_debug = mechanics.getMaterial(ctx, "comb", 0);
   if (!mgis::isInvalid(m_comb_opt_debug)) {
-      auto swell_opt_debug = mfem_mgis::getInternalStateVariable(ctx, *m_comb_opt_debug, "SwellingExport");
+      auto swell_opt_debug = getInternalStateVariable(ctx, *m_comb_opt_debug, "SwellingExport");
       if (swell_opt_debug) {
           const auto& vals = swell_opt_debug->getValues();
           
@@ -242,7 +243,7 @@ int main(int argc, char *argv[]) {
           }
           #endif
 
-          if (mfem_mgis::getMPIrank() == 0) {
+          if (getMPIrank() == 0) {
               if (global_min == std::numeric_limits<double>::max()) {
                   global_min = 0.0;
                   global_max = 0.0;
@@ -258,6 +259,6 @@ int main(int argc, char *argv[]) {
       debug_print_physics_stats(ctx, heat_transfer, mechanics, p.parallel);
   }
 
-  mfem_mgis::Profiler::OutputManager::printTimeTable(/*ctx*/);
+  Profiler::OutputManager::printTimeTable(ctx);
   return EXIT_SUCCESS;
 }

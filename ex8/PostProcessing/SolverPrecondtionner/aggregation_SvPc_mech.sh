@@ -3,7 +3,7 @@
 set -euo pipefail
 
 LOG_DIR="logs_optimises_cluster"
-OUT="aggregation_SvPc.csv"
+OUT="aggregation_SvPc_mech_1e5.csv"
 
 echo "physics,solver,preconditioner,dof,problem_footprint_GB,solution_footprint_GB,calls,min_s,mean_s,max_s,part_percent" > "$OUT"
 

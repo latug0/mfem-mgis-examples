@@ -23,7 +23,7 @@ add_custom_target(
 )
 
 # Define the executable to build for this example
-add_executable(robin_test robin_test.cxx)
+add_executable(robin_test robin_test_v2.cxx ../src/RobinBC.cxx)
 
 add_dependencies(robin_test behaviour)
 

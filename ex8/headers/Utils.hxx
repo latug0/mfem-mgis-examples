@@ -77,7 +77,7 @@ inline void add_post_processings(Problem& p, std::string msg) {
 
 template<typename Problem>
 inline void execute_post_processings(mgis::Context& ctx, Problem& p, double start, double end) {
-  CatchTimeSection("common::post_processing_step");
+  CatchTimeSection(ctx, "common::post_processing_step");
   p.executePostProcessings(start, end);
 }
 
@@ -88,7 +88,7 @@ inline static void setLinearSolver(mgis::Context& ctx,
                             const TestParameters &param, 
                             const int verbosity = 0,
                             const mfem_mgis::real Tol = 1e-9) {
-  CatchTimeSection("set_linear_solver");
+  CatchTimeSection(ctx, "set_linear_solver");
   
   std::string solver;
   std::string precond;

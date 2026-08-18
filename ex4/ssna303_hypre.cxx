@@ -26,6 +26,7 @@
 int main(int argc, char** argv) {
   
 	auto ctx = mgis::Context{};
+  //ctx.enableProfiling(true);
   mfem_mgis::initialize(argc, argv);
   bool parallel = true;
   constexpr const auto dim = mfem_mgis::size_type{3};
@@ -64,7 +65,7 @@ int main(int argc, char** argv) {
 
   // loading the mesh
   {
-  mfem_mgis::NonLinearEvolutionProblem problem(
+  mfem_mgis::NonLinearEvolutionProblem problem(ctx,
       {{"MeshFileName", mesh_file},
        {"FiniteElementFamily", "H1"},
        {"FiniteElementOrder", order},
@@ -205,6 +206,6 @@ int main(int argc, char** argv) {
     std::cout << '\n';
   }
   }
-  mfem_mgis::Profiler::timers::print_and_write_timers();
+  //mfem_mgis::Profiler::OutputManager::printTimeTable(ctx);
   return EXIT_SUCCESS;
 }

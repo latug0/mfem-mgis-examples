@@ -65,7 +65,7 @@ Order 2
 
 // We need this class for test case sources
 struct TestParameters {
-  const char* mesh_file = "inclusion.msh";
+  const char* mesh_file = "mesh/inclusion.msh";
   const char* behaviour = "ImplicitNortonThreshold";
   const char* library = "src/libBehaviour.so";
   const char* petscsrc_file = "petscsrc";
@@ -114,7 +114,7 @@ void common_parameters(mfem::OptionsParser& args, TestParameters& p)
 }
 
   template<typename Implementation>
-void print_mesh_information(Implementation& impl)
+void print_mesh_information(mgis::Context& ctx, Implementation& impl)
 {
 
   using mfem_mgis::Profiler::Utils::sum;
@@ -157,7 +157,7 @@ long get_memory_checkpoint()
   return res;
 };
 
-void print_memory_footprint(Context& ctx, std::string msg)
+void print_memory_footprint(mgis::Context& ctx, std::string msg)
 {
   long mem = get_memory_checkpoint();
   double m = double(mem) * 1e-6; // conversion kb to Gb
@@ -178,13 +178,13 @@ void add_post_processings(Problem& p, std::string msg)
 } // end timer add_postprocessing_and_outputs
 
   template<typename Problem>
-void execute_post_processings(Context& ctx, Problem& p, double start, double end)
+void execute_post_processings(mgis::Context& ctx, Problem& p, double start, double end)
 {
   CatchTimeSection(ctx, "common::post_processing_step");
   p.executePostProcessings(ctx, start, end);
 }
 
-void setup_properties(Context& ctx, const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolutionProblem& problem)
+void setup_properties(mgis::Context& ctx, const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolutionProblem& problem)
 {
   using namespace mgis::behaviour;
   using real=mfem_mgis::real;
@@ -241,7 +241,7 @@ void setup_properties(Context& ctx, const TestParameters& p, mfem_mgis::Periodic
 
 
   template<typename Problem>    
-static void setLinearSolver(Context& ctx, Problem& p,
+static void setLinearSolver(mgis::Context& ctx, Problem& p,
     const int verbosity = 0,
     const mfem_mgis::real Tol = 1e-12
     )
@@ -267,7 +267,7 @@ static void setLinearSolver(Context& ctx, Problem& p,
 }
 
   template<typename Problem>
-void run_solve(Context& ctx, Problem& p, double start, double dt)
+void run_solve(mgis::Context& ctx, Problem& p, double start, double dt)
 {
   CatchTimeSection(ctx, "Solve");
   // solving the problem
@@ -275,7 +275,8 @@ void run_solve(Context& ctx, Problem& p, double start, double dt)
   // check status
   if (!statistics.status) {
     ctx.log() << "INFO: FAILED\n";
-    ctx.abort();
+    // ctx.abort(); Is private
+    std::abort();
   }
 }
 
@@ -299,7 +300,7 @@ int main(int argc, char* argv[])
   constexpr const auto dim = mfem_mgis::size_type{3};
 
   // creating the finite element workspace
-  auto fed = std::make_shared<mfem_mgis::FiniteElementDiscretization>(
+  auto fed = std::make_shared<mfem_mgis::FiniteElementDiscretization>(ctx,
       mfem_mgis::Parameters{{"MeshFileName", p.mesh_file},
       {"FiniteElementFamily", "H1"},
       {"FiniteElementOrder", p.order},
@@ -308,9 +309,9 @@ int main(int argc, char* argv[])
       {"UnknownsSize", dim},
       {"NumberOfUniformRefinements", p.parallel ? p.refinement : 0},
       {"Parallel", p.parallel}});
-  mfem_mgis::PeriodicNonLinearEvolutionProblem problem(fed);
-  print_mesh_information(problem.getImplementation<true>());
-  print_memory_footprint("After_problem:");
+  mfem_mgis::PeriodicNonLinearEvolutionProblem problem(ctx, fed);
+  print_mesh_information(ctx, problem.getImplementation<true>());
+  print_memory_footprint(ctx, "After_problem:");
 
   // set problem
   setup_properties(ctx, p, problem);
@@ -343,7 +344,7 @@ int main(int argc, char* argv[])
   }
 
   // print and write timetable
-  print_memory_footprint("After Solving:");
+  print_memory_footprint(ctx, "After Solving:");
   mfem_mgis::Profiler::OutputManager::printTimeTable(ctx);
   return(EXIT_SUCCESS);
 }

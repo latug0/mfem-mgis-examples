@@ -21,6 +21,9 @@ else(CMAKE_CONFIGURATION_TYPES)
    endif(NOT TARGET check)
 endif(CMAKE_CONFIGURATION_TYPES)
 
+# Require TBB
+find_package(TBB)
+
 # Require MFEM-MGIS
 if (NOT TARGET mfem-mgis::MFEMMGIS)
   find_package(MFEMMGIS REQUIRED)
@@ -46,7 +49,7 @@ add_custom_target(generate-libBehaviour-ex6 ALL
   DEPENDS "src/libBehaviour.so")
 
 add_executable(rve RveNonLinearElastic.cxx)
-target_link_libraries(rve mfem-mgis::MFEMMGIS)
+target_link_libraries(rve mfem-mgis::MFEMMGIS TBB::tbb)
 target_include_directories(rve
   SYSTEM
   PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"   

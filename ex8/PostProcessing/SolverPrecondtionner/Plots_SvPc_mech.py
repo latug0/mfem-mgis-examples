@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Patch
 
-df = pd.read_csv("aggregation_SvPc_mech_5e4.csv")
+df = pd.read_csv("aggregation_SvPc_mech_1e5.csv")
 
 df["preconditioner"] = df["preconditioner"].fillna("Aucun")
 

@@ -21,6 +21,9 @@ else(CMAKE_CONFIGURATION_TYPES)
    endif(NOT TARGET check)
 endif(CMAKE_CONFIGURATION_TYPES)
 
+# Require TBB
+find_package(TBB)
+
 # Require MFEM-MGIS
 if (NOT TARGET mfem-mgis::MFEMMGIS)
   find_package(MFEMMGIS REQUIRED)
@@ -28,7 +31,7 @@ endif(NOT TARGET mfem-mgis::MFEMMGIS)
 
 # Define the executable to build for this example
 add_executable(Ssna303 ssna303.cxx)
-target_link_libraries(Ssna303 mfem-mgis::MFEMMGIS)
+target_link_libraries(Ssna303 mfem-mgis::MFEMMGIS TBB::tbb)
 target_include_directories(Ssna303
     SYSTEM
     PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"

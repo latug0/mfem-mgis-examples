@@ -69,7 +69,7 @@ setup_properties(mgis::Context& ctx,
   //using namespace mgis::model;
   using real = mfem_mgis::real;
 
-  CatchTimeSection("set_mgis_stuff");
+  CatchTimeSection(ctx, "set_mgis_stuff");
   auto or_die = ctx.getFatalFailureHandler();
 
   SetupPropertiesResult result;

@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
   }
   args.PrintOptions(std::cout);
   // the non linear problem
-  mfem_mgis::NonLinearEvolutionProblem problem({{"MeshFileName", mesh_file},
+  mfem_mgis::NonLinearEvolutionProblem problem(ctx, {{"MeshFileName", mesh_file},
                                                 {"FiniteElementFamily", "H1"},
                                                 {"FiniteElementOrder", order},
                                                 {"UnknownsSize", dim},

@@ -22,6 +22,9 @@ else(CMAKE_CONFIGURATION_TYPES)
    endif(NOT TARGET check)
 endif(CMAKE_CONFIGURATION_TYPES)
 
+# Require TBB
+find_package(TBB)
+
 # Require MFEM-MGIS
 if (NOT TARGET mfem-mgis::MFEMMGIS)
   find_package(MFEMMGIS REQUIRED)
@@ -30,7 +33,7 @@ endif(NOT TARGET mfem-mgis::MFEMMGIS)
 if(MFEM_USE_MPI)
   # Define the executable to build for this example
   add_executable(InclusionsEx InclusionsEx.cxx)
-  target_link_libraries(InclusionsEx mfem-mgis::MFEMMGIS)
+  target_link_libraries(InclusionsEx mfem-mgis::MFEMMGIS TBB::tbb)
   target_include_directories(InclusionsEx
       SYSTEM
       PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"

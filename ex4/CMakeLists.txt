@@ -22,6 +22,9 @@ else(CMAKE_CONFIGURATION_TYPES)
    endif(NOT TARGET check)
 endif(CMAKE_CONFIGURATION_TYPES)
 
+# Require TBB
+find_package(TBB)
+
 # Require MFEM-MGIS
 if (NOT TARGET mfem-mgis::MFEMMGIS)
   find_package(MFEMMGIS REQUIRED)
@@ -57,7 +60,7 @@ foreach(tg IN ITEMS mumps hypre petsc)
       ((NOT MFEM_USE_MUMPS) AND (${tg} STREQUAL "mumps")))
   else()
     add_executable("Ssna303_3d_${tg}" ssna303_${tg}.cxx)
-    target_link_libraries(Ssna303_3d_${tg} mfem-mgis::MFEMMGIS)
+    target_link_libraries(Ssna303_3d_${tg} mfem-mgis::MFEMMGIS TBB::tbb)
     target_include_directories(Ssna303_3d_${tg}
       SYSTEM
       PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
