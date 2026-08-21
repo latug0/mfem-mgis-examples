@@ -7,7 +7,7 @@
 @ExternalStateVariable real Pow;
 Pow.setGlossaryName("PowerDensity");
 
-@StateVariable strain S;
+@StateVariable real S;
 S.setGlossaryName("SolidSwelling");
 
 // It is more convenient to keep a single state variable per integration point.

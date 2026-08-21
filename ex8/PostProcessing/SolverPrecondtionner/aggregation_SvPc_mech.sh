@@ -2,10 +2,10 @@
 
 set -euo pipefail
 
-LOG_DIR="logs_optimises_cluster"
+LOG_DIR="logs_SvPc_mech_1e5"
 OUT="aggregation_SvPc_mech_1e5.csv"
 
-echo "physics,solver,preconditioner,dof,problem_footprint_GB,solution_footprint_GB,calls,min_s,mean_s,max_s,part_percent" > "$OUT"
+echo "physics,solver,preconditioner,dof,problem_footprint_GB,solution_footprint_GB,calls,min_s,mean_s,max_s,part_percent,stat_min,stat_max,stat_mean,stat_stddev" > "$OUT"
 
 extract_timer() {
     local pattern="$1"
@@ -22,6 +22,26 @@ extract_timer() {
 
     if [[ -z "$values" ]]; then
         echo "0,0,0,0,0"
+    else
+        echo "$values"
+    fi
+}
+
+extract_stats() {
+    local block_name="$1"
+    local file="$2"
+    local values
+
+    values=$(awk -F':' -v name="$block_name" '
+        $0 ~ name {flag=1; next}
+        flag && /Global MIN/ { min=$2 }
+        flag && /Global MAX/ { max=$2 }
+        flag && /MEAN/       { mean=$2 }
+        flag && /STD DEV/    { std=$2; printf "%s,%s,%s,%s", min, max, mean, std; exit }
+    ' "$file" | tr -d ' \t')
+
+    if [[ -z "$values" ]]; then
+        echo "N/A,N/A,N/A,N/A"
     else
         echo "$values"
     fi
@@ -47,7 +67,7 @@ for f in "${fichiers[@]}"; do
     rest="${basename_f#*_Th_}"
     
     th_part="${rest%%_Mc_*}"
-    mc_part="${rest#*_Mc_}" 
+    mc_part="${rest#*_Mc_}"
 
     if [[ -z "${th_part//_/}" ]]; then
         th_solver="Unknown"
@@ -76,8 +96,11 @@ for f in "${fichiers[@]}"; do
     thermal=$(extract_timer "|--> Thermal" "$f")
     mechanics=$(extract_timer "|--> Mechanics" "$f")
 
-    echo "Thermal,${th_solver},${th_prec},${dof},${problem_mem},${solution_mem},${thermal}" >> "$OUT"
-    echo "Mechanics,${mc_solver},${mc_prec},${dof},${problem_mem},${solution_mem},${mechanics}" >> "$OUT"
+    temp_stats=$(extract_stats "DEBUG STATS : Temperature" "$f")
+    disp_stats=$(extract_stats "DEBUG STATS : Displacement Magnitude" "$f")
+
+    echo "Thermal,${th_solver},${th_prec},${dof},${problem_mem},${solution_mem},${thermal},${temp_stats}" >> "$OUT"
+    echo "Mechanics,${mc_solver},${mc_prec},${dof},${problem_mem},${solution_mem},${mechanics},${disp_stats}" >> "$OUT"
 done
 
 echo

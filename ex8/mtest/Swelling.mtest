@@ -1,0 +1,54 @@
+@Author RIGAL Julien;
+@Description {"Gonflement sous puissance constante - Pow=1e10 W/m3"};
+
+@Behaviour<generic> '../build/src/libU3SI2-generic.so' 'U3SI2_SolidSwelling';
+
+@ExternalStateVariable 'Temperature' 293.15;
+// Puissance volumique constante
+@ExternalStateVariable 'PowerDensity' {
+  0.0 : 1.0e10,
+  2.0e6 : 1.0e10
+};
+
+@Times {
+  0.0,
+  1.0e5,
+  2.0e5,
+  3.0e5,
+  4.0e5,
+  5.0e5,
+  6.0e5,
+  7.0e5,
+  8.0e5,
+  9.0e5,
+  1.0e6,
+  1.1e6,
+  1.2e6,
+  1.3e6,
+  1.4e6,
+  1.5e6,
+  1.6e6,
+  1.7e6,
+  1.8e6,
+  1.9e6,
+  2.0e6,
+  3.0e6,
+  4.0e6
+};
+
+
+// Vérification attendue :
+// - PowerDensity = 1e10 W/m3 pendant tout l'essai
+// - SolidSwelling doit croître linéairement avec le temps
+//
+// Le modèle intègre :
+//   dS = 6.2e-29 * Pow / (fe * 1.60218e-13) * dt
+//
+// avec :
+//   Pow = 1e10 W/m3
+//   fe  = 200 MeV
+//
+// Valeur attendue à t = 2e6 s :
+//   S ~ 0.0387
+//
+// Le gonflement doit donc être ~0 au début et ~3.87% à la fin.

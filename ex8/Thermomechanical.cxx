@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
       return (t <= t_ramp) ? p.source * (t / t_ramp) : p.source;
   };
 
-  auto mesh = construct<MeshDiscretization>(
+  auto mesh = construct<MeshDiscretization>(ctx,
           ctx,
           Parameters{
               {"MeshFileName", p.mesh_file},
@@ -185,8 +185,6 @@ int main(int argc, char *argv[]) {
   
   auto ps = construct<PhysicalSystem>(ctx, mesh) | or_die;
 
-  IterativeCouplingScheme test_bidon(ctx, mesh);
-
   auto c = std::make_shared<IterativeCouplingScheme>(ctx, mesh) | or_die;
   auto criterion = std::make_shared<FirstIterationConvergenceCriterion>();
 
@@ -217,46 +215,8 @@ int main(int argc, char *argv[]) {
   }
   print_memory_footprint("After Solving:");
 
-  auto m_comb_opt_debug = mechanics.getMaterial(ctx, "comb", 0);
-  if (!mgis::isInvalid(m_comb_opt_debug)) {
-      auto swell_opt_debug = getInternalStateVariable(ctx, *m_comb_opt_debug, "SwellingExport");
-      if (swell_opt_debug) {
-          const auto& vals = swell_opt_debug->getValues();
-          
-          double local_min = std::numeric_limits<double>::max();
-          double local_max = -std::numeric_limits<double>::max();
-          
-          // Recherche du min/max local sur le processeur
-          for (int i = 0; i < vals.size(); ++i) {
-              if (vals[i] < local_min) local_min = vals[i];
-              if (vals[i] > local_max) local_max = vals[i];
-          }
-
-          double global_min = local_min;
-          double global_max = local_max;
-
-          #ifdef MFEM_USE_MPI
-          if (p.parallel) {
-              MPI_Comm comm = mechanics_fed->getFiniteElementSpace<true>().GetComm();
-              MPI_Allreduce(&local_min, &global_min, 1, MPI_DOUBLE, MPI_MIN, comm);
-              MPI_Allreduce(&local_max, &global_max, 1, MPI_DOUBLE, MPI_MAX, comm);
-          }
-          #endif
-
-          if (getMPIrank() == 0) {
-              if (global_min == std::numeric_limits<double>::max()) {
-                  global_min = 0.0;
-                  global_max = 0.0;
-              }
-              std::cout << " DEBUG MFRONT : SwellingExport (Points d'Intégration)" << std::endl;
-              std::cout << "   -> MIN global : " << global_min << std::endl;
-              std::cout << "   -> MAX global : " << global_max << std::endl;
-          }
-      }
-  }
-
   if (p.debug) {
-      debug_print_physics_stats(ctx, heat_transfer, mechanics, p.parallel);
+      debug_print_physics_stats(ctx, heat_transfer, mechanics, p.parallel, setup);
   }
 
   Profiler::OutputManager::printTimeTable(ctx);

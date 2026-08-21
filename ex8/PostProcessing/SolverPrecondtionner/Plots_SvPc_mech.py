@@ -12,6 +12,18 @@ df["preconditioner"] = df["preconditioner"].fillna("Aucun")
 df_meca = df[(df["physics"] == "Mechanics") & (df["mean_s"] > 0)].copy()
 
 if not df_meca.empty:
+    df_meca = df_meca[df_meca["calls"] == 1].copy()
+
+    mumps_data = df[(df["physics"] == "Mechanics") & (df["solver"] == "MUMPSSolver")]
+    if not mumps_data.empty:
+        mumps_ref = mumps_data["stat_mean"].iloc[0]
+        if mumps_ref != 0:
+            df_meca["rel_err"] = abs(df_meca["stat_mean"] - mumps_ref) / abs(mumps_ref)
+            df_meca = df_meca[df_meca["rel_err"] <= 1e-8].copy()
+        else:
+            df_meca = df_meca[df_meca["stat_mean"] == 0].copy()
+
+if not df_meca.empty:
     pivot_df = df_meca.pivot_table(index="solver", columns="preconditioner", values="mean_s")
     
     palette = ['#4C72B0', '#55A868', '#C44E52', '#8172B3', '#CCB974', '#64B5CD']
@@ -63,4 +75,4 @@ if not df_meca.empty:
     
     print("Graph has been generated : Profiling_SvPc_Mechanics_5e4.png")
 else:
-    print("No valid 'Mechanics' data was found in the CSV.")
+    print("No valid 'Mechanics' data was found in the CSV after filtering.")

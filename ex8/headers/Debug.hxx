@@ -16,7 +16,8 @@ inline void debug_print_physics_stats(
     mfem_mgis::Context& ctx, 
     mfem_mgis::NonLinearEvolutionProblem& heat_transfer,
     mfem_mgis::NonLinearEvolutionProblem& mechanics,
-    bool parallel) 
+    bool parallel,
+    const SetupPropertiesResult& setup) 
 {
     // Helper lambda for nodal fields
     auto print_nodal_stats = [&](const mfem::GridFunction& gf, const std::string& name, bool is_vector) {
@@ -132,9 +133,15 @@ inline void debug_print_physics_stats(
             double local_max = -std::numeric_limits<double>::max();
             double local_sum = 0.0;
             double local_sum_sq = 0.0;
-            long long local_count = vals.size();
+            
+            // Symmetric tensors are flattened to 6 components per integration point.
+            long long num_ips = vals.size() / 6; 
+            long long local_count = num_ips;
 
-            for (double val : vals) {
+            for (long long i = 0; i < num_ips; ++i) {
+                // The volumetric swelling (tensor trace) :
+                const double val = vals[i * 6] + vals[i * 6 + 1] + vals[i * 6 + 2];
+                
                 if (val < local_min) local_min = val;
                 if (val > local_max) local_max = val;
                 local_sum += val;
@@ -176,5 +183,61 @@ inline void debug_print_physics_stats(
                 std::cout << "------------------------------------------------" << std::endl;
             }
         }
+    }
+
+    // Power 
+    if (!setup.fields.empty() && setup.fields[0].Pow_s1_sw) {
+        const auto& pow_vals = *setup.fields[0].Pow_s1_sw;
+        
+        double local_min = std::numeric_limits<double>::max();
+        double local_max = -std::numeric_limits<double>::max();
+        double local_sum = 0.0;
+        double local_sum_sq = 0.0;
+        
+        const long long num_ips = pow_vals.size(); 
+        const long long local_count = num_ips;
+
+        for (long long i = 0; i < num_ips; ++i) {
+            const double val = pow_vals[i]; 
+            if (val < local_min) local_min = val;
+            if (val > local_max) local_max = val;
+            local_sum += val;
+            local_sum_sq += val * val;
+        }
+
+        double g_min = local_min, g_max = local_max, g_sum = local_sum, g_sum_sq = local_sum_sq;
+        long long g_count = local_count;
+
+        #ifdef MFEM_USE_MPI
+        if (parallel) {
+            MPI_Comm comm = MPI_COMM_WORLD;
+            auto mech_fed_local = mechanics.getFiniteElementDiscretizationPointer();
+            auto& m_fes_local = mech_fed_local->getFiniteElementSpace<true>();
+            if (auto pfes = dynamic_cast<const mfem::ParFiniteElementSpace*>(&m_fes_local)) {
+                comm = pfes->GetComm();
+            }
+            MPI_Allreduce(&local_min, &g_min, 1, MPI_DOUBLE, MPI_MIN, comm);
+            MPI_Allreduce(&local_max, &g_max, 1, MPI_DOUBLE, MPI_MAX, comm);
+            MPI_Allreduce(&local_sum, &g_sum, 1, MPI_DOUBLE, MPI_SUM, comm);
+            MPI_Allreduce(&local_sum_sq, &g_sum_sq, 1, MPI_DOUBLE, MPI_SUM, comm);
+            MPI_Allreduce(&local_count, &g_count, 1, MPI_LONG_LONG, MPI_SUM, comm);
+        }
+        #endif
+
+        if (mfem_mgis::getMPIrank() == 0 && g_count > 0) {
+            double mean = g_sum / g_count;
+            double var = (g_sum_sq / g_count) - (mean * mean);
+            double std_dev = (var > 0.0) ? std::sqrt(var) : 0.0;
+
+            std::cout << " DEBUG STATS : PowerDensity (Points d'Intégration)" << std::endl;
+            std::cout << "   -> Global MIN : " << g_min << std::endl;
+            std::cout << "   -> Global MAX : " << g_max << std::endl;
+            std::cout << "   -> MEAN       : " << mean << std::endl;
+            std::cout << "   -> STD DEV    : " << std_dev << std::endl;
+            std::cout << "   -> (Int pts)  : " << g_count << std::endl;
+            std::cout << "------------------------------------------------" << std::endl;
+        }
+    } else {
+        if (mfem_mgis::getMPIrank() == 0) std::cout << "[WARNING] PowerDensity non trouvée." << std::endl;
     }
 }

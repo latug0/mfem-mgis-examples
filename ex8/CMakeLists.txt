@@ -25,12 +25,14 @@ get_filename_component(MFRONT_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/MFront" A
 
 file(GLOB MFRONT_LOIS "${MFRONT_INCLUDE_DIR}/*.mfront")
 
+set(MFRONT_OUTPUTS
+    "${CMAKE_CURRENT_BINARY_DIR}/src/libU3SI2-generic.so"
+    "${CMAKE_CURRENT_BINARY_DIR}/src/libALFENI-generic.so"
+)
+
 # Compiling MFront laws
 add_custom_command(
-    OUTPUT 
-        "${CMAKE_CURRENT_BINARY_DIR}/src/libU3SI2-generic.so"
-        "${CMAKE_CURRENT_BINARY_DIR}/src/libALFENI-generic.so"
-        "${CMAKE_CURRENT_BINARY_DIR}/src/libMFrontGenericInterface.so"
+    OUTPUT ${MFRONT_OUTPUTS}
     COMMAND mfront --obuild --interface=generic --include=${MFRONT_INCLUDE_DIR} ${MFRONT_LOIS}
     DEPENDS ${MFRONT_LOIS}
     COMMENT "Generating laws for thermomechanical simulation."
@@ -47,9 +49,7 @@ target_include_directories(Thermomechanical PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}
 
 add_custom_target(
     generate-libBehaviour ALL
-    DEPENDS 
-        "${CMAKE_CURRENT_BINARY_DIR}/src/libU3SI2-generic.so"
-        "${CMAKE_CURRENT_BINARY_DIR}/src/libALFENI-generic.so"
+    DEPENDS ${MFRONT_OUTPUTS}
 )
 
 target_link_libraries(Thermomechanical PRIVATE

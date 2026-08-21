@@ -48,7 +48,7 @@ namespace mfem_mgis {
           }
 
           for (int ni = 0; ni < nnodes; ++ni)
-              R[ni] += w * h_eff * (T_pt - T_inf) * shape[ni]; 
+              R[ni] -= w * h_eff * (T_pt - T_inf) * shape[ni]; 
       }
   } // end of AssembleElementVector
 
@@ -85,7 +85,7 @@ namespace mfem_mgis {
 
           for (int ni = 0; ni < nnodes; ++ni)
               for (int nj = 0; nj < nnodes; ++nj)
-                  K(ni, nj) += w * h_eff * shape[ni] * shape[nj]; 
+                  K(ni, nj) -= w * h_eff * shape[ni] * shape[nj]; 
       }
   } // end of AssembleElementGrad
 

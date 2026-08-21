@@ -107,29 +107,45 @@ inline static void setLinearSolver(mgis::Context& ctx,
   }
 
   if (contains(iterative_solvers, solver)) {
+  constexpr int defaultMaxNumOfIt = 10e3;
+
+  auto solverParameters = mfem_mgis::Parameters{};
+  solverParameters.insert(
+      mfem_mgis::Parameters{{"VerbosityLevel", verbosity}});
+  solverParameters.insert(
+      mfem_mgis::Parameters{{"MaximumNumberOfIterations", defaultMaxNumOfIt}});
+
+  if (solver == "MINRESSolver" ||
+      solver == "BiCGSTABSolver" ||
+      solver == "CGSolver" ||
+      solver == "GMRESSolver") {
+    solverParameters.insert(
+        mfem_mgis::Parameters{{"AbsoluteTolerance", Tol}});
+  } else {
+    solverParameters.insert(
+        mfem_mgis::Parameters{{"Tolerance", Tol}});
+  }
+
+  if (!precond.empty()) {
     if (!contains(preconditionners, precond)) {
       std::cerr << "Invalid preconditioner: " << precond << std::endl;
       std::abort();
     }
-    constexpr int defaultMaxNumOfIt = 50e3;
-    auto solverParameters = mfem_mgis::Parameters{};
-    solverParameters.insert(mfem_mgis::Parameters{{"VerbosityLevel", verbosity}});
-    solverParameters.insert(mfem_mgis::Parameters{{"MaximumNumberOfIterations", defaultMaxNumOfIt}});
-    solverParameters.insert(mfem_mgis::Parameters{{"Tolerance", Tol}});
 
-    auto options = mfem_mgis::Parameters{{"VerbosityLevel", verbosity}};
+    auto options = mfem_mgis::Parameters{
+        {"VerbosityLevel", verbosity}};
+
     auto preconditioner = mfem_mgis::Parameters{
         {"Name", precond},
         {"Options", options}};
 
-    solverParameters.insert(mfem_mgis::Parameters{{"Preconditioner", preconditioner}});
-    p.setLinearSolver(solver, solverParameters);
+    solverParameters.insert(
+        mfem_mgis::Parameters{{"Preconditioner", preconditioner}});
   }
-  else if (contains(direct_solvers, solver)) {
-    auto solverParameters = mfem_mgis::Parameters{};
-    solverParameters.insert(mfem_mgis::Parameters{{"VerbosityLevel", verbosity}});
-    p.setLinearSolver(solver, {{"Symmetric", true}});
+
+  p.setLinearSolver(solver, solverParameters);
   }
+
   else {
     std::cerr << "Unknown solver type: " << solver << std::endl;
     std::abort();

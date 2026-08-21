@@ -20,7 +20,7 @@ sw.setGlossaryName("Swelling");
 @Swelling<Volume> sw;
 
 // Export swelling for post-processing
-@AuxiliaryStateVariable strain SwellingExport;
+@AuxiliaryStateVariable real SwellingExport;
 SwellingExport.setEntryName("SwellingExport");
 
 @FlowRule{

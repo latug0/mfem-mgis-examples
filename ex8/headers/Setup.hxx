@@ -21,7 +21,7 @@ struct TestParameters {
   const char *precond_meca = "HypreBoomerAMG";
   int order = 1;
   bool parallel = true;
-  bool debug = false;
+  bool debug = true;
   int refinement = 0;
   int post_processing = 1; // default value : disabled
   int verbosity_level = 0; // default value : lower level
@@ -30,7 +30,7 @@ struct TestParameters {
   double Ti = 293.15;
   double Te = 315.0; 
   double source = 1e10;
-  double water_pressure = 1e6;
+  double water_pressure = 0.0;
   double duree = 2e6;
   double h_conv = 5e4;
 };
