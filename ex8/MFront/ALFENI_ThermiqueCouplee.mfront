@@ -44,7 +44,7 @@ F.setGlossaryName("DeformationGradient");
 
   const auto C  = computeRightCauchyGreenTensor(F + dF);
   const auto iC = invert(C);
-  const auto J  = - det(F + dF);
+  const auto J  = det(F + dF);
 
   const auto k0 = A + B * (T + dT - 273.15);
 

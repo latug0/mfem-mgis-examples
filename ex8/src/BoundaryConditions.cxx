@@ -37,5 +37,5 @@ void apply_boundary_conditions(
   // Volumetric heat generation in the fuel.
   heat_transfer.addBoundaryCondition(std::make_unique<mfem_mgis::UniformHeatSourceBoundaryCondition>(
       heat_transfer.getFiniteElementDiscretizationPointer(), 1,
-      [power_history](const auto t) { return -power_history(t); }));
+      [power_history](const auto t) { return power_history(t); }));
 }
