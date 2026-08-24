@@ -122,66 +122,60 @@ inline void debug_print_physics_stats(
     print_nodal_stats(U_gf, "Displacement Magnitude (||U||)", true);
     #endif
 
-    // Swelling (Integration points)
-    auto m_comb = mechanics.getMaterial(ctx, "comb", 0);
-    if (!mgis::isInvalid(m_comb)) {
-        auto swell_var = mfem_mgis::getInternalStateVariable(ctx, *m_comb, "SwellingExport");
-        if (swell_var) {
-            const auto& vals = swell_var->getValues();
+    // Swelling
+    if (setup.swelling_model) {
+        auto& m_sw = setup.swelling_model->getMaterial();
+        
+        const auto& vals = m_sw.s1.internal_state_variables; 
+        
+        double local_min = std::numeric_limits<double>::max();
+        double local_max = -std::numeric_limits<double>::max();
+        double local_sum = 0.0;
+        double local_sum_sq = 0.0;
+        
+        const long long num_ips = vals.size();
+        const long long local_count = num_ips;
+
+        for (long long i = 0; i < num_ips; ++i) {
+            const double val = vals[i]; 
             
-            double local_min = std::numeric_limits<double>::max();
-            double local_max = -std::numeric_limits<double>::max();
-            double local_sum = 0.0;
-            double local_sum_sq = 0.0;
-            
-            // Symmetric tensors are flattened to 6 components per integration point.
-            long long num_ips = vals.size() / 6; 
-            long long local_count = num_ips;
+            if (val < local_min) local_min = val;
+            if (val > local_max) local_max = val;
+            local_sum += val;
+            local_sum_sq += val * val;
+        }
 
-            for (long long i = 0; i < num_ips; ++i) {
-                // The volumetric swelling (tensor trace) :
-                const double val = vals[i * 6] + vals[i * 6 + 1] + vals[i * 6 + 2];
-                
-                if (val < local_min) local_min = val;
-                if (val > local_max) local_max = val;
-                local_sum += val;
-                local_sum_sq += val * val;
+        double g_min = local_min, g_max = local_max, g_sum = local_sum, g_sum_sq = local_sum_sq;
+        long long g_count = local_count;
+
+        #ifdef MFEM_USE_MPI
+        if (parallel) {
+            MPI_Comm comm = MPI_COMM_WORLD;
+            auto mech_fed_local = mechanics.getFiniteElementDiscretizationPointer();
+            auto& m_fes_local = mech_fed_local->getFiniteElementSpace<true>();
+            if (auto pfes = dynamic_cast<const mfem::ParFiniteElementSpace*>(&m_fes_local)) {
+                comm = pfes->GetComm();
             }
+            MPI_Allreduce(&local_min, &g_min, 1, MPI_DOUBLE, MPI_MIN, comm);
+            MPI_Allreduce(&local_max, &g_max, 1, MPI_DOUBLE, MPI_MAX, comm);
+            MPI_Allreduce(&local_sum, &g_sum, 1, MPI_DOUBLE, MPI_SUM, comm);
+            MPI_Allreduce(&local_sum_sq, &g_sum_sq, 1, MPI_DOUBLE, MPI_SUM, comm);
+            MPI_Allreduce(&local_count, &g_count, 1, MPI_LONG_LONG, MPI_SUM, comm);
+        }
+        #endif
 
-            double g_min = local_min, g_max = local_max, g_sum = local_sum, g_sum_sq = local_sum_sq;
-            long long g_count = local_count;
+        if (mfem_mgis::getMPIrank() == 0 && g_count > 0) {
+            double mean = g_sum / g_count;
+            double var = (g_sum_sq / g_count) - (mean * mean);
+            double std_dev = (var > 0.0) ? std::sqrt(var) : 0.0;
 
-            #ifdef MFEM_USE_MPI
-            if (parallel) {
-                MPI_Comm comm = MPI_COMM_WORLD;
-                auto mech_fed_local = mechanics.getFiniteElementDiscretizationPointer();
-                auto& m_fes_local = mech_fed_local->getFiniteElementSpace<true>();
-                
-                if (auto pfes = dynamic_cast<const mfem::ParFiniteElementSpace*>(&m_fes_local)) {
-                    comm = pfes->GetComm();
-                }
-                
-                MPI_Allreduce(&local_min, &g_min, 1, MPI_DOUBLE, MPI_MIN, comm);
-                MPI_Allreduce(&local_max, &g_max, 1, MPI_DOUBLE, MPI_MAX, comm);
-                MPI_Allreduce(&local_sum, &g_sum, 1, MPI_DOUBLE, MPI_SUM, comm);
-                MPI_Allreduce(&local_sum_sq, &g_sum_sq, 1, MPI_DOUBLE, MPI_SUM, comm);
-                MPI_Allreduce(&local_count, &g_count, 1, MPI_LONG_LONG, MPI_SUM, comm);
-            }
-            #endif
-
-            if (mfem_mgis::getMPIrank() == 0 && g_count > 0) {
-                double mean = g_sum / g_count;
-                double var = (g_sum_sq / g_count) - (mean * mean);
-                double std_dev = (var > 0.0) ? std::sqrt(var) : 0.0;
-
-                std::cout << " DEBUG STATS : SwellingExport (Fuel)" << std::endl;
-                std::cout << "   -> Global MIN : " << g_min << std::endl;
-                std::cout << "   -> Global MAX : " << g_max << std::endl;
-                std::cout << "   -> MEAN       : " << mean << std::endl;
-                std::cout << "   -> STD DEV    : " << std_dev << std::endl;
-                std::cout << "   -> (Int pts)  : " << g_count << std::endl;
-                std::cout << "------------------------------------------------" << std::endl;
-            }
+            std::cout << " DEBUG STATS : SolidSwelling (Fuel)" << std::endl;
+            std::cout << "   -> Global MIN : " << g_min << std::endl;
+            std::cout << "   -> Global MAX : " << g_max << std::endl;
+            std::cout << "   -> MEAN       : " << mean << std::endl;
+            std::cout << "   -> STD DEV    : " << std_dev << std::endl;
+            std::cout << "   -> (Int pts)  : " << g_count << std::endl;
+            std::cout << "------------------------------------------------" << std::endl;
         }
     }
 
@@ -229,7 +223,7 @@ inline void debug_print_physics_stats(
             double var = (g_sum_sq / g_count) - (mean * mean);
             double std_dev = (var > 0.0) ? std::sqrt(var) : 0.0;
 
-            std::cout << " DEBUG STATS : PowerDensity (Points d'Intégration)" << std::endl;
+            std::cout << " DEBUG STATS : PowerDensity" << std::endl;
             std::cout << "   -> Global MIN : " << g_min << std::endl;
             std::cout << "   -> Global MAX : " << g_max << std::endl;
             std::cout << "   -> MEAN       : " << mean << std::endl;
@@ -238,6 +232,6 @@ inline void debug_print_physics_stats(
             std::cout << "------------------------------------------------" << std::endl;
         }
     } else {
-        if (mfem_mgis::getMPIrank() == 0) std::cout << "[WARNING] PowerDensity non trouvée." << std::endl;
+        if (mfem_mgis::getMPIrank() == 0) std::cout << "[WARNING] PowerDensity not found." << std::endl;
     }
 }

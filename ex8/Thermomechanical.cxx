@@ -200,10 +200,9 @@ int main(int argc, char *argv[]) {
   ps.setCouplingScheme(ctx, c) | or_die;
 
   // declaring the simulation
-  int nsteps = 1;
   const auto times =
       construct<Simulation::TimesDescription>(
-          ctx, 0, p.duree, nsteps) |
+          ctx, 0, p.duree, p.nbsteps) |
       or_die;
   auto s = construct<Simulation>(ctx, ctx, ps, times) | or_die; // mgis::construct could be implemented such that it uses/transfers the first context we give
   // running the simulation

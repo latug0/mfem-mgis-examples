@@ -31,7 +31,8 @@ struct TestParameters {
   double Te = 315.0; 
   double source = 1e10;
   double water_pressure = 0.0;
-  double duree = 2e6;
+  double duree = 1e5;
+  int nbsteps = 1;
   double h_conv = 5e4;
 };
 

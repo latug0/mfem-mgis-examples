@@ -58,7 +58,6 @@ static void dumpPartialQuadratureFunction(
 int main(int argc, char** argv) {
 
   auto ctx = mgis::Context{};
-  //ctx.enableProfiling(true);
   //
   static constexpr const auto parallel = false;
   // options treatment
@@ -128,6 +127,5 @@ int main(int argc, char** argv) {
       static_cast<const mfem_mgis::Material&>(m1), "HydrostaticPressure");
   dumpPartialQuadratureFunction<parallel>(output, pr);
   //
-  //mfem_mgis::Profiler::OutputManager::printTimeTable(ctx);
   return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }

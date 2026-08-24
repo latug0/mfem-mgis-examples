@@ -6,8 +6,11 @@
 @ExternalStateVariable 'Temperature' 293.15;
 // Puissance volumique constante
 @ExternalStateVariable 'PowerDensity' {
-  0.0 : 1.0e10,
-  2.0e6 : 1.0e10
+  0.0   : 0.0,
+  1.0e4 : 1.0e9,
+  9.0e4 : 9.0e9,
+  1.0e5 : 1.0e10,
+  4.0e6 : 1.0e10
 };
 
 @Times {
@@ -37,18 +40,17 @@
 };
 
 
-// Vérification attendue :
-// - PowerDensity = 1e10 W/m3 pendant tout l'essai
-// - SolidSwelling doit croître linéairement avec le temps
+// Expected behavior:
+// - PowerDensity increases linearly from 0 to 1e10 W/m3 during the first 100,000 seconds, then remains constant.
+// - SolidSwelling follows a quadratic evolution initially (integral of the ramp), then grows linearly over time.
 //
-// Le modèle intègre :
+// Governing equation:
 //   dS = 6.2e-29 * Pow / (fe * 1.60218e-13) * dt
 //
-// avec :
-//   Pow = 1e10 W/m3
-//   fe  = 200 MeV
+// Total integrated energy at t = 2e6 s:
+//   E = (0.5 * 1e5 * 1e10) [ramp] + (1.9e6 * 1e10) [plateau] = 1.95e16 J/m3
 //
-// Valeur attendue à t = 2e6 s :
-//   S ~ 0.0387
-//
-// Le gonflement doit donc être ~0 au début et ~3.87% à la fin.
+// Expected value at t = 2e6 s:
+//   S ~ 0.0377 
+// 
+// Therefore, the swelling should progress from ~0% initially to ~3.77% at the end of the simulation.

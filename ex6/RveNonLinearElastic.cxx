@@ -160,9 +160,8 @@ void run_solve(mgis::Context& ctx, Problem& p, double start, double end)
 
 	// check status
 	if (statistics.status) {
-		ctx.log() << "INFO: FAILED\n";
-    	// ctx.abort(); Is private
-		std::abort();
+		mfem::out << "INFO: FAILED\n";
+		std::exit(EXIT_FAILURE);
   }
 }
 

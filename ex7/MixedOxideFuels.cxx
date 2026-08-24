@@ -118,7 +118,7 @@ void print_mesh_information(mgis::Context& ctx, Implementation& impl)
 {
 
   using mfem_mgis::Profiler::Utils::sum;
-  ctx.log() << "INFO: print_mesh_information\n";
+  mfem::out << "INFO: print_mesh_information\n";
 
   //getMesh
   auto mesh = impl.getFiniteElementSpace().GetMesh();
@@ -139,7 +139,7 @@ void print_mesh_information(mgis::Context& ctx, Implementation& impl)
   int64_t unknowns_local = fespace.GetTrueVSize();
   int64_t unknowns = sum(unknowns_local);
 
-  ctx.log() << "INFO: number of vertices -> " << numbers_of_vertices << '\n'
+  mfem::out << "INFO: number of vertices -> " << numbers_of_vertices << '\n'
             << "INFO: number of elements -> " << numbers_of_elements << '\n'
             << "INFO: element size -> " << h << '\n'
             << "INFO: Number of finite element unknowns: " << unknowns << '\n';
@@ -161,7 +161,7 @@ void print_memory_footprint(mgis::Context& ctx, std::string msg)
 {
   long mem = get_memory_checkpoint();
   double m = double(mem) * 1e-6; // conversion kb to Gb
-  ctx.log() << msg << " memory footprint: " << m << " GB\n";
+  mfem::out << msg << " memory footprint: " << m << " GB\n";
 }
 
 
@@ -274,9 +274,8 @@ void run_solve(mgis::Context& ctx, Problem& p, double start, double dt)
   auto statistics = p.solve(start, dt);
   // check status
   if (!statistics.status) {
-    ctx.log() << "INFO: FAILED\n";
-    // ctx.abort(); Is private
-    std::abort();
+    mfem::out() << "INFO: FAILED\n";
+    std::exit(EXIT_FAILURE);
   }
 }
 
@@ -337,7 +336,7 @@ int main(int argc, char* argv[])
   for(int i = 0 ; i < nStep ; i++)
   {
 
-    ctx.log() << "Solving: from " << i*dt << " to " << (i+1)*dt << '\n';
+    mfem::out << "Solving: from " << i*dt << " to " << (i+1)*dt << '\n';
     run_solve(ctx, problem, i * dt, dt);
     if(use_post_processing)  execute_post_processings(ctx, problem, i * dt, dt);
     problem.update();
