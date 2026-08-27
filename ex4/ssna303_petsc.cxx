@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
   {
     // loading the mesh and timer
     mfem_mgis::NonLinearEvolutionProblem problem(
-        {{"MeshFileName", mesh_file},
+      ctx,  {{"MeshFileName", mesh_file},
          {"FiniteElementFamily", "H1"},
          {"FiniteElementOrder", order},
          {"UnknownsSize", dim},
