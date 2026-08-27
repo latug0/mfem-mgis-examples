@@ -31,10 +31,10 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
-/* 
+/*
 Problem : Rve mox2 phases with a viscoplastic behavior law
 
-Parameters : 
+Parameters :
 
 start time = 0
 end time = 5s
@@ -42,14 +42,14 @@ number of time step = 40
 
 Strain Gradient matrix : val = 0.012
 [ - val / 2 ,         0 ,   0 ]
-[ 0         , - val / 2 ,   0 ] 
+[ 0         , - val / 2 ,   0 ]
 [ 0         ,          0, val ]
 
 Solver : HypreGMRES
 Preconditionner : HypreBoomerAMG
 
 Behavior law parameters : ImplicitNortonThreshold
-[ parameters       , matrix   , inclusions ]    
+[ parameters       , matrix   , inclusions ]
 [ Young Modulus    , 8.182e9  , 2*8.182e9  ];
 [ Poisson Ratio    , 0.364    , 0.364      ];
 [ Stress Threshold , 100.0e6  , 100.0e12   ];
@@ -62,7 +62,6 @@ Familly H1
 Order 2
 */
 
-
 // We need this class for test case sources
 struct TestParameters {
   const char* mesh_file = "mesh/inclusion.msh";
@@ -73,26 +72,29 @@ struct TestParameters {
   bool use_petsc = false;
   bool parallel = true;
   int refinement = 0;
-  int post_processing = 1; // default value : disabled
-  int verbosity_level = 0; // default value : lower level
+  int post_processing = 1;  // default value : disabled
+  int verbosity_level = 0;  // default value : lower level
 };
 
-void common_parameters(mfem::OptionsParser& args, TestParameters& p)
-{
+void common_parameters(mfem::OptionsParser& args, TestParameters& p) {
   args.AddOption(&p.mesh_file, "-m", "--mesh", "Mesh file to use.");
   args.AddOption(&p.library, "-l", "--library", "Material library.");
-  args.AddOption(&p.order, "-o", "--order", "Finite element order (polynomial degree).");
-  args.AddOption(&p.refinement, "-r", "--refinement", "refinement level of the mesh, default = 0");
-  args.AddOption(&p.post_processing, "-p", "--post-processing", "run post processing step");
-  args.AddOption(&p.verbosity_level, "-v", "--verbosity-level", "choose the verbosity level");
+  args.AddOption(&p.order, "-o", "--order",
+                 "Finite element order (polynomial degree).");
+  args.AddOption(&p.refinement, "-r", "--refinement",
+                 "refinement level of the mesh, default = 0");
+  args.AddOption(&p.post_processing, "-p", "--post-processing",
+                 "run post processing step");
+  args.AddOption(&p.verbosity_level, "-v", "--verbosity-level",
+                 "choose the verbosity level");
   args.AddOption(&p.petscsrc_file, "--use-petsc", "--use-petsc", " use petsc");
-  args.AddOption(&p.petscsrc_file, "--petsc-configuration-file", "--petsc-configuration-file", "petsc configuration file");
+  args.AddOption(&p.petscsrc_file, "--petsc-configuration-file",
+                 "--petsc-configuration-file", "petsc configuration file");
 
   args.Parse();
 
   if (!args.Good()) {
-    if (mfem_mgis::getMPIrank() == 0)
-      args.PrintUsage(std::cout);
+    if (mfem_mgis::getMPIrank() == 0) args.PrintUsage(std::cout);
     mfem_mgis::finalize();
     exit(0);
   }
@@ -100,38 +102,33 @@ void common_parameters(mfem::OptionsParser& args, TestParameters& p)
     if (mfem_mgis::getMPIrank() == 0)
       std::cout << "ERROR: Mesh file missing" << std::endl;
     args.PrintUsage(std::cout);
-    //mfem_mgis::abort(EXIT_FAILURE);
+    // mfem_mgis::abort(EXIT_FAILURE);
   }
-  if (mfem_mgis::getMPIrank() == 0)
-    args.PrintOptions(std::cout);
+  if (mfem_mgis::getMPIrank() == 0) args.PrintOptions(std::cout);
 
   mfem_mgis::declareDefaultOptions(args);
 
   std::cout << " USE_PETSc = " << mfem_mgis::usePETSc() << std::endl;
-  if (mfem_mgis::usePETSc())
-    mfem_mgis::setPETSc(p.petscsrc_file);
-
+  if (mfem_mgis::usePETSc()) mfem_mgis::setPETSc(p.petscsrc_file);
 }
 
-  template<typename Implementation>
-void print_mesh_information(mgis::Context& ctx, Implementation& impl)
-{
-
+template <typename Implementation>
+void print_mesh_information(mgis::Context& ctx, Implementation& impl) {
   using mfem_mgis::Profiler::Utils::sum;
   mfem::out << "INFO: print_mesh_information\n";
 
-  //getMesh
+  // getMesh
   auto mesh = impl.getFiniteElementSpace().GetMesh();
 
-  //get the number of vertices
+  // get the number of vertices
   int64_t numbers_of_vertices_local = mesh->GetNV();
-  int64_t  numbers_of_vertices = sum(numbers_of_vertices_local);
+  int64_t numbers_of_vertices = sum(numbers_of_vertices_local);
 
-  //get the number of elements
+  // get the number of elements
   int64_t numbers_of_elements_local = mesh->GetNE();
   int64_t numbers_of_elements = sum(numbers_of_elements_local);
 
-  //get the element size
+  // get the element size
   double h = mesh->GetElementSize(0);
 
   // get n dofs
@@ -145,8 +142,7 @@ void print_mesh_information(mgis::Context& ctx, Implementation& impl)
             << "INFO: Number of finite element unknowns: " << unknowns << '\n';
 }
 
-long get_memory_checkpoint()
-{
+long get_memory_checkpoint() {
   rusage obj;
   int who = 0;
   [[maybe_unused]] auto test = getrusage(who, &obj);
@@ -157,39 +153,33 @@ long get_memory_checkpoint()
   return res;
 };
 
-void print_memory_footprint(mgis::Context& ctx, std::string msg)
-{
+void print_memory_footprint(mgis::Context& ctx, std::string msg) {
   long mem = get_memory_checkpoint();
-  double m = double(mem) * 1e-6; // conversion kb to Gb
+  double m = double(mem) * 1e-6;  // conversion kb to Gb
   mfem::out << msg << " memory footprint: " << m << " GB\n";
 }
 
+template <typename Problem>
+void add_post_processings(mgis::Context& ctx, Problem& p, std::string msg) {
+  p.addPostProcessing(ctx, "ParaviewExportResults", {{"OutputFileName", msg}});
+  p.addPostProcessing(ctx, "MeanThermodynamicForces",
+                      {{"OutputFileName", "avgStress"}});
+}  // end timer add_postprocessing_and_outputs
 
-  template<typename Problem>
-void add_post_processings(mgis::Context& ctx, Problem& p, std::string msg)
-{
-  p.addPostProcessing(
-      ctx,
-      "ParaviewExportResults",
-      {{"OutputFileName", msg}}
-      );
-  p.addPostProcessing(
-      ctx,
-      "MeanThermodynamicForces",
-      {{"OutputFileName", "avgStress"}});
-} // end timer add_postprocessing_and_outputs
-
-  template<typename Problem>
-void execute_post_processings(mgis::Context& ctx, Problem& p, double start, double end)
-{
+template <typename Problem>
+void execute_post_processings(mgis::Context& ctx,
+                              Problem& p,
+                              double start,
+                              double end) {
   CatchTimeSection(ctx, "common::post_processing_step");
   p.executePostProcessings(ctx, start, end);
 }
 
-void setup_properties(mgis::Context& ctx, const TestParameters& p, mfem_mgis::PeriodicNonLinearEvolutionProblem& problem)
-{
+void setup_properties(mgis::Context& ctx,
+                      const TestParameters& p,
+                      mfem_mgis::PeriodicNonLinearEvolutionProblem& problem) {
   using namespace mgis::behaviour;
-  using real=mfem_mgis::real;
+  using real = mfem_mgis::real;
 
   CatchTimeSection(ctx, "set_mgis_stuff");
   problem.addBehaviourIntegrator("Mechanics", 1, p.library, p.behaviour);
@@ -197,8 +187,8 @@ void setup_properties(mgis::Context& ctx, const TestParameters& p, mfem_mgis::Pe
   // materials
   auto& m1 = problem.getMaterial(1);
   auto& m2 = problem.getMaterial(2);
-  auto set_properties = [](auto& m, const double yo, const double po, const double st, const double no) 
-  {
+  auto set_properties = [](auto& m, const double yo, const double po,
+                           const double st, const double no) {
     setMaterialProperty(m.s0, "YoungModulus", yo);
     setMaterialProperty(m.s0, "PoissonRatio", po);
     setMaterialProperty(m.s0, "StressThreshold", st);
@@ -211,8 +201,8 @@ void setup_properties(mgis::Context& ctx, const TestParameters& p, mfem_mgis::Pe
   };
 
   set_properties(m1, 8.182e9, 0.364, 100.0e6, 3.333333);
-  set_properties(m2, 2*8.182e9, 0.364, 100.0e12, 3.333333);
-  //set_properties(m2, 0. , 0., 0.364, 100.0e+12, 3.333333);
+  set_properties(m2, 2 * 8.182e9, 0.364, 100.0e12, 3.333333);
+  // set_properties(m2, 0. , 0., 0.364, 100.0e+12, 3.333333);
 
   //
   auto set_temperature = [](auto& m) {
@@ -222,7 +212,6 @@ void setup_properties(mgis::Context& ctx, const TestParameters& p, mfem_mgis::Pe
   set_temperature(m1);
   set_temperature(m2);
 
-
   // macroscopic strain
   std::vector<real> e(6, real{0});
   const int xx = 0;
@@ -231,46 +220,45 @@ void setup_properties(mgis::Context& ctx, const TestParameters& p, mfem_mgis::Pe
 
   /* bar{E} = e33 *(-1/2 E1 x E1 + (-1/2) * E2 x E2 + E3 x E3)*/
   const double eps = 0.012;
-  e[xx] = -0.5*eps;
-  e[yy] = -0.5*eps;
+  e[xx] = -0.5 * eps;
+  e[yy] = -0.5 * eps;
   e[zz] = eps;
-  problem.setMacroscopicGradientsEvolution([e](const double t) { 
-      auto ret = e;
-      for(auto& it : ret) it *= t;
-      return ret; 
-      });
-} 
+  problem.setMacroscopicGradientsEvolution([e](const double t) {
+    auto ret = e;
+    for (auto& it : ret) it *= t;
+    return ret;
+  });
+}
 
-
-  template<typename Problem>    
-static void setLinearSolver(mgis::Context& ctx, Problem& p,
-    const int verbosity = 0,
-    const mfem_mgis::real Tol = 1e-12
-    )
-{
+template <typename Problem>
+static void setLinearSolver(mgis::Context& ctx,
+                            Problem& p,
+                            const int verbosity = 0,
+                            const mfem_mgis::real Tol = 1e-12) {
   CatchTimeSection(ctx, "set_linear_solver");
   // pilote
-  constexpr int defaultMaxNumOfIt     = 5000;     // MaximumNumberOfIterations
-  constexpr int adjustMaxNumOfIt     = 500000;     // MaximumNumberOfIterations
+  constexpr int defaultMaxNumOfIt = 5000;   // MaximumNumberOfIterations
+  constexpr int adjustMaxNumOfIt = 500000;  // MaximumNumberOfIterations
   auto solverParameters = mfem_mgis::Parameters{};
   solverParameters.insert(mfem_mgis::Parameters{{"VerbosityLevel", verbosity}});
-  solverParameters.insert(mfem_mgis::Parameters{{"MaximumNumberOfIterations", defaultMaxNumOfIt}});
-  //solverParameters.insert(mfem_mgis::Parameters{{"AbsoluteTolerance", Tol}});
-  //solverParameters.insert(mfem_mgis::Parameters{{"RelativeTolerance", Tol}});
+  solverParameters.insert(
+      mfem_mgis::Parameters{{"MaximumNumberOfIterations", defaultMaxNumOfIt}});
+  // solverParameters.insert(mfem_mgis::Parameters{{"AbsoluteTolerance", Tol}});
+  // solverParameters.insert(mfem_mgis::Parameters{{"RelativeTolerance", Tol}});
   solverParameters.insert(mfem_mgis::Parameters{{"Tolerance", Tol}});
-
 
   // preconditionner hypreBoomerAMG
   auto options = mfem_mgis::Parameters{{"VerbosityLevel", verbosity}};
-  auto preconditionner = mfem_mgis::Parameters{{"Name","HypreBoomerAMG"}, {"Options",options}};
-  solverParameters.insert(mfem_mgis::Parameters{{"Preconditioner",preconditionner}});
+  auto preconditionner =
+      mfem_mgis::Parameters{{"Name", "HypreBoomerAMG"}, {"Options", options}};
+  solverParameters.insert(
+      mfem_mgis::Parameters{{"Preconditioner", preconditionner}});
   // solver HypreGMRES
   p.setLinearSolver(ctx, "HypreGMRES", solverParameters);
 }
 
-  template<typename Problem>
-void run_solve(mgis::Context& ctx, Problem& p, double start, double dt)
-{
+template <typename Problem>
+void run_solve(mgis::Context& ctx, Problem& p, double start, double dt) {
   CatchTimeSection(ctx, "Solve");
   // solving the problem
   auto statistics = p.solve(ctx, start, dt);
@@ -281,12 +269,11 @@ void run_solve(mgis::Context& ctx, Problem& p, double start, double dt)
   }
 }
 
-int main(int argc, char* argv[]) 
-{
+int main(int argc, char* argv[]) {
   auto ctx = mgis::Context{};
   ctx.enableProfiling(true);
 
-  // mpi initialization here 
+  // mpi initialization here
   mfem_mgis::initialize(argc, argv);
 
   // get parameters
@@ -301,15 +288,16 @@ int main(int argc, char* argv[])
   constexpr const auto dim = mfem_mgis::size_type{3};
 
   // creating the finite element workspace
-  auto fed = std::make_shared<mfem_mgis::FiniteElementDiscretization>(ctx,
-      mfem_mgis::Parameters{{"MeshFileName", p.mesh_file},
-      {"FiniteElementFamily", "H1"},
-      {"FiniteElementOrder", p.order},
-      //{"MeshReadMode", "Restart"},
-      {"MeshReadMode", "FromScratch"},
-      {"UnknownsSize", dim},
-      {"NumberOfUniformRefinements", p.parallel ? p.refinement : 0},
-      {"Parallel", p.parallel}});
+  auto fed = std::make_shared<mfem_mgis::FiniteElementDiscretization>(
+      ctx, mfem_mgis::Parameters{
+               {"MeshFileName", p.mesh_file},
+               {"FiniteElementFamily", "H1"},
+               {"FiniteElementOrder", p.order},
+               //{"MeshReadMode", "Restart"},
+               {"MeshReadMode", "FromScratch"},
+               {"UnknownsSize", dim},
+               {"NumberOfUniformRefinements", p.parallel ? p.refinement : 0},
+               {"Parallel", p.parallel}});
   mfem_mgis::PeriodicNonLinearEvolutionProblem problem(ctx, fed);
   print_mesh_information(ctx, problem.getImplementation<true>());
   print_memory_footprint(ctx, "After_problem:");
@@ -317,37 +305,34 @@ int main(int argc, char* argv[])
   // set problem
   setup_properties(ctx, p, problem);
 
-  if( !mfem_mgis::usePETSc())
-  {
+  if (!mfem_mgis::usePETSc()) {
     setLinearSolver(ctx, problem, p.verbosity_level);
   }
 
   problem.setSolverParameters({{"VerbosityLevel", 1},
-      {"RelativeTolerance", 1e-6},
-      {"AbsoluteTolerance", 0.},
-      {"MaximumNumberOfIterations", 6}});
+                               {"RelativeTolerance", 1e-6},
+                               {"AbsoluteTolerance", 0.},
+                               {"MaximumNumberOfIterations", 6}});
 
   // add post processings
-  if(use_post_processing) {
+  if (use_post_processing) {
     add_post_processings(ctx, problem, "OutputFile-mixed-oxide-fuels");
   }
 
   // main function here
-  int nStep=40;
-  double start=0;
-  double end=5;
-  const double dt = (end-start)/nStep;
-  for(int i = 0 ; i < nStep ; i++)
-  {
-
-    mfem::out << "Solving: from " << i*dt << " to " << (i+1)*dt << '\n';
+  int nStep = 40;
+  double start = 0;
+  double end = 5;
+  const double dt = (end - start) / nStep;
+  for (int i = 0; i < nStep; i++) {
+    mfem::out << "Solving: from " << i * dt << " to " << (i + 1) * dt << '\n';
     run_solve(ctx, problem, i * dt, dt);
-    if(use_post_processing)  execute_post_processings(ctx, problem, i * dt, dt);
+    if (use_post_processing) execute_post_processings(ctx, problem, i * dt, dt);
     problem.update();
   }
 
   // print and write timetable
   print_memory_footprint(ctx, "After Solving:");
   mfem_mgis::Profiler::OutputManager::printTimeTable(ctx);
-  return(EXIT_SUCCESS);
+  return (EXIT_SUCCESS);
 }

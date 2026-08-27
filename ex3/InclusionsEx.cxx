@@ -158,12 +158,9 @@ TestParameters parseCommandLineOptions(int& argc, char* argv[]) {
   args.AddOption(&p.library, "-l", "--library", "Material library.");
   args.AddOption(&p.order, "-o", "--order",
                  "Finite element order (polynomial degree).");
-  args.AddOption(&p.xmax, "-xm", "--xmax",
-                 "Corner, coordinate x direction.");
-  args.AddOption(&p.ymax, "-ym", "--ymax",
-                 "Corner coordinate y direction.");
-  args.AddOption(&p.zmax, "-zm", "--zmax",
-                 "Corner coordinate z direction.");
+  args.AddOption(&p.xmax, "-xm", "--xmax", "Corner, coordinate x direction.");
+  args.AddOption(&p.ymax, "-ym", "--ymax", "Corner coordinate y direction.");
+  args.AddOption(&p.zmax, "-zm", "--zmax", "Corner coordinate z direction.");
   args.AddOption(&p.tcase, "-t", "--test-case",
                  "identifier of the case : Exx->0, Eyy->1, Ezz->2, Exy->3, "
                  "Exz->4, Eyz->5");
@@ -172,8 +169,7 @@ TestParameters parseCommandLineOptions(int& argc, char* argv[]) {
       "identifier of the linear solver: 0 -> GMRES, 1 -> CG, 2 -> UMFPack");
   args.Parse();
   if (!args.Good()) {
-    if (mfem_mgis::getMPIrank() == 0)
-      args.PrintUsage(std::cout);
+    if (mfem_mgis::getMPIrank() == 0) args.PrintUsage(std::cout);
     mfem_mgis::finalize();
     exit(0);
   }
@@ -183,8 +179,7 @@ TestParameters parseCommandLineOptions(int& argc, char* argv[]) {
     args.PrintUsage(std::cout);
     mfem_mgis::abort(EXIT_FAILURE);
   }
-  if (mfem_mgis::getMPIrank() == 0)
-    args.PrintOptions(std::cout);
+  if (mfem_mgis::getMPIrank() == 0) args.PrintOptions(std::cout);
   if ((p.tcase < 0) || (p.tcase > 5)) {
     std::cerr << "Invalid test case\n";
     mfem_mgis::abort(EXIT_FAILURE);
@@ -196,7 +191,8 @@ int executeMFEMMGISTest(mgis::Context& ctx, const TestParameters& p) {
   constexpr const auto dim = mfem_mgis::size_type{3};
   // creating the finite element workspace
 
-  auto fed = std::make_shared<mfem_mgis::FiniteElementDiscretization>(ctx,
+  auto fed = std::make_shared<mfem_mgis::FiniteElementDiscretization>(
+      ctx,
       mfem_mgis::Parameters{{"MeshFileName", p.mesh_file},
                             {"FiniteElementFamily", "H1"},
                             {"FiniteElementOrder", p.order},
@@ -206,17 +202,17 @@ int executeMFEMMGISTest(mgis::Context& ctx, const TestParameters& p) {
 
   {
     if (mfem_mgis::getMPIrank() == 0)
-      std::cout << "Number of processes: " << mfem_mgis::getMPIsize() << std::endl;
+      std::cout << "Number of processes: " << mfem_mgis::getMPIsize()
+                << std::endl;
     // building the non linear problem
 
-    std::vector<mfem_mgis::real> corner1({0.,0.,0.});
+    std::vector<mfem_mgis::real> corner1({0., 0., 0.});
     std::vector<mfem_mgis::real> corner2({p.xmax, p.ymax, p.zmax});
-    mfem_mgis::PeriodicNonLinearEvolutionProblem problem(ctx, fed, corner1, corner2);
-
+    mfem_mgis::PeriodicNonLinearEvolutionProblem problem(ctx, fed, corner1,
+                                                         corner2);
 
     //    const mfem::Mesh &m = fed->getMesh<true>();
 
-    
     problem.addBehaviourIntegrator("Mechanics", 1, p.library, "Elasticity");
     problem.addBehaviourIntegrator("Mechanics", 2, p.library, "Elasticity");
     // materials
@@ -230,8 +226,8 @@ int executeMFEMMGISTest(mgis::Context& ctx, const TestParameters& p) {
       mgis::behaviour::setMaterialProperty(m.s1, "ShearModulus", mu);
     };
 
-    std::array<mfem_mgis::real,2> lambda({100, 200});
-    std::array<mfem_mgis::real,2>     mu({75 , 150});
+    std::array<mfem_mgis::real, 2> lambda({100, 200});
+    std::array<mfem_mgis::real, 2> mu({75, 150});
     set_properties(m1, lambda[0], mu[0]);
     set_properties(m2, lambda[1], mu[1]);
     //
@@ -265,9 +261,9 @@ int executeMFEMMGISTest(mgis::Context& ctx, const TestParameters& p) {
     problem.executePostProcessings(ctx, 0, 1);
     //
     if (!checkSolution(problem, p.tcase)) {
-      return(EXIT_FAILURE);
+      return (EXIT_FAILURE);
     }
-    return(EXIT_SUCCESS);
+    return (EXIT_SUCCESS);
     mfem_mgis::Profiler::OutputManager::printTimeTable(ctx);
   }
 }
@@ -276,5 +272,5 @@ int main(int argc, char* argv[]) {
   auto ctx = mgis::Context{};
   mfem_mgis::initialize(argc, argv);
   const auto p = parseCommandLineOptions(argc, argv);
-  return(executeMFEMMGISTest(ctx, p));
+  return (executeMFEMMGISTest(ctx, p));
 }

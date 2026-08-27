@@ -56,7 +56,6 @@ static void dumpPartialQuadratureFunction(
  * analytical profile.
  */
 int main(int argc, char** argv) {
-
   auto ctx = mgis::Context{};
   //
   static constexpr const auto parallel = false;
@@ -64,16 +63,16 @@ int main(int argc, char** argv) {
   mfem_mgis::initialize(argc, argv);
   auto success = true;
   // building the non linear problem
-  mfem_mgis::NonLinearEvolutionProblem problem(ctx, 
-      {{"MeshFileName", "./cube.msh"},
-       {"Materials", mfem_mgis::Parameters{{"plate", 1}}},
-       {"Boundaries", mfem_mgis::Parameters{{"left", 2}, {"right", 4}}},
-       {"FiniteElementFamily", "H1"},
-       {"FiniteElementOrder", 2},
-       {"UnknownsSize", 2},
-       {"NumberOfUniformRefinements", parallel ? 2 : 0},
-       {"Hypothesis", "PlaneStrain"},
-       {"Parallel", parallel}});
+  mfem_mgis::NonLinearEvolutionProblem problem(
+      ctx, {{"MeshFileName", "./cube.msh"},
+            {"Materials", mfem_mgis::Parameters{{"plate", 1}}},
+            {"Boundaries", mfem_mgis::Parameters{{"left", 2}, {"right", 4}}},
+            {"FiniteElementFamily", "H1"},
+            {"FiniteElementOrder", 2},
+            {"UnknownsSize", 2},
+            {"NumberOfUniformRefinements", parallel ? 2 : 0},
+            {"Hypothesis", "PlaneStrain"},
+            {"Parallel", parallel}});
   // materials
   problem.addBehaviourIntegrator("Mechanics", "plate", "./src/libBehaviour.so",
                                  "Elasticity");

@@ -14,23 +14,23 @@
 
 #include "MFEMMGIS/Parameter.hxx"
 
-#include "Setup.hxx" 
+#include "Setup.hxx"
 
-inline bool contains(const std::vector<std::string>& list, const std::string& value) {
-    return std::find(list.begin(), list.end(), value) != list.end();
+inline bool contains(const std::vector<std::string>& list,
+                     const std::string& value) {
+  return std::find(list.begin(), list.end(), value) != list.end();
 }
- 
-inline const std::vector<std::string> direct_solvers = {
-  "MUMPSSolver", "UMFPackSolver"
-};
+
+inline const std::vector<std::string> direct_solvers = {"MUMPSSolver",
+                                                        "UMFPackSolver"};
 
 inline const std::vector<std::string> iterative_solvers = {
-  "CGSolver", "GMRESSolver", "BiCGSTABSolver", "MINRESSolver", "SLISolver", "HyprePCG", "HypreGMRES", "HypreFGMRES"
-};
+    "CGSolver",  "GMRESSolver", "BiCGSTABSolver", "MINRESSolver",
+    "SLISolver", "HyprePCG",    "HypreGMRES",     "HypreFGMRES"};
 
 inline const std::vector<std::string> preconditionners = {
-  "HypreBoomerAMG", "HypreDiagScale", "HypreEuclid", "HypreILU", "HypreParaSails"
-};
+    "HypreBoomerAMG", "HypreDiagScale", "HypreEuclid", "HypreILU",
+    "HypreParaSails"};
 
 inline long get_memory_checkpoint() {
   rusage obj;
@@ -43,14 +43,14 @@ inline long get_memory_checkpoint() {
 
 inline void print_memory_footprint(std::string msg) {
   long mem = get_memory_checkpoint();
-  double m = double(mem) * 1e-6; 
+  double m = double(mem) * 1e-6;
   mfem_mgis::Profiler::Utils::Message(msg, " memory footprint: ", m, " GB");
 }
 
-template<typename Implementation>
+template <typename Implementation>
 inline void print_mesh_information(Implementation& impl) {
-  using mfem_mgis::Profiler::Utils::sum;
   using mfem_mgis::Profiler::Utils::Message;
+  using mfem_mgis::Profiler::Utils::sum;
   Message("INFO: print_mesh_information");
   auto mesh = impl.getFiniteElementSpace().GetMesh();
   int64_t numbers_of_vertices_local = mesh->GetNV();
@@ -64,86 +64,82 @@ inline void print_mesh_information(Implementation& impl) {
   Message("INFO: number of vertices -> ", numbers_of_vertices);
   Message("INFO: number of elements -> ", numbers_of_elements);
   Message("INFO: element size -> ", h);
-  Message("INFO: Number of finite element unknowns: " , unknowns);
+  Message("INFO: Number of finite element unknowns: ", unknowns);
 }
 
-template<typename Problem>
+template <typename Problem>
 inline void add_post_processings(Problem& p, std::string msg) {
-  p.addPostProcessing("ParaviewExportResults", {
-      {"OutputDirectory", "Resultats"},
-      {"OutputFileName", msg}
-  });
+  p.addPostProcessing(
+      "ParaviewExportResults",
+      {{"OutputDirectory", "Resultats"}, {"OutputFileName", msg}});
 }
 
-template<typename Problem>
-inline void execute_post_processings(mgis::Context& ctx, Problem& p, double start, double end) {
+template <typename Problem>
+inline void execute_post_processings(mgis::Context& ctx,
+                                     Problem& p,
+                                     double start,
+                                     double end) {
   CatchTimeSection(ctx, "common::post_processing_step");
   p.executePostProcessings(start, end);
 }
 
 template <typename Problem>
 inline static void setLinearSolver(mgis::Context& ctx,
-                            Problem &p, 
-                            const std::string &physics_type, 
-                            const TestParameters &param, 
-                            const int verbosity = 0,
-                            const mfem_mgis::real Tol = 1e-9) {
+                                   Problem& p,
+                                   const std::string& physics_type,
+                                   const TestParameters& param,
+                                   const int verbosity = 0,
+                                   const mfem_mgis::real Tol = 1e-9) {
   CatchTimeSection(ctx, "set_linear_solver");
-  
+
   std::string solver;
   std::string precond;
 
   if (physics_type == "heat_transfer") {
     solver = param.solver_thermo;
     precond = param.precond_thermo;
-  } 
-  else if (physics_type == "mechanics") {
+  } else if (physics_type == "mechanics") {
     solver = param.solver_meca;
     precond = param.precond_meca;
-  } 
-  else {
-    std::cerr << "Erreur : Physique inconnue (" << physics_type << ")" << std::endl;
+  } else {
+    std::cerr << "Erreur : Physique inconnue (" << physics_type << ")"
+              << std::endl;
     std::abort();
   }
 
   if (contains(iterative_solvers, solver)) {
-  constexpr int defaultMaxNumOfIt = 10e3;
+    constexpr int defaultMaxNumOfIt = 10e3;
 
-  auto solverParameters = mfem_mgis::Parameters{};
-  solverParameters.insert(
-      mfem_mgis::Parameters{{"VerbosityLevel", verbosity}});
-  solverParameters.insert(
-      mfem_mgis::Parameters{{"MaximumNumberOfIterations", defaultMaxNumOfIt}});
-
-  if (solver == "MINRESSolver" ||
-      solver == "BiCGSTABSolver" ||
-      solver == "CGSolver" ||
-      solver == "GMRESSolver") {
+    auto solverParameters = mfem_mgis::Parameters{};
     solverParameters.insert(
-        mfem_mgis::Parameters{{"AbsoluteTolerance", Tol}});
-  } else {
-    solverParameters.insert(
-        mfem_mgis::Parameters{{"Tolerance", Tol}});
-  }
+        mfem_mgis::Parameters{{"VerbosityLevel", verbosity}});
+    solverParameters.insert(mfem_mgis::Parameters{
+        {"MaximumNumberOfIterations", defaultMaxNumOfIt}});
 
-  if (!precond.empty()) {
-    if (!contains(preconditionners, precond)) {
-      std::cerr << "Invalid preconditioner: " << precond << std::endl;
-      std::abort();
+    if (solver == "MINRESSolver" || solver == "BiCGSTABSolver" ||
+        solver == "CGSolver" || solver == "GMRESSolver") {
+      solverParameters.insert(
+          mfem_mgis::Parameters{{"AbsoluteTolerance", Tol}});
+    } else {
+      solverParameters.insert(mfem_mgis::Parameters{{"Tolerance", Tol}});
     }
 
-    auto options = mfem_mgis::Parameters{
-        {"VerbosityLevel", verbosity}};
+    if (!precond.empty()) {
+      if (!contains(preconditionners, precond)) {
+        std::cerr << "Invalid preconditioner: " << precond << std::endl;
+        std::abort();
+      }
 
-    auto preconditioner = mfem_mgis::Parameters{
-        {"Name", precond},
-        {"Options", options}};
+      auto options = mfem_mgis::Parameters{{"VerbosityLevel", verbosity}};
 
-    solverParameters.insert(
-        mfem_mgis::Parameters{{"Preconditioner", preconditioner}});
-  }
+      auto preconditioner =
+          mfem_mgis::Parameters{{"Name", precond}, {"Options", options}};
 
-  p.setLinearSolver(solver, solverParameters);
+      solverParameters.insert(
+          mfem_mgis::Parameters{{"Preconditioner", preconditioner}});
+    }
+
+    p.setLinearSolver(solver, solverParameters);
   }
 
   else {

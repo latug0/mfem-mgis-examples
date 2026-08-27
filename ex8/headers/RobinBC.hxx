@@ -1,8 +1,7 @@
 /*!
  * \file   include/MFEMMGIS/RobinBC.hxx
- * \brief  Definition of the Robin boundary condition and its nonlinear form integrator.
- * \author Julien Rigal
- * \date   22/07/2026
+ * \brief  Definition of the Robin boundary condition and its nonlinear form
+ * integrator. \author Julien Rigal \date   22/07/2026
  */
 
 #ifndef MFEM_MGIS_ROBIN_BC_HXX
@@ -24,7 +23,7 @@ namespace mfem_mgis {
     //! \brief ambient temperature
     double T_inf;
     //! \brief optional displacement field to account for geometry changes
-    mfem::GridFunction* u_disp;
+    mfem::GridFunction *u_disp;
 
     /*!
      * \brief constructor
@@ -32,8 +31,10 @@ namespace mfem_mgis {
      * \param[in] T_inf_: ambient temperature
      * \param[in] u_disp_: optional displacement field
      */
-    RobinNonlinearFormIntegrator(double h_, double T_inf_, mfem::GridFunction* u_disp_);
-    
+    RobinNonlinearFormIntegrator(double h_,
+                                 double T_inf_,
+                                 mfem::GridFunction *u_disp_);
+
     /*!
      * \brief Assemble the element vector (residual)
      * \param[in] e: finite element
@@ -57,7 +58,7 @@ namespace mfem_mgis {
                              mfem::ElementTransformation &tr,
                              const mfem::Vector &elfun,
                              mfem::DenseMatrix &K) override;
-  }; // end of struct RobinNonlinearFormIntegrator
+  };  // end of struct RobinNonlinearFormIntegrator
 
   /*!
    * \brief class used to simplify the definition of Robin boundary conditions.
@@ -72,26 +73,46 @@ namespace mfem_mgis {
      * \param[in] T_inf: ambient temperature
      * \param[in] u_disp: optional displacement field
      */
-    RobinBC(std::shared_ptr<mfem_mgis::FiniteElementDiscretization> fed, int tag, double h, double T_inf, mfem::GridFunction* u_disp);
-    
+    RobinBC(std::shared_ptr<mfem_mgis::FiniteElementDiscretization> fed,
+            int tag,
+            double h,
+            double T_inf,
+            mfem::GridFunction *u_disp);
+
     //! \brief destructor
     ~RobinBC() override;
 
     void setup(const real, const real) override {}
 
-    bool addNonlinearFormIntegrator(Context &, NonlinearForm<false> &, const mfem::Vector &) noexcept override;
-    bool addNonlinearFormIntegrator(Context &, NonlinearForm<true> &, const mfem::Vector &) noexcept override;
+    bool addNonlinearFormIntegrator(Context &,
+                                    NonlinearForm<false> &,
+                                    const mfem::Vector &) noexcept override;
+    bool addNonlinearFormIntegrator(Context &,
+                                    NonlinearForm<true> &,
+                                    const mfem::Vector &) noexcept override;
 
-    bool addLinearFormIntegrators(Context &, BilinearForm<false> &, LinearForm<false> &,
-                                  const mfem::Vector &, const real, const real) noexcept override { return true; }
-    bool addLinearFormIntegrators(Context &, BilinearForm<true> &, LinearForm<true> &,
-                                  const mfem::Vector &, const real, const real) noexcept override { return true; }
+    bool addLinearFormIntegrators(Context &,
+                                  BilinearForm<false> &,
+                                  LinearForm<false> &,
+                                  const mfem::Vector &,
+                                  const real,
+                                  const real) noexcept override {
+      return true;
+    }
+    bool addLinearFormIntegrators(Context &,
+                                  BilinearForm<true> &,
+                                  LinearForm<true> &,
+                                  const mfem::Vector &,
+                                  const real,
+                                  const real) noexcept override {
+      return true;
+    }
 
    private:
     mfem::Array<int> bdr_marker;
-    RobinNonlinearFormIntegrator* nfi;
-  }; // end of class RobinBC
+    RobinNonlinearFormIntegrator *nfi;
+  };  // end of class RobinBC
 
-} // end of namespace mfem_mgis
+}  // end of namespace mfem_mgis
 
 #endif /* MFEM_MGIS_ROBIN_BC_HXX */

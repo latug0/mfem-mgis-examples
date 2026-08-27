@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
 
   auto *m = new mfem::Mesh(mfem::Mesh::MakeCartesian3D(
       nx, 2, 2, mfem::Element::HEXAHEDRON, L, 1.0, 1.0));
-  
+
   for (int i = 0; i < m->GetNBE(); ++i) {
     mfem::ElementTransformation *tr = m->GetBdrElementTransformation(i);
     mfem::IntegrationPoint ip;
@@ -92,7 +92,6 @@ int main(int argc, char **argv) {
       std::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
           fed, TAG_LEFT, 0, [T0](const auto) noexcept { return T0; }));
 
-
   pb.addBoundaryCondition(
       std::make_unique<mfem_mgis::RobinBC>(fed, TAG_RIGHT, h, T_inf, nullptr));
 
@@ -102,8 +101,7 @@ int main(int argc, char **argv) {
                           {"AbsoluteTolerance", 0},
                           {"MaximumNumberOfIterations", 100}});
 
-  if (!pb.solve(0.0, 1.0))
-    mfem_mgis::abort("Non-convergence");
+  if (!pb.solve(0.0, 1.0)) mfem_mgis::abort("Non-convergence");
 
   auto &fes = fed->getFiniteElementSpace<false>();
   mfem::GridFunction T_exact(&fes);
@@ -125,8 +123,7 @@ int main(int argc, char **argv) {
   double TL_num = 0.0;
   int n = 0;
   for (int i = 0; i < fes.GetNBE(); ++i) {
-    if (mesh->GetBdrAttribute(i) != TAG_RIGHT)
-      continue;
+    if (mesh->GetBdrAttribute(i) != TAG_RIGHT) continue;
     mfem::Array<int> vdofs;
     fes.GetBdrElementVDofs(i, vdofs);
     for (int j = 0; j < vdofs.Size(); ++j) {
@@ -137,7 +134,8 @@ int main(int argc, char **argv) {
   TL_num /= n;
 
   std::cout << "Num : T(L) = " << TL_num << " K\n";
-  std::cout << "Erreur relative     = " << std::abs(TL_num - TL_ref) / TL_ref << " \n";
+  std::cout << "Erreur relative     = " << std::abs(TL_num - TL_ref) / TL_ref
+            << " \n";
 
   return EXIT_SUCCESS;
 }

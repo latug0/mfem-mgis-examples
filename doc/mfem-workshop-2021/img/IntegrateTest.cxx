@@ -1,8 +1,9 @@
 const auto b = load("libBehaviour.so", "Norton", Hypothesis::TRIDIMENSIONAL);
 auto d = BehaviourData{b};
-const auto o = getVariableOffset(b.isvs, "EquivalentViscoplasticStrain", b.hypothesis);
+const auto o =
+    getVariableOffset(b.isvs, "EquivalentViscoplasticStrain", b.hypothesis);
 const auto de = 5.e-5;
-d.dt = 180;  
+d.dt = 180;
 // initialize the states
 setExternalStateVariable(d.s1, "Temperature", 293.15);
 // copy d.s1 in d.s0

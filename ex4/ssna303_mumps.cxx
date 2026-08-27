@@ -29,12 +29,11 @@
 #include "MFEMMGIS/NonLinearEvolutionProblemImplementation.hxx"
 #include "MFEMMGIS/LinearSolverFactory.hxx"
 
-#define PRINT_DEBUG (std::cout <<  __FILE__ << ":" <<  __LINE__ << std::endl)
+#define PRINT_DEBUG (std::cout << __FILE__ << ":" << __LINE__ << std::endl)
 
 int main(int argc, char** argv) {
-
   auto ctx = mgis::Context{};
-  //ctx.enableProfiling(true);
+  // ctx.enableProfiling(true);
   mfem_mgis::initialize(argc, argv);
   constexpr const auto dim = mfem_mgis::size_type{3};
   const char* mesh_file = "ssna303_3d.msh";
@@ -61,14 +60,14 @@ int main(int argc, char** argv) {
   args.PrintOptions(std::cout);
 
   // loading the mesh
-  mfem_mgis::NonLinearEvolutionProblem problem(ctx,
-      {{"MeshFileName", mesh_file},
-       {"FiniteElementFamily", "H1"},
-       {"FiniteElementOrder", order},
-       {"UnknownsSize", dim},
-       {"Hypothesis", "Tridimensional"},
-       {"Parallel", true},
-       {"NumberOfUniformRefinements", parallel ? ref_para : ref_seq}});
+  mfem_mgis::NonLinearEvolutionProblem problem(
+      ctx, {{"MeshFileName", mesh_file},
+            {"FiniteElementFamily", "H1"},
+            {"FiniteElementOrder", order},
+            {"UnknownsSize", dim},
+            {"Hypothesis", "Tridimensional"},
+            {"Parallel", true},
+            {"NumberOfUniformRefinements", parallel ? ref_para : ref_seq}});
 
   // 2 1 "Volume"
   problem.addBehaviourIntegrator("Mechanics", 1, library, behaviour);
@@ -90,7 +89,7 @@ int main(int argc, char** argv) {
   problem.addBoundaryCondition(
       std::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
           problem.getFiniteElementDiscretizationPointer(), 5, 2));
-  // 2 UpperBoundary 
+  // 2 UpperBoundary
   problem.addBoundaryCondition(
       std::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
           problem.getFiniteElementDiscretizationPointer(), 2, 1,
@@ -109,17 +108,18 @@ int main(int argc, char** argv) {
       std::cout << "MUMPS" << std::endl;
       problem.setLinearSolver("MUMPSSolver", {});
     } else {
-        std::cout << "UMFSolver" << std::endl;
-        problem.setLinearSolver("UMFPackSolver", {});
+      std::cout << "UMFSolver" << std::endl;
+      problem.setLinearSolver("UMFPackSolver", {});
     }
   }
 
   // vtk export
-  problem.addPostProcessing("ParaviewExportResults",
-                            {{"OutputFileName", std::string("ssna303-displacements")}});
+  problem.addPostProcessing(
+      "ParaviewExportResults",
+      {{"OutputFileName", std::string("ssna303-displacements")}});
   problem.addPostProcessing("ComputeResultantForceOnBoundary",
                             {{"Boundary", 2}, {"OutputFileName", "force.txt"}});
-  
+
   // loop over time step
   const auto nsteps = mfem_mgis::size_type{2};
   const auto dt = mfem_mgis::real{0.001};
@@ -132,9 +132,9 @@ int main(int argc, char** argv) {
     auto ct = t;
     auto dt2 = dt;
     auto nsteps = mfem_mgis::size_type{1};
-    auto niter  = mfem_mgis::size_type{0};
+    auto niter = mfem_mgis::size_type{0};
     while (nsteps != 0) {
-     bool converged = problem.solve(ct, dt2);
+      bool converged = problem.solve(ct, dt2);
       if (converged) {
         --nsteps;
         ct += dt2;
@@ -155,6 +155,6 @@ int main(int argc, char** argv) {
     ++iteration;
     std::cout << '\n';
   }
-  //mfem_mgis::Profiler::OutputManager::printTimeTable(ctx);
+  // mfem_mgis::Profiler::OutputManager::printTimeTable(ctx);
   return EXIT_SUCCESS;
 }

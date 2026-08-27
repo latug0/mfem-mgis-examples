@@ -8,23 +8,29 @@
 #include <test-cases/check_manta_rev_elastic.hxx>
 #include <test-cases/fissuration.hxx>
 
-
-
-template<typename Solver, typename Pc>
-std::function<void(const TestParameters&, const bool, const Solver, const Pc, gather_information&)> get_kernel(int a_case)
-{
-	switch(a_case)
-	{
-		case 1: return cas_cible_1::kernel<Solver,Pc>;
-		case 2: return fissuration::kernel<Solver,Pc>;
-		case 3: return check_manta_rev_elastic::kernel<Solver,Pc>;
-		default: return cas_cible_1::kernel<Solver,Pc>;
-	}
+template <typename Solver, typename Pc>
+std::function<void(const TestParameters&,
+                   const bool,
+                   const Solver,
+                   const Pc,
+                   gather_information&)>
+get_kernel(int a_case) {
+  switch (a_case) {
+    case 1:
+      return cas_cible_1::kernel<Solver, Pc>;
+    case 2:
+      return fissuration::kernel<Solver, Pc>;
+    case 3:
+      return check_manta_rev_elastic::kernel<Solver, Pc>;
+    default:
+      return cas_cible_1::kernel<Solver, Pc>;
+  }
 }
 
 std::vector<solver_name> get_solvers(int a_case);
 std::vector<petsc_ksp_type> get_solvers_with_petsc(int a_case);
 std::vector<precond_name> get_pc(int a_case);
 std::vector<petsc_pc_type> get_pc_with_petsc(int a_case);
-std::function<bool(solver_name,precond_name,int)> get_match(int a_case);
-std::function<bool(petsc_ksp_type,petsc_pc_type,int)> get_match_with_petsc(int a_case);
+std::function<bool(solver_name, precond_name, int)> get_match(int a_case);
+std::function<bool(petsc_ksp_type, petsc_pc_type, int)> get_match_with_petsc(
+    int a_case);

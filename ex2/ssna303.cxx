@@ -41,7 +41,8 @@ int main(int argc, char** argv) {
   }
   args.PrintOptions(std::cout);
   // the non linear problem
-  mfem_mgis::NonLinearEvolutionProblem problem(ctx, {{"MeshFileName", mesh_file},
+  mfem_mgis::NonLinearEvolutionProblem problem(ctx,
+                                               {{"MeshFileName", mesh_file},
                                                 {"FiniteElementFamily", "H1"},
                                                 {"FiniteElementOrder", order},
                                                 {"UnknownsSize", dim},
@@ -65,8 +66,8 @@ int main(int argc, char** argv) {
       {{"Boundary", "UpperBoundary"},
        {"Component", 1},
        {"LoadingEvolution", [](const auto t) {
-            const auto u = 6e-3 * t;
-            return u;
+          const auto u = 6e-3 * t;
+          return u;
         }}});
   // solving the problem
   if (!mfem_mgis::usePETSc()) {
@@ -74,7 +75,7 @@ int main(int argc, char** argv) {
                                  {"RelativeTolerance", 1e-6},
                                  {"AbsoluteTolerance", 0.},
                                  {"MaximumNumberOfIterations", 10}});
-  // selection of the linear solver
+    // selection of the linear solver
     if (parallel) {
       problem.setLinearSolver("MUMPSSolver", {});
     } else {
@@ -87,9 +88,9 @@ int main(int argc, char** argv) {
 
   problem.addPostProcessing("ParaviewExportResults",
                             {{"OutputFileName", "ssna303-displacements"}});
-  problem.addPostProcessing("ParaviewExportIntegrationPointResultsAtNodes",
-                            {{{"Results", "Stress"},
-                              {"OutputFileName", "ssna303-stress"}}});
+  problem.addPostProcessing(
+      "ParaviewExportIntegrationPointResultsAtNodes",
+      {{{"Results", "Stress"}, {"OutputFileName", "ssna303-stress"}}});
   problem.addPostProcessing(
       "ParaviewExportIntegrationPointResultsAtNodes",
       {{{"Results", "EquivalentPlasticStrain"},

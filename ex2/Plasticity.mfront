@@ -13,7 +13,6 @@
   "\]"
 }
 
-//@StrainMeasure Hencky;
 @StateVariable StrainStensor eel;
 eel.setGlossaryName("ElasticStrain");
 @StateVariable strain p;
