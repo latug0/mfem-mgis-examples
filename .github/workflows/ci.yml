@@ -27,8 +27,6 @@ jobs:
           git clone https://github.com/rprat-pro/spack-repo-mfem-mgis.git
           spack repo add spack-repo-mfem-mgis
           spack install mfem-mgis
-      - name: Install tbb
-        run: sudo apt-get install libtbb-dev              
       - name: Configure Test Cases
         shell: spack-sh {0}
         run: |

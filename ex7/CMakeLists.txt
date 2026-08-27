@@ -21,9 +21,6 @@ else(CMAKE_CONFIGURATION_TYPES)
    endif(NOT TARGET check)
 endif(CMAKE_CONFIGURATION_TYPES)
 
-# Require TBB
-find_package(TBB)
-
 # Require MFEM-MGIS
 if (NOT TARGET mfem-mgis::MFEMMGIS)
   find_package(MFEMMGIS REQUIRED)
@@ -51,7 +48,7 @@ add_custom_target(generate-libBehaviour-ex7 ALL
   DEPENDS "src/libBehaviour.so")
 
 add_executable(mox2 MixedOxideFuels.cxx)
-target_link_libraries(mox2 mfem-mgis::MFEMMGIS TBB::tbb)
+target_link_libraries(mox2 mfem-mgis::MFEMMGIS)
 target_include_directories(mox2
   SYSTEM
   PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"   
