@@ -4,66 +4,98 @@
 #include <memory>
 #include <functional>
 
-//#include "MFEMMGIS/Context.hxx"
+// #include "MFEMMGIS/Context.hxx"
 #include "MFEMMGIS/NonLinearEvolutionProblem.hxx"
 #include "MFEMMGIS/PointWiseModel.hxx"
 #include "MFEMMGIS/Profiler.hxx"
 #include "MGIS/Behaviour/MaterialStateManager.hxx"
 
 struct TestParameters {
-  const char *mesh_file = "../mesh/assemblage_hexa.msh";
-  const char *behaviour = "ConductionThermique";
-  const char *libraryALFENI = "src/libALFENI-generic.so";
-  const char *libraryU3SI2 = "src/libU3SI2-generic.so";
-  const char *solver_thermo = "HypreGMRES";
-  const char *precond_thermo = "HypreBoomerAMG";
-  const char *solver_meca = "HyprePCG";
-  const char *precond_meca = "HypreBoomerAMG";
-  int order = 1;
-  bool parallel = true;
-  bool debug = true;
-  int refinement = 0;
+  const char* mesh_file =
+      "../mesh/assemblage_hexa.msh";  // path to the mesh file
+  const char* behaviour =
+      "ConductionThermique";  // default thermal behaviour name
+  const char* libraryALFENI =
+      "src/libALFENI-generic.so";  // MFront ALFENI library
+                                   // (behaviours/models)
+  const char* libraryU3SI2 = "src/libU3SI2-generic.so";  // MFront U3SI2 library
+                                                         // (behaviours/models)
+  const char* solver_thermo =
+      "HypreGMRES";  // linear solver used for the thermal problem
+  const char* precond_thermo =
+      "HypreBoomerAMG";  // preconditioner associated with the thermal solver
+  const char* solver_meca =
+      "HyprePCG";  // linear solver used for the mechanical problem
+  const char* precond_meca =
+      "HypreBoomerAMG";  // preconditioner associated with the mechanical solver
+  int order = 1;         // finite element order
+  bool parallel = true;  // enable parallel execution (MPI)
+  bool debug = true;     // enable debug output/checks
+  int refinement = 0;    // number of uniform mesh refinements
   int post_processing = 1;  // default value : disabled
   int verbosity_level = 0;  // default value : lower level
 
   // Physical properties
-  double Ti = 293.15;
-  double Te = 315.0;
-  double source = 1e10;
-  double water_pressure = 0.0;
-  double duree = 1e5;
-  int nbsteps = 1;
-  double h_conv = 5e4;
+  double Ti = 293.15;           // initial temperature (K)
+  double Te = 315.0;            // external/convection temperature (K)
+  double source = 1e10;         // volumetric power source term
+  double water_pressure = 0.0;  // imposed water pressure
+  double duree = 1e5;           // total simulation duration
+  int nbsteps = 1;              // number of time steps
+  double h_conv = 5e4;          // thermal convection coefficient
 };
 
 struct GaussFieldStorage {
-  std::shared_ptr<std::vector<double>> T_s0;
-  std::shared_ptr<std::vector<double>> T_s1;
+  std::shared_ptr<std::vector<double>>
+      T_s0;  // temperature at the beginning of the time step
+  std::shared_ptr<std::vector<double>>
+      T_s1;  // temperature at the end of the time step
 
-  std::shared_ptr<std::vector<double>> Pow_s0_sw;
-  std::shared_ptr<std::vector<double>> Pow_s1_sw;
+  std::shared_ptr<std::vector<double>>
+      Pow_s0_sw;  // power density (swelling model) at the beginning of the time
+                  // step
+  std::shared_ptr<std::vector<double>>
+      Pow_s1_sw;  // power density (swelling model) at the end of the time step
 
-  std::shared_ptr<std::vector<double>> Pow_s0_mmc;
-  std::shared_ptr<std::vector<double>> Pow_s1_mmc;
+  std::shared_ptr<std::vector<double>>
+      Pow_s0_mmc;  // power density (mechanical material) at the beginning of
+                   // the time step
+  std::shared_ptr<std::vector<double>>
+      Pow_s1_mmc;  // power density (mechanical material) at the end of the time
+                   // step
 
-  std::shared_ptr<std::vector<double>> Pow_s0_th;
-  std::shared_ptr<std::vector<double>> Pow_s1_th;
+  std::shared_ptr<std::vector<double>>
+      Pow_s0_th;  // power density (thermal material) at the beginning of the
+                  // time step
+  std::shared_ptr<std::vector<double>>
+      Pow_s1_th;  // power density (thermal material) at the end of the time
+                  // step
 };
 
 struct SetupPropertiesResult {
-  std::vector<GaussFieldStorage> fields;
-  std::shared_ptr<mfem_mgis::PointWiseModel> swelling_model;
+  std::vector<GaussFieldStorage>
+      fields;  // Gauss point field storage, one entry per material
+  std::shared_ptr<mfem_mgis::PointWiseModel>
+      swelling_model;  // swelling model attached to material 1
 };
 
 /*!
  * \brief Configures materials, models, and field storages
+ * \param[in,out] ctx: execution context, used for timing sections and error
+ * handling
+ * \param[in] p: test parameters (mesh, libraries, physical properties, ...)
+ * \param[in,out] heat_transfer: non-linear heat transfer problem to configure
+ * \param[in,out] mechanics: non-linear mechanical problem to configure
+ * \param[in] power_history: function giving the power density as a function of
+ * time
+ * \return the field storages and the swelling model created during setup
  */
 inline SetupPropertiesResult setup_properties(
-    mgis::Context &ctx,
-    const TestParameters &p,
-    mfem_mgis::NonLinearEvolutionProblem &heat_transfer,
-    mfem_mgis::NonLinearEvolutionProblem &mechanics,
-    const std::function<double(double)> &power_history) {
+    mgis::Context& ctx,
+    const TestParameters& p,
+    mfem_mgis::NonLinearEvolutionProblem& heat_transfer,
+    mfem_mgis::NonLinearEvolutionProblem& mechanics,
+    const std::function<double(double)>& power_history) {
   using namespace mfem_mgis;
   using namespace mgis::behaviour;
   // using namespace mgis::model;
@@ -97,8 +129,8 @@ inline SetupPropertiesResult setup_properties(
                                        "ALFENI_ThermiqueCouplee");
 
   for (const int mat_id : {1, 2, 3}) {
-    auto &m_th = heat_transfer.getMaterial(mat_id);
-    auto &m_mc = mechanics.getMaterial(mat_id);
+    auto& m_th = heat_transfer.getMaterial(mat_id);
+    auto& m_mc = mechanics.getMaterial(mat_id);
 
     GaussFieldStorage storage;
     storage.T_s0 = std::make_shared<std::vector<mgis::real>>(m_mc.n, p.Ti);
@@ -132,7 +164,7 @@ inline SetupPropertiesResult setup_properties(
                                      {"Hypothesis", "Tridimensional"}}) |
                       or_die;
 
-      auto &m_sw = sw_model->getMaterial();
+      auto& m_sw = sw_model->getMaterial();
       const double initial_power = power_history(0.0);
       storage.Pow_s0_sw =
           std::make_shared<std::vector<mgis::real>>(m_sw.n, initial_power);

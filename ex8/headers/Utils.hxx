@@ -142,6 +142,10 @@ inline static void setLinearSolver(mgis::Context& ctx,
     p.setLinearSolver(solver, solverParameters);
   }
 
+  else if (contains(direct_solvers, solver)) {
+    p.setLinearSolver(solver, mfem_mgis::Parameters{});
+  }
+
   else {
     std::cerr << "Unknown solver type: " << solver << std::endl;
     std::abort();
