@@ -60,8 +60,7 @@ add_custom_target(
 target_link_libraries(Thermomechanical PRIVATE
     MPI::MPI_CXX
     OpenMP::OpenMP_CXX
-	mfem-mgis::MFEMMGIS
-    tbb
+	  mfem-mgis::MFEMMGIS
 )
 
 add_dependencies(check Thermomechanical generate-libBehaviour)
