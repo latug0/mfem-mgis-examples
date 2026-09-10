@@ -52,7 +52,8 @@
 #include "headers/Utils.hxx"
 #include "headers/Debug.hxx"
 
-void common_parameters(mfem::OptionsParser &args, TestParameters &p) {
+// @see Setup.hxx
+void common_parameters(mfem::OptionsParser& args, TestParameters& p) {
   args.AddOption(&p.mesh_file, "-m", "--mesh", "Mesh file to use.");
   args.AddOption(&p.libraryU3SI2, "-lU", "--libraryU3SI2",
                  "Material library for said material.");
@@ -76,6 +77,12 @@ void common_parameters(mfem::OptionsParser &args, TestParameters &p) {
                  "choose the verbosity level");
   args.AddOption(&p.debug, "-d", "--debug", "-nd", "--nodebug",
                  "Enable physics statistics debug output.");
+  args.AddOption(&p.duree, "-dur", "--duree",
+                 "Total simulation duration, default = 1e5");
+  args.AddOption(&p.nbsteps, "-ns", "--nbsteps",
+                 "Number of time steps, default = 1");
+  args.AddOption(&p.h_conv, "-hc", "--h-conv",
+                 "Thermal convection coefficient, default = 5e4");
 
   args.Parse();
 
@@ -88,7 +95,7 @@ void common_parameters(mfem::OptionsParser &args, TestParameters &p) {
   mfem_mgis::declareDefaultOptions(args);
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   using namespace mfem_mgis;
   using namespace mfem;
   initialize(argc, argv);
@@ -136,8 +143,8 @@ int main(int argc, char *argv[]) {
                                              {"Name", "Mechanics"}}) |
       or_die;
 
-  auto &heat_transfer = heat_transfer_model->getProblem();
-  auto &mechanics = mechanics_model->getProblem();
+  auto& heat_transfer = heat_transfer_model->getProblem();
+  auto& mechanics = mechanics_model->getProblem();
 
   heat_transfer.setSolverParameters({{"VerbosityLevel", 2},
                                      {"RelativeTolerance", 1e-6},
@@ -156,11 +163,11 @@ int main(int argc, char *argv[]) {
   /*Test de récupération du déplacement pour l'envoyer à Robin*/
   auto mechanics_fed = mechanics.getFiniteElementDiscretizationPointer();
 #ifdef MFEM_USE_MPI
-  auto &mech_fes = mechanics_fed->getFiniteElementSpace<true>();
+  auto& mech_fes = mechanics_fed->getFiniteElementSpace<true>();
 #else
-  auto &mech_fes = mechanics_fed->getFiniteElementSpace<false>();
+  auto& mech_fes = mechanics_fed->getFiniteElementSpace<false>();
 #endif
-  double *u_data = mechanics.getUnknowns(mfem_mgis::ets).GetData();
+  double* u_data = mechanics.getUnknowns(mfem_mgis::ets).GetData();
   mfem::GridFunction u_mech(&mech_fes, u_data);
   /*Fin de test*/
 

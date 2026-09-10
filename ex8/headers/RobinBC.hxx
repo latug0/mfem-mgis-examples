@@ -23,7 +23,7 @@ namespace mfem_mgis {
     //! \brief ambient temperature
     double T_inf;
     //! \brief optional displacement field to account for geometry changes
-    mfem::GridFunction *u_disp;
+    mfem::GridFunction* u_disp;
 
     /*!
      * \brief constructor
@@ -33,7 +33,7 @@ namespace mfem_mgis {
      */
     RobinNonlinearFormIntegrator(double h_,
                                  double T_inf_,
-                                 mfem::GridFunction *u_disp_);
+                                 mfem::GridFunction* u_disp_);
 
     /*!
      * \brief Assemble the element vector (residual)
@@ -42,10 +42,10 @@ namespace mfem_mgis {
      * \param[in] T_el: element temperatures
      * \param[out] R: assembled residual vector
      */
-    void AssembleElementVector(const mfem::FiniteElement &e,
-                               mfem::ElementTransformation &tr,
-                               const mfem::Vector &T_el,
-                               mfem::Vector &R) override;
+    void AssembleElementVector(const mfem::FiniteElement& e,
+                               mfem::ElementTransformation& tr,
+                               const mfem::Vector& T_el,
+                               mfem::Vector& R) override;
 
     /*!
      * \brief Assemble the element gradient (Jacobian)
@@ -54,10 +54,10 @@ namespace mfem_mgis {
      * \param[in] elfun: element function values
      * \param[out] K: assembled local Jacobian matrix
      */
-    void AssembleElementGrad(const mfem::FiniteElement &e,
-                             mfem::ElementTransformation &tr,
-                             const mfem::Vector &elfun,
-                             mfem::DenseMatrix &K) override;
+    void AssembleElementGrad(const mfem::FiniteElement& e,
+                             mfem::ElementTransformation& tr,
+                             const mfem::Vector& elfun,
+                             mfem::DenseMatrix& K) override;
   };  // end of struct RobinNonlinearFormIntegrator
 
   /*!
@@ -77,32 +77,32 @@ namespace mfem_mgis {
             int tag,
             double h,
             double T_inf,
-            mfem::GridFunction *u_disp);
+            mfem::GridFunction* u_disp);
 
     //! \brief destructor
     ~RobinBC() override;
 
     void setup(const real, const real) override {}
 
-    bool addNonlinearFormIntegrator(Context &,
-                                    NonlinearForm<false> &,
-                                    const mfem::Vector &) noexcept override;
-    bool addNonlinearFormIntegrator(Context &,
-                                    NonlinearForm<true> &,
-                                    const mfem::Vector &) noexcept override;
+    bool addNonlinearFormIntegrator(Context&,
+                                    NonlinearForm<false>&,
+                                    const mfem::Vector&) noexcept override;
+    bool addNonlinearFormIntegrator(Context&,
+                                    NonlinearForm<true>&,
+                                    const mfem::Vector&) noexcept override;
 
-    bool addLinearFormIntegrators(Context &,
-                                  BilinearForm<false> &,
-                                  LinearForm<false> &,
-                                  const mfem::Vector &,
+    bool addLinearFormIntegrators(Context&,
+                                  BilinearForm<false>&,
+                                  LinearForm<false>&,
+                                  const mfem::Vector&,
                                   const real,
                                   const real) noexcept override {
       return true;
     }
-    bool addLinearFormIntegrators(Context &,
-                                  BilinearForm<true> &,
-                                  LinearForm<true> &,
-                                  const mfem::Vector &,
+    bool addLinearFormIntegrators(Context&,
+                                  BilinearForm<true>&,
+                                  LinearForm<true>&,
+                                  const mfem::Vector&,
                                   const real,
                                   const real) noexcept override {
       return true;
@@ -110,7 +110,7 @@ namespace mfem_mgis {
 
    private:
     mfem::Array<int> bdr_marker;
-    RobinNonlinearFormIntegrator *nfi;
+    RobinNonlinearFormIntegrator* nfi;
   };  // end of class RobinBC
 
 }  // end of namespace mfem_mgis

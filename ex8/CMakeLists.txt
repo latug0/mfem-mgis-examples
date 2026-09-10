@@ -40,10 +40,15 @@ add_custom_command(
 )
 
 add_executable(Thermomechanical
-    Thermomechanical.cxx 
-    src/BoundaryConditions.cxx 
+    Thermomechanical.cxx
+    src/BoundaryConditions.cxx
     src/RobinBC.cxx
 )
+
+# Copy the default mesh next to the executable
+file(COPY
+    ${CMAKE_CURRENT_SOURCE_DIR}/mesh/assemblage_hexa.msh
+    DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 target_include_directories(Thermomechanical PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/headers")
 
@@ -60,3 +65,15 @@ target_link_libraries(Thermomechanical PRIVATE
 )
 
 add_dependencies(check Thermomechanical generate-libBehaviour)
+
+add_test(NAME Thermomechanical_MUMPS
+    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 1
+        $<TARGET_FILE:Thermomechanical>
+        -m assemblage_hexa.msh
+        -lU src/libU3SI2-generic.so
+        -lA src/libALFENI-generic.so
+        -svTh HypreGMRES -pcTh HypreBoomerAMG
+        -svMc MUMPSSolver
+        -o 1 -r 0 -p 1 -v 0
+        -dur 1e5 -ns 1 -hc 5e4
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
