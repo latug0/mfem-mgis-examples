@@ -118,7 +118,7 @@ int main(int argc, char** argv) {
        {"Materials", {"plate"}},
        {"Results", results}});
   // solving the problem on 1 time step
-  auto r = problem.solve(0, 1);
+  auto r = problem.solve(ctx, 0, 1);
   problem.executePostProcessings(ctx, 0, 1);
   //
   std::ofstream output("HydrostaticPressure.txt");

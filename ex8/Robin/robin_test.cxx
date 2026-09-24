@@ -101,7 +101,9 @@ int main(int argc, char **argv) {
                           {"AbsoluteTolerance", 0},
                           {"MaximumNumberOfIterations", 100}});
 
-  if (!pb.solve(0.0, 1.0)) mfem_mgis::abort("Non-convergence");
+  if (!pb.solve(ctx, 0.0, 1.0)) {
+    mfem_mgis::abort("Non-convergence")
+  };
 
   auto &fes = fed->getFiniteElementSpace<false>();
   mfem::GridFunction T_exact(&fes);

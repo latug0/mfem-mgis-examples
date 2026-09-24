@@ -134,7 +134,7 @@ int main(int argc, char** argv) {
     auto nsteps = mfem_mgis::size_type{1};
     auto niter = mfem_mgis::size_type{0};
     while (nsteps != 0) {
-      bool converged = problem.solve(ct, dt2);
+      bool converged = problem.solve(ctx, ct, dt2);
       if (converged) {
         --nsteps;
         ct += dt2;

@@ -255,7 +255,7 @@ int executeMFEMMGISTest(mgis::Context& ctx, const TestParameters& p) {
         "ParaviewExportResults",
         {{"OutputFileName", "PeriodicTestOutput-" + std::to_string(p.tcase)}});
     // solving the problem
-    if (!problem.solve(0, 1)) {
+    if (!problem.solve(ctx, 0, 1)) {
       mfem_mgis::abort(EXIT_FAILURE);
     }
     problem.executePostProcessings(ctx, 0, 1);
