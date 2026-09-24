@@ -316,7 +316,7 @@ int executeMFEMMGISTest(const TestParameters& p) {
       //      std::cout << mfem_mgis::getMPIrank() << " " <<
       //      mesh.GetGlobalElementNum(ig) <<
       //	" attr " << ig << " bary " << barycenter[ig][0]<<" " <<
-      //barycenter[ig][1]<< " " << barycenter[ig][2]<<" bool "<<
+      // barycenter[ig][1]<< " " << barycenter[ig][2]<<" bool "<<
       //	(barycenter[ig][0] < xthr) <<std::endl;
     }
 

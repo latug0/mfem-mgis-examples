@@ -113,13 +113,17 @@ int main(int argc, char** argv) {
       if (converged) {
         --nsteps;
         ct += dt2;
-        problem.update();
+        if (!problem.update(ctx)) {
+          mfem_mgis::raise("update failed");
+        }
       } else {
         std::cout << "\nsubstep: " << nsubsteps << '\n';
         nsteps *= 2;
         dt2 /= 2;
         ++nsubsteps;
-        problem.revert();
+        if (!problem.revert(ctx)) {
+          mfem_mgis::raise("revert failed");
+        }
         if (nsubsteps == 10) {
           mfem_mgis::raise("maximum number of substeps");
         }

@@ -121,11 +121,15 @@ static void setSolverParameters(
                                {"MaximumNumberOfIterations", 10}});
 }  // end of setSolverParmeters
 
-bool checkSolution(mfem_mgis::NonLinearEvolutionProblem& problem,
-                   const std::size_t i) {
-  const auto b = mfem_mgis::compareToAnalyticalSolution(
-      problem, getSolution(i), {{"CriterionThreshold", 1e-7}});
-  if (!b) {
+std::optional<bool> checkSolution(mfem_mgis::Context& ctx,
+                                  mfem_mgis::NonLinearEvolutionProblem& problem,
+                                  const std::size_t i) {
+  const auto ob = mfem_mgis::compareToAnalyticalSolution(
+      ctx, problem, getSolution(i), {{"CriterionThreshold", 1e-7}});
+  if (mfem_mgis::isInvalid(ob)) {
+    return {};
+  }
+  if (!(*ob)) {
     if (mfem_mgis::getMPIrank() == 0)
       std::cerr << "Error is greater than threshold\n";
     return false;
@@ -260,7 +264,11 @@ int executeMFEMMGISTest(mgis::Context& ctx, const TestParameters& p) {
     }
     problem.executePostProcessings(ctx, 0, 1);
     //
-    if (!checkSolution(problem, p.tcase)) {
+    const auto ob = checkSolution(ctx, problem, p.tcase);
+    if (mfem_mgis::isInvalid(ob)) {
+      return (EXIT_FAILURE);
+    }
+    if (!(*ob)) {
       return (EXIT_FAILURE);
     }
     return (EXIT_SUCCESS);

@@ -328,11 +328,13 @@ int main(int argc, char* argv[]) {
     mfem::out << "Solving: from " << i * dt << " to " << (i + 1) * dt << '\n';
     run_solve(ctx, problem, i * dt, dt);
     if (use_post_processing) execute_post_processings(ctx, problem, i * dt, dt);
-    problem.update();
+    if (!problem.update(ctx)) {
+      return EXIT_FAILURE;
+    }
   }
 
   // print and write timetable
   print_memory_footprint(ctx, "After Solving:");
   mfem_mgis::Profiler::OutputManager::printTimeTable(ctx);
-  return (EXIT_SUCCESS);
+  return EXIT_SUCCESS;
 }

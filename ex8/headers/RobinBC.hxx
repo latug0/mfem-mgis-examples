@@ -84,7 +84,11 @@ namespace mfem_mgis {
     //! \brief destructor
     ~RobinBC() override;
 
-    void setup(const real, const real) override {}
+    [[nodiscard]] bool setup(Context&,
+                             const real,
+                             const real) noexcept override {
+      return true;
+    }  // end of setup
 
     bool addNonlinearFormIntegrator(Context&,
                                     NonlinearForm<false>&,

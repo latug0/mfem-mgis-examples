@@ -66,12 +66,12 @@ int main(int argc, char** argv) {
   {
     // loading the mesh and timer
     mfem_mgis::NonLinearEvolutionProblem problem(
-      ctx,  {{"MeshFileName", mesh_file},
-         {"FiniteElementFamily", "H1"},
-         {"FiniteElementOrder", order},
-         {"UnknownsSize", dim},
-         {"Hypothesis", "Tridimensional"},
-         {"Parallel", true}});
+        ctx, {{"MeshFileName", mesh_file},
+              {"FiniteElementFamily", "H1"},
+              {"FiniteElementOrder", order},
+              {"UnknownsSize", dim},
+              {"Hypothesis", "Tridimensional"},
+              {"Parallel", true}});
 
     auto mesh =
         problem.getImplementation<true>().getFiniteElementSpace().GetMesh();
@@ -162,13 +162,17 @@ int main(int argc, char** argv) {
         if (converged) {
           --nsteps;
           ct += dt2;
-          problem.update();
+          if (!problem.update(ctx)) {
+            mgis::raise("update failed");
+          }
         } else {
           std::cout << "\nsubstep: " << niter << '\n';
           nsteps *= 2;
           dt2 /= 2;
           ++niter;
-          problem.revert();
+          if (!problem.revert(ctx)) {
+            mgis::raise("revert failed");
+          }
           if (niter == 10) {
             mgis::raise("maximum number of substeps");
           }
