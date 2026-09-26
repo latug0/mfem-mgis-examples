@@ -5,47 +5,44 @@ on:
     branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
+  workflow_dispatch:
+
+# a new commit pushed to a pull request cancels the previous run
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     steps:
-      - name: Check for dockerenv file
-        run: (ls /.dockerenv && echo Found dockerenv) || (echo No dockerenv)
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Set up Spack
-        uses: spack/setup-spack@v2
+        uses: spack/setup-spack@v3
         with:
-          ref: v1.1.0     # Spack version (examples: develop, releases/v0.21)
-          buildcache: true  # Configure oci://ghcr.io/spack/github-actions-buildcache
-          color: true       # Force color output (SPACK_COLOR=always)
-          path: spack       # Where to clone Spack
+          spack_ref: v1.2.2      # Spack version
+          packages_ref: develop  # the builtin repository provides mfem-mgis since its develop version
+          buildcache: false      # the public build cache would bring older dependencies
+          color: true            # Force color output (SPACK_COLOR=always)
+          spack_path: spack      # Where to clone Spack
       - name: Install MFEM MGIS
         run: |
-          git clone https://github.com/rprat-pro/spack-repo-mfem-mgis.git
-          spack repo add spack-repo-mfem-mgis
-          spack install mfem-mgis
-      - name: Configure Test Cases
+          # openblas 0.3.34 overflows in its Haswell/Zen fallback kernels on AVX-512 Zen 4/5
+          # hosts (OpenMathLib/OpenBLAS#6013, #6021), fixed after 0.3.34
+          spack config add "packages:openblas:conflict:['@0.3.34']"
+          # otherwise excluding a version silently switches to another BLAS provider
+          spack config add "packages:blas:require:[openblas]"
+          spack config add "packages:lapack:require:[openblas]"
+          spack install mfem-mgis@master
+      - name: Build the examples
         shell: spack-sh {0}
         run: |
-          spack load mfem
           spack load mfem-mgis
-          cmake -B ${{github.workspace}}/release -DCMAKE_PREFIX_PATH=`spack location -i tfel`/share/tfel/cmake
-      - name: Build Test Cases
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j $(nproc)
+      - name: Run the examples
         shell: spack-sh {0}
         run: |
-          spack load tfel
-          spack load mfem
           spack load mfem-mgis
-          cmake --build ${{github.workspace}}/release --config Release 
-      - name: Run examples
-        working-directory: ${{github.workspace}}/release
-        shell: spack-sh {0}
-        run: |
-          spack load tfel
-          spack load mfem        
-          spack load mfem-mgis
-          make -j
-          ctest --rerun-failed --output-on-failure
+          ctest --test-dir build -j $(nproc) --output-on-failure
