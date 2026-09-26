@@ -13,32 +13,28 @@ export SPACK_ROOT=$PWD/spack
 source ${SPACK_ROOT}/share/spack/setup-env.sh
 ```
 
-Firstly, get the mfem-mgis spack repository.
+Firstly, install the development version of mfem-mgis, which the examples follow. It is
+provided by the `develop` branch of the Spack packages repository, used by default by this
+clone of Spack. With a release of Spack, first switch to this branch with
+`spack repo update builtin --branch develop`.
 
 ```
-git clone https://github.com/rprat-pro/spack-repo-mfem-mgis.git
-spack repo add $PWD/spack-repo-mfem-mgis
+spack install mfem-mgis@master
 ```
 
-Secondly, install mfem-mgis
-
-```
-spack install mfem-mgis
-```
-
-Thirdly, load mfem-mgis
+Secondly, load mfem-mgis
 
 ```
 spack load mfem-mgis
 ```
 
-Finally, build your examples:
+Finally, build and run your examples:
 
 ```
 cd mfem-mgis-examples
-mkdir build && cd build
-cmake .. -DCMAKE_PREFIX_PATH=`spack location -i tfel`/share/tfel/cmake
-make -j 4
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j 4
+ctest --test-dir build
 ```
 
 For an installation on a supercomputer without internet please follow the procedure described here for MFEM-MGIS installation: https://thelfer.github.io/mfem-mgis/installation_guide/installation_guide.html#installation-guide-on-topaze-ccrt-of-mfem-mgis-examples
