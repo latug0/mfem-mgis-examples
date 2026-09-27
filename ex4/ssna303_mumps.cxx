@@ -33,6 +33,7 @@
 
 int main(int argc, char** argv) {
   auto ctx = mgis::Context{};
+  auto or_die = ctx.getFatalFailureHandler();
   // ctx.enableProfiling(true);
   mfem_mgis::initialize(argc, argv);
   constexpr const auto dim = mfem_mgis::size_type{3};
@@ -60,65 +61,63 @@ int main(int argc, char** argv) {
   args.PrintOptions(std::cout);
 
   // loading the mesh
-  mfem_mgis::NonLinearEvolutionProblem problem(
-      ctx, {{"MeshFileName", mesh_file},
+  auto problem = mfem_mgis::construct<mfem_mgis::NonLinearEvolutionProblem>(
+									    ctx, mfem_mgis::Parameters{{"MeshFileName", mesh_file},
             {"FiniteElementFamily", "H1"},
             {"FiniteElementOrder", order},
             {"UnknownsSize", dim},
             {"Hypothesis", "Tridimensional"},
             {"Parallel", true},
-            {"NumberOfUniformRefinements", parallel ? ref_para : ref_seq}});
+            {"NumberOfUniformRefinements", parallel ? ref_para : ref_seq}})|or_die;
 
   // 2 1 "Volume"
-  problem.addBehaviourIntegrator("Mechanics", 1, library, behaviour);
+  problem.addBehaviourIntegrator(ctx, "Mechanics", 1, library, behaviour)|or_die;
   // materials
-  auto& m1 = problem.getMaterial(1);
-  mgis::behaviour::setExternalStateVariable(m1.s0, "Temperature", 293.15);
-  mgis::behaviour::setExternalStateVariable(m1.s1, "Temperature", 293.15);
+  auto& m1 = problem.getMaterial(ctx, 1, 0)|or_die;
+  mgis::behaviour::setExternalStateVariable(ctx, m1.s0, "Temperature", 293.15)|or_die;
+  mgis::behaviour::setExternalStateVariable(ctx, m1.s1, "Temperature", 293.15)|or_die;
   // boundary conditions
 
   // 3 LowerBoundary
-  problem.addBoundaryCondition(
-      std::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
-          problem.getFiniteElementDiscretizationPointer(), 3, 1));
+  problem.addBoundaryCondition(ctx,
+			       make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(ctx,
+          problem.getFiniteElementDiscretizationPointer(), 3, 1)|or_die)|or_die;
   // 4 SymmetryPlane1
-  problem.addBoundaryCondition(
-      std::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
-          problem.getFiniteElementDiscretizationPointer(), 4, 0));
+  problem.addBoundaryCondition(ctx,
+			       make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(ctx,
+          problem.getFiniteElementDiscretizationPointer(), 4, 0)|or_die)|or_die;
   // 5 SymmetryPlane2
-  problem.addBoundaryCondition(
-      std::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
-          problem.getFiniteElementDiscretizationPointer(), 5, 2));
+  problem.addBoundaryCondition(ctx,
+			       make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(ctx,
+          problem.getFiniteElementDiscretizationPointer(), 5, 2)|or_die)|or_die;
   // 2 UpperBoundary
-  problem.addBoundaryCondition(
-      std::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
+  problem.addBoundaryCondition(ctx,
+			       make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(ctx,
           problem.getFiniteElementDiscretizationPointer(), 2, 1,
           [](const auto t) {
             const auto u = 6e-3 * t;
             return u;
-          }));
+          })|or_die)|or_die;
 
   // solving the problem without petsc
   if (!mfem_mgis::usePETSc()) {
-    problem.setSolverParameters({{"VerbosityLevel", 2},
+    problem.setSolverParameters(ctx, {{"VerbosityLevel", 2},
                                  {"RelativeTolerance", 1e-6},
                                  {"AbsoluteTolerance", 0.},
-                                 {"MaximumNumberOfIterations", 10}});
+                                 {"MaximumNumberOfIterations", 10}}) |or_die;
     if (parallel) {
-      std::cout << "MUMPS" << std::endl;
-      problem.setLinearSolver("MUMPSSolver", {});
+      problem.setLinearSolver(ctx, "MUMPSSolver", {})|or_die;
     } else {
-      std::cout << "UMFSolver" << std::endl;
-      problem.setLinearSolver("UMFPackSolver", {});
+      problem.setLinearSolver(ctx, "UMFPackSolver", {})|or_die;
     }
   }
 
   // vtk export
-  problem.addPostProcessing(
+  problem.addPostProcessing(ctx, 
       "ParaviewExportResults",
-      {{"OutputFileName", std::string("ssna303-displacements")}});
-  problem.addPostProcessing("ComputeResultantForceOnBoundary",
-                            {{"Boundary", 2}, {"OutputFileName", "force.txt"}});
+      {{"OutputFileName", std::string("ssna303-displacements")}})|or_die;
+  problem.addPostProcessing(ctx, "ComputeResultantForceOnBoundary",
+                            {{"Boundary", 2}, {"OutputFileName", "force.txt"}})|or_die;
 
   // loop over time step
   const auto nsteps = mfem_mgis::size_type{2};
@@ -138,23 +137,21 @@ int main(int argc, char** argv) {
       if (converged) {
         --nsteps;
         ct += dt2;
-        if (!problem.update(ctx)) {
-          mgis::raise("update failed");
-        }
+	if(nsteps==0){
+	  problem.executePostProcessings(ctx, t, dt) | or_die;
+	}
+        problem.update(ctx)|or_die;
       } else {
         std::cout << "\nsubstep: " << niter << '\n';
         nsteps *= 2;
         dt2 /= 2;
         ++niter;
-        if (!problem.revert(ctx)) {
-          mgis::raise("revert failed");
-        }
+        problem.revert(ctx)|or_die;
         if (niter == 10) {
-          mgis::raise("maximum number of substeps");
+          mgis::abort("maximum number of substeps");
         }
       }
     }
-    problem.executePostProcessings(ctx, t, dt);
     t += dt;
     ++iteration;
     std::cout << '\n';

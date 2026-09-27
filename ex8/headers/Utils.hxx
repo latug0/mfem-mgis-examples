@@ -68,32 +68,38 @@ inline void print_mesh_information(Implementation& impl) {
 }
 
 template <typename Problem>
-inline void add_post_processings(Problem& p,
+inline void add_post_processings(mfem_mgis::attributes::MayAbort,
+				 mfem_mgis::Context& ctx,
+				 Problem& p,
                                  std::string msg,
                                  std::string field_name) {
-  p.addPostProcessing(
+  auto or_die = ctx.getFatalFailureHandler();
+  p.addPostProcessing(ctx,
       "ParaviewExportResults",
-      {{"OutputFileName", msg}, {"OutputFieldName", field_name}});
+      {{"OutputFileName", msg}, {"OutputFieldName", field_name}})|or_die;
 }
 
 template <typename Problem>
-inline void execute_post_processings(mgis::Context& ctx,
+inline void execute_post_processings(mfem_mgis::attributes::MayAbort,
+				     mfem_mgis::Context& ctx,
                                      Problem& p,
                                      double start,
                                      double end) {
   CatchTimeSection(ctx, "common::post_processing_step");
-  p.executePostProcessings(start, end);
+  auto or_die = ctx.getFatalFailureHandler();
+  p.executePostProcessings(ctx, start, end)|or_die;
 }
 
 template <typename Problem>
-inline static void setLinearSolver(mgis::Context& ctx,
+inline static void setLinearSolver(mfem_mgis::attributes::MayAbort,
+				   mfem_mgis::Context& ctx,
                                    Problem& p,
                                    const std::string& physics_type,
                                    const TestParameters& param,
                                    const int verbosity = 0,
                                    const mfem_mgis::real Tol = 1e-9) {
   CatchTimeSection(ctx, "set_linear_solver");
-
+  auto or_die = ctx.getFatalFailureHandler();
   std::string solver;
   std::string precond;
 
@@ -104,32 +110,31 @@ inline static void setLinearSolver(mgis::Context& ctx,
     solver = param.solver_meca;
     precond = param.precond_meca;
   } else {
-    std::cerr << "Erreur : Physique inconnue (" << physics_type << ")"
-              << std::endl;
-    std::abort();
+    mfem_mgis::abort("unknown physics (" + physics_type + ")");
   }
 
   if (contains(iterative_solvers, solver)) {
     constexpr int defaultMaxNumOfIt = 10e3;
 
     auto solverParameters = mfem_mgis::Parameters{};
-    solverParameters.insert(
+    solverParameters.insert(mfem_mgis::may_throw,
         mfem_mgis::Parameters{{"VerbosityLevel", verbosity}});
-    solverParameters.insert(mfem_mgis::Parameters{
+    solverParameters.insert(mfem_mgis::may_throw,
+			    mfem_mgis::Parameters{
         {"MaximumNumberOfIterations", defaultMaxNumOfIt}});
 
     if (solver == "MINRESSolver" || solver == "BiCGSTABSolver" ||
         solver == "CGSolver" || solver == "GMRESSolver") {
-      solverParameters.insert(
+      solverParameters.insert(mfem_mgis::may_throw,
           mfem_mgis::Parameters{{"AbsoluteTolerance", Tol}});
     } else {
-      solverParameters.insert(mfem_mgis::Parameters{{"Tolerance", Tol}});
+      solverParameters.insert(mfem_mgis::may_throw,
+			      mfem_mgis::Parameters{{"Tolerance", Tol}});
     }
 
     if (!precond.empty()) {
       if (!contains(preconditionners, precond)) {
-        std::cerr << "Invalid preconditioner: " << precond << std::endl;
-        std::abort();
+        mfem_mgis::abort("Invalid preconditioner: " + precond);
       }
 
       auto options = mfem_mgis::Parameters{{"VerbosityLevel", verbosity}};
@@ -137,19 +142,18 @@ inline static void setLinearSolver(mgis::Context& ctx,
       auto preconditioner =
           mfem_mgis::Parameters{{"Name", precond}, {"Options", options}};
 
-      solverParameters.insert(
+      solverParameters.insert(mfem_mgis::throwing,
           mfem_mgis::Parameters{{"Preconditioner", preconditioner}});
     }
 
-    p.setLinearSolver(solver, solverParameters);
+    p.setLinearSolver(ctx, solver, solverParameters)|or_die;
   }
 
   else if (contains(direct_solvers, solver)) {
-    p.setLinearSolver(solver, mfem_mgis::Parameters{});
+    p.setLinearSolver(ctx, solver, mfem_mgis::Parameters{})|or_die;
   }
 
   else {
-    std::cerr << "Unknown solver type: " << solver << std::endl;
-    std::abort();
+    mfem_mgis::abort("Unknown solver type: " + solver);
   }
 }
