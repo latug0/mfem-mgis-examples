@@ -12,8 +12,9 @@
 #include "Setup.hxx"
 #include "RobinBC.hxx"
 
-void apply_boundary_conditions(mfem_mgis::attributes::MayAbort,
-			       mfem_mgis::Context&,
+void apply_boundary_conditions(
+    mfem_mgis::attributes::MayAbort,
+    mfem_mgis::Context&,
     mfem_mgis::NonLinearEvolutionProblem& heat_transfer,
     mfem_mgis::NonLinearEvolutionProblem& mechanics,
     const TestParameters& p,

@@ -113,7 +113,9 @@ void common_parameters(mfem::OptionsParser& args, TestParameters& p) {
 }
 
 template <typename Implementation>
-void print_mesh_information(mfem_mgis::attributes::MayAbort, mfem_mgis::Context& ctx, Implementation& impl) {
+void print_mesh_information(mfem_mgis::attributes::MayAbort,
+                            mfem_mgis::Context& ctx,
+                            Implementation& impl) {
   using mfem_mgis::Profiler::Utils::sum;
   mfem::out << "INFO: print_mesh_information\n";
 
@@ -153,21 +155,27 @@ long get_memory_checkpoint() {
   return res;
 };
 
-void print_memory_footprint(mfem_mgis::attributes::MayAbort, mfem_mgis::Context& ctx, std::string msg) {
+void print_memory_footprint(mfem_mgis::attributes::MayAbort,
+                            mfem_mgis::Context& ctx,
+                            std::string msg) {
   long mem = get_memory_checkpoint();
   double m = double(mem) * 1e-6;  // conversion kb to Gb
   mfem::out << msg << " memory footprint: " << m << " GB\n";
 }
 
 template <typename Problem>
-void add_post_processings(mfem_mgis::attributes::MayAbort, mfem_mgis::Context& ctx, Problem& p, std::string msg) {
+void add_post_processings(mfem_mgis::attributes::MayAbort,
+                          mfem_mgis::Context& ctx,
+                          Problem& p,
+                          std::string msg) {
   p.addPostProcessing(ctx, "ParaviewExportResults", {{"OutputFileName", msg}});
   p.addPostProcessing(ctx, "MeanThermodynamicForces",
                       {{"OutputFileName", "avgStress"}});
 }  // end timer add_postprocessing_and_outputs
 
 template <typename Problem>
-void execute_post_processings(mfem_mgis::attributes::MayAbort, mfem_mgis::Context& ctx,
+void execute_post_processings(mfem_mgis::attributes::MayAbort,
+                              mfem_mgis::Context& ctx,
                               Problem& p,
                               double start,
                               double end) {
@@ -175,30 +183,34 @@ void execute_post_processings(mfem_mgis::attributes::MayAbort, mfem_mgis::Contex
   p.executePostProcessings(ctx, start, end);
 }
 
-void setup_properties(mfem_mgis::attributes::MayAbort, mfem_mgis::Context& ctx,
+void setup_properties(mfem_mgis::attributes::MayAbort,
+                      mfem_mgis::Context& ctx,
                       const TestParameters& p,
                       mfem_mgis::PeriodicNonLinearEvolutionProblem& problem) {
   using namespace mgis::behaviour;
   using real = mfem_mgis::real;
   auto or_die = ctx.getFatalFailureHandler();
-  
-  CatchTimeSection(ctx, "set_mgis_stuff");
-  problem.addBehaviourIntegrator(ctx, "Mechanics", 1, p.library, p.behaviour)|or_die;
-  problem.addBehaviourIntegrator(ctx, "Mechanics", 2, p.library, p.behaviour)|or_die;
-  // materials
-  auto& m1 = problem.getMaterial(ctx, 1, 0)|or_die;
-  auto& m2 = problem.getMaterial(ctx, 2, 0)|or_die;
-  auto set_properties = [&ctx, &or_die](auto& m, const double yo, const double po,
-                           const double st, const double no) {
-    setMaterialProperty(ctx, m.s0, "YoungModulus", yo)|or_die;
-    setMaterialProperty(ctx, m.s0, "PoissonRatio", po)|or_die;
-    setMaterialProperty(ctx, m.s0, "StressThreshold", st)|or_die;
-    setMaterialProperty(ctx, m.s0, "NortonExponent", no)|or_die;
 
-    setMaterialProperty(ctx, m.s1, "YoungModulus", yo)|or_die;
-    setMaterialProperty(ctx, m.s1, "PoissonRatio", po)|or_die;
-    setMaterialProperty(ctx, m.s1, "StressThreshold", st)|or_die;
-    setMaterialProperty(ctx, m.s1, "NortonExponent", no)|or_die;
+  CatchTimeSection(ctx, "set_mgis_stuff");
+  problem.addBehaviourIntegrator(ctx, "Mechanics", 1, p.library, p.behaviour) |
+      or_die;
+  problem.addBehaviourIntegrator(ctx, "Mechanics", 2, p.library, p.behaviour) |
+      or_die;
+  // materials
+  auto& m1 = problem.getMaterial(ctx, 1, 0) | or_die;
+  auto& m2 = problem.getMaterial(ctx, 2, 0) | or_die;
+  auto set_properties = [&ctx, &or_die](auto& m, const double yo,
+                                        const double po, const double st,
+                                        const double no) {
+    setMaterialProperty(ctx, m.s0, "YoungModulus", yo) | or_die;
+    setMaterialProperty(ctx, m.s0, "PoissonRatio", po) | or_die;
+    setMaterialProperty(ctx, m.s0, "StressThreshold", st) | or_die;
+    setMaterialProperty(ctx, m.s0, "NortonExponent", no) | or_die;
+
+    setMaterialProperty(ctx, m.s1, "YoungModulus", yo) | or_die;
+    setMaterialProperty(ctx, m.s1, "PoissonRatio", po) | or_die;
+    setMaterialProperty(ctx, m.s1, "StressThreshold", st) | or_die;
+    setMaterialProperty(ctx, m.s1, "NortonExponent", no) | or_die;
   };
 
   set_properties(m1, 8.182e9, 0.364, 100.0e6, 3.333333);
@@ -232,7 +244,8 @@ void setup_properties(mfem_mgis::attributes::MayAbort, mfem_mgis::Context& ctx,
 }
 
 template <typename Problem>
-static void setLinearSolver(mfem_mgis::attributes::MayAbort, mfem_mgis::Context& ctx,
+static void setLinearSolver(mfem_mgis::attributes::MayAbort,
+                            mfem_mgis::Context& ctx,
                             Problem& p,
                             const int verbosity = 0,
                             const mfem_mgis::real Tol = 1e-12) {
@@ -242,25 +255,33 @@ static void setLinearSolver(mfem_mgis::attributes::MayAbort, mfem_mgis::Context&
   constexpr int defaultMaxNumOfIt = 5000;   // MaximumNumberOfIterations
   constexpr int adjustMaxNumOfIt = 500000;  // MaximumNumberOfIterations
   auto solverParameters = mfem_mgis::Parameters{};
-  solverParameters.insert(mfem_mgis::may_throw, mfem_mgis::Parameters{{"VerbosityLevel", verbosity}});
   solverParameters.insert(mfem_mgis::may_throw,
+                          mfem_mgis::Parameters{{"VerbosityLevel", verbosity}});
+  solverParameters.insert(
+      mfem_mgis::may_throw,
       mfem_mgis::Parameters{{"MaximumNumberOfIterations", defaultMaxNumOfIt}});
   // solverParameters.insert(mfem_mgis::Parameters{{"AbsoluteTolerance", Tol}});
   // solverParameters.insert(mfem_mgis::Parameters{{"RelativeTolerance", Tol}});
-  solverParameters.insert(mfem_mgis::may_throw,mfem_mgis::Parameters{{"Tolerance", Tol}});
+  solverParameters.insert(mfem_mgis::may_throw,
+                          mfem_mgis::Parameters{{"Tolerance", Tol}});
 
   // preconditionner hypreBoomerAMG
   auto options = mfem_mgis::Parameters{{"VerbosityLevel", verbosity}};
   auto preconditionner =
       mfem_mgis::Parameters{{"Name", "HypreBoomerAMG"}, {"Options", options}};
-  solverParameters.insert(mfem_mgis::may_throw,
+  solverParameters.insert(
+      mfem_mgis::may_throw,
       mfem_mgis::Parameters{{"Preconditioner", preconditionner}});
   // solver HypreGMRES
-  p.setLinearSolver(ctx, "HypreGMRES", solverParameters)|or_die;
+  p.setLinearSolver(ctx, "HypreGMRES", solverParameters) | or_die;
 }
 
 template <typename Problem>
-void run_solve(mfem_mgis::attributes::MayAbort, mfem_mgis::Context& ctx, Problem& p, double start, double dt) {
+void run_solve(mfem_mgis::attributes::MayAbort,
+               mfem_mgis::Context& ctx,
+               Problem& p,
+               double start,
+               double dt) {
   CatchTimeSection(ctx, "Solve");
   // solving the problem
   auto statistics = p.solve(ctx, start, dt);
@@ -301,8 +322,12 @@ int main(int argc, char* argv[]) {
                {"UnknownsSize", dim},
                {"NumberOfUniformRefinements", p.parallel ? p.refinement : 0},
                {"Parallel", p.parallel}});
-  auto problem = mfem_mgis::construct<mfem_mgis::PeriodicNonLinearEvolutionProblem>(ctx, fed)|or_die;
-  print_mesh_information(mfem_mgis::may_abort, ctx, problem.getImplementation<true>());
+  auto problem =
+      mfem_mgis::construct<mfem_mgis::PeriodicNonLinearEvolutionProblem>(ctx,
+                                                                         fed) |
+      or_die;
+  print_mesh_information(mfem_mgis::may_abort, ctx,
+                         problem.getImplementation<true>());
   print_memory_footprint(mfem_mgis::may_abort, ctx, "After_problem:");
 
   // set problem
@@ -313,13 +338,15 @@ int main(int argc, char* argv[]) {
   }
 
   problem.setSolverParameters(ctx, {{"VerbosityLevel", 1},
-                               {"RelativeTolerance", 1e-6},
-                               {"AbsoluteTolerance", 0.},
-                               {"MaximumNumberOfIterations", 6}})|or_die;
+                                    {"RelativeTolerance", 1e-6},
+                                    {"AbsoluteTolerance", 0.},
+                                    {"MaximumNumberOfIterations", 6}}) |
+      or_die;
 
   // add post processings
   if (use_post_processing) {
-    add_post_processings(mfem_mgis::may_abort, ctx, problem, "OutputFile-mixed-oxide-fuels");
+    add_post_processings(mfem_mgis::may_abort, ctx, problem,
+                         "OutputFile-mixed-oxide-fuels");
   }
 
   // main function here
@@ -330,10 +357,10 @@ int main(int argc, char* argv[]) {
   for (int i = 0; i < nStep; i++) {
     mfem::out << "Solving: from " << i * dt << " to " << (i + 1) * dt << '\n';
     run_solve(mfem_mgis::may_abort, ctx, problem, i * dt, dt);
-    if (use_post_processing){
+    if (use_post_processing) {
       execute_post_processings(mfem_mgis::may_abort, ctx, problem, i * dt, dt);
     }
-    problem.update(ctx)|or_die;
+    problem.update(ctx) | or_die;
   }
 
   // print and write timetable

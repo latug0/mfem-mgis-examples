@@ -165,14 +165,16 @@ int main(int argc, char* argv[]) {
   auto& mechanics = mechanics_model->getProblem();
 
   heat_transfer.setSolverParameters(ctx, {{"VerbosityLevel", 2},
-                                     {"RelativeTolerance", 1e-6},
-                                     {"AbsoluteTolerance", 1e-6},
-                                     {"MaximumNumberOfIterations", 10}})|or_die;
+                                          {"RelativeTolerance", 1e-6},
+                                          {"AbsoluteTolerance", 1e-6},
+                                          {"MaximumNumberOfIterations", 10}}) |
+      or_die;
 
   mechanics.setSolverParameters(ctx, {{"VerbosityLevel", 2},
-                                 {"RelativeTolerance", 1e-6},
-                                 {"AbsoluteTolerance", 1e-6},
-                                 {"MaximumNumberOfIterations", 10}})|or_die;
+                                      {"RelativeTolerance", 1e-6},
+                                      {"AbsoluteTolerance", 1e-6},
+                                      {"MaximumNumberOfIterations", 10}}) |
+      or_die;
 
   print_mesh_information(heat_transfer.getImplementation<true>());
   print_mesh_information(mechanics.getImplementation<true>());
@@ -186,18 +188,22 @@ int main(int argc, char* argv[]) {
 #endif
   u_mech = 0.0;
 
-  const auto setup =
-    setup_properties(mfem_mgis::may_abort, ctx, p, heat_transfer, mechanics, power_history);
+  const auto setup = setup_properties(mfem_mgis::may_abort, ctx, p,
+                                      heat_transfer, mechanics, power_history);
 
-  apply_boundary_conditions(mfem_mgis::may_abort, ctx, heat_transfer, mechanics, p, power_history,
-                            &u_mech);
+  apply_boundary_conditions(mfem_mgis::may_abort, ctx, heat_transfer, mechanics,
+                            p, power_history, &u_mech);
 
-  setLinearSolver(mfem_mgis::may_abort, ctx, heat_transfer, "heat_transfer", p, p.verbosity_level);
-  setLinearSolver(mfem_mgis::may_abort, ctx, mechanics, "mechanics", p, p.verbosity_level);
+  setLinearSolver(mfem_mgis::may_abort, ctx, heat_transfer, "heat_transfer", p,
+                  p.verbosity_level);
+  setLinearSolver(mfem_mgis::may_abort, ctx, mechanics, "mechanics", p,
+                  p.verbosity_level);
 
   if (p.post_processing == 1) {
-    add_post_processings(mfem_mgis::may_abort, ctx, mechanics, "Results/Mechanics", "Displacement");
-    add_post_processings(mfem_mgis::may_abort, ctx, heat_transfer, "Results/Thermal", "Temperature");
+    add_post_processings(mfem_mgis::may_abort, ctx, mechanics,
+                         "Results/Mechanics", "Displacement");
+    add_post_processings(mfem_mgis::may_abort, ctx, heat_transfer,
+                         "Results/Thermal", "Temperature");
 
     // // Exportation du swelling + déformation plastique
     // mfem_mgis::Parameters params_plast = {
@@ -209,19 +215,22 @@ int main(int argc, char* argv[]) {
 
     mfem_mgis::Parameters params_swell;
     params_swell.insert(mfem_mgis::throwing, "Results", "SwellingExport");
-    params_swell.insert(mfem_mgis::throwing, "OutputFileName", "Results/Swelling");
+    params_swell.insert(mfem_mgis::throwing, "OutputFileName",
+                        "Results/Swelling");
 
     std::vector<mfem_mgis::Parameter> mat_filter = {"comb"};
     params_swell.insert(mfem_mgis::throwing, "Materials", mat_filter);
 
-    mechanics.addPostProcessing(ctx, "ParaviewExportIntegrationPointResultsAtNodes",
-                                params_swell)|or_die;
+    mechanics.addPostProcessing(
+        ctx, "ParaviewExportIntegrationPointResultsAtNodes", params_swell) |
+        or_die;
   }
 
   auto ps = mfem_mgis::construct<PhysicalSystem>(ctx, mesh) | or_die;
 
   auto c = mfem_mgis::make_shared<IterativeCouplingScheme>(ctx, mesh) | or_die;
-  auto criterion = mfem_mgis::make_shared<FirstIterationConvergenceCriterion>(ctx);
+  auto criterion =
+      mfem_mgis::make_shared<FirstIterationConvergenceCriterion>(ctx);
 
   c->setMaximumNumberOfIterations(ctx, 10) | or_die;
   c->addConvergenceCriterion(ctx, criterion) | or_die;

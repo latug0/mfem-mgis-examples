@@ -63,14 +63,17 @@ int main(int argc, char** argv) {
 
   // loading the mesh
   {
-    auto problem = mfem_mgis::construct<    mfem_mgis::NonLinearEvolutionProblem>(
-										  ctx, mfem_mgis::Parameters{{"MeshFileName", mesh_file},
-              {"FiniteElementFamily", "H1"},
-              {"FiniteElementOrder", order},
-              {"UnknownsSize", dim},
-              {"NumberOfUniformRefinements", parallel ? ref_para : ref_seq},
-              {"Hypothesis", "Tridimensional"},
-              {"Parallel", true}})|or_die;
+    auto problem =
+        mfem_mgis::construct<mfem_mgis::NonLinearEvolutionProblem>(
+            ctx, mfem_mgis::Parameters{{"MeshFileName", mesh_file},
+                                       {"FiniteElementFamily", "H1"},
+                                       {"FiniteElementOrder", order},
+                                       {"UnknownsSize", dim},
+                                       {"NumberOfUniformRefinements",
+                                        parallel ? ref_para : ref_seq},
+                                       {"Hypothesis", "Tridimensional"},
+                                       {"Parallel", true}}) |
+        or_die;
 
     auto mesh =
         problem.getImplementation<true>().getFiniteElementSpace().GetMesh();
@@ -82,50 +85,70 @@ int main(int argc, char** argv) {
     double h = mesh->GetElementSize(0);
 
     // 2 1 "Volume"
-    problem.addBehaviourIntegrator(ctx, "Mechanics", 1, library, behaviour)|or_die;
+    problem.addBehaviourIntegrator(ctx, "Mechanics", 1, library, behaviour) |
+        or_die;
     // materials
-    auto& m1 = problem.getMaterial(ctx,1,0)|or_die;
-    mgis::behaviour::setExternalStateVariable(ctx, m1.s0, "Temperature", 293.15)|or_die;
-    mgis::behaviour::setExternalStateVariable(ctx, m1.s1, "Temperature", 293.15)|or_die;
+    auto& m1 = problem.getMaterial(ctx, 1, 0) | or_die;
+    mgis::behaviour::setExternalStateVariable(ctx, m1.s0, "Temperature",
+                                              293.15) |
+        or_die;
+    mgis::behaviour::setExternalStateVariable(ctx, m1.s1, "Temperature",
+                                              293.15) |
+        or_die;
     // boundary conditions
 
     // 3 LowerBoundary
-    problem.addBoundaryCondition(ctx,
-				 mfem_mgis::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(ctx,
-												      problem.getFiniteElementDiscretizationPointer(), 3, 1)|or_die)|or_die;
+    problem.addBoundaryCondition(
+        ctx,
+        mfem_mgis::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
+            ctx, problem.getFiniteElementDiscretizationPointer(), 3, 1) |
+            or_die) |
+        or_die;
     // 4 SymmetryPlane1
-    problem.addBoundaryCondition(ctx,
-				 mfem_mgis::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(ctx,
-            problem.getFiniteElementDiscretizationPointer(), 4, 0)|or_die)|or_die;
+    problem.addBoundaryCondition(
+        ctx,
+        mfem_mgis::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
+            ctx, problem.getFiniteElementDiscretizationPointer(), 4, 0) |
+            or_die) |
+        or_die;
     // 5 SymmetryPlane2
-    problem.addBoundaryCondition(ctx,
-				 mfem_mgis::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(ctx,
-            problem.getFiniteElementDiscretizationPointer(), 5, 2)|or_die)|or_die;
+    problem.addBoundaryCondition(
+        ctx,
+        mfem_mgis::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
+            ctx, problem.getFiniteElementDiscretizationPointer(), 5, 2) |
+            or_die) |
+        or_die;
     // 2 UpperBoundary
-    problem.addBoundaryCondition(ctx,
-				 mfem_mgis::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(ctx,
-            problem.getFiniteElementDiscretizationPointer(), 2, 1,
+    problem.addBoundaryCondition(
+        ctx,
+        mfem_mgis::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
+            ctx, problem.getFiniteElementDiscretizationPointer(), 2, 1,
             [](const auto t) {
               const auto u = 6e-3 * t;
               return u;
-            })|or_die)|or_die;
+            }) |
+            or_die) |
+        or_die;
 
     // solving the problem
     problem.setSolverParameters(ctx, {{"VerbosityLevel", 0},
-                                 {"RelativeTolerance", 1e-6},
-                                 {"AbsoluteTolerance", 0.},
-                                 {"MaximumNumberOfIterations", 20}})|or_die;
+                                      {"RelativeTolerance", 1e-6},
+                                      {"AbsoluteTolerance", 0.},
+                                      {"MaximumNumberOfIterations", 20}}) |
+        or_die;
 
     // selection of the linear solver without preconditioner
     if (solver == "") {
       return EXIT_FAILURE;
     }
     if (preconditioner == "") {
-      problem.setLinearSolver(ctx, solver, {{"VerbosityLevel", 0},
-                                       //{"AbsoluteTolerance", 1e-12},
-                                       //{"KDim", 3},
-                                       {"Tolerance", 1e-12},
-                                       {"MaximumNumberOfIterations", 300}})|or_die;
+      problem.setLinearSolver(ctx, solver,
+                              {{"VerbosityLevel", 0},
+                               //{"AbsoluteTolerance", 1e-12},
+                               //{"KDim", 3},
+                               {"Tolerance", 1e-12},
+                               {"MaximumNumberOfIterations", 300}}) |
+          or_die;
     } else {
       // with the HypreBoomerAMG preconditioner
       //  auto prec_none = mfem_mgis::Parameters{{"Name", "None"}};
@@ -136,12 +159,14 @@ int main(int argc, char** argv) {
                //                           {"Strategy", "Elasticity"},
                {"VerbosityLevel", 0}}}};
 
-      problem.setLinearSolver(ctx, solver, {{"VerbosityLevel", 0},
-                                       //{"AbsoluteTolerance", 1e-12},
-                                       //{"RelativeTolerance", 1e-12},
-                                       //{"Tolerance", 1e-12},
-                                       {"MaximumNumberOfIterations", 300},
-                                       {"Preconditioner", prec_boomer}})|or_die;
+      problem.setLinearSolver(ctx, solver,
+                              {{"VerbosityLevel", 0},
+                               //{"AbsoluteTolerance", 1e-12},
+                               //{"RelativeTolerance", 1e-12},
+                               //{"Tolerance", 1e-12},
+                               {"MaximumNumberOfIterations", 300},
+                               {"Preconditioner", prec_boomer}}) |
+          or_die;
     }
     // print on file
     out << " SetLinearSolver" << std::endl;
@@ -157,13 +182,15 @@ int main(int argc, char** argv) {
     out << " numbers_of_elements = " << numbers_of_elements << std::endl;
 
     // vtk export
-    problem.addPostProcessing(ctx,
-        "ParaviewExportResults",
+    problem.addPostProcessing(
+        ctx, "ParaviewExportResults",
         {{"OutputFileName",
-	   std::string("ssna303-displacements-HFGMRES_WS_1")}})|or_die;
-    problem.addPostProcessing(ctx,
-        "ComputeResultantForceOnBoundary",
-        {{"Boundary", 2}, {"OutputFileName", "force_HFGMRES_WS_1.txt"}})|or_die;
+          std::string("ssna303-displacements-HFGMRES_WS_1")}}) |
+        or_die;
+    problem.addPostProcessing(
+        ctx, "ComputeResultantForceOnBoundary",
+        {{"Boundary", 2}, {"OutputFileName", "force_HFGMRES_WS_1.txt"}}) |
+        or_die;
 
     // loop over time step
     const auto nsteps = mfem_mgis::size_type{2};
@@ -185,16 +212,16 @@ int main(int argc, char** argv) {
         if (converged) {
           --nsteps;
           ct += dt2;
-	  if(nsteps==0){
-	    problem.executePostProcessings(ctx, t, dt)|or_die;
-	  }
-          problem.update(ctx)|or_die;
+          if (nsteps == 0) {
+            problem.executePostProcessings(ctx, t, dt) | or_die;
+          }
+          problem.update(ctx) | or_die;
         } else {
           std::cout << "\nsubstep: " << niter << '\n';
           nsteps *= 2;
           dt2 /= 2;
           ++niter;
-          problem.revert(ctx)|or_die;
+          problem.revert(ctx) | or_die;
           if (niter == 10) {
             mgis::abort("maximum number of substeps");
           }

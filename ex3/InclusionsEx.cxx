@@ -86,38 +86,42 @@ void (*getSolution(const std::size_t i))(mfem::Vector&, const mfem::Vector&) {
   return solutions[i];
 }
 
-[[nodiscard]] static bool setLinearSolver(mfem_mgis::Context& ctx,
-					  mfem_mgis::AbstractNonLinearEvolutionProblem& p,
-					  const std::size_t i) noexcept{
+[[nodiscard]] static bool setLinearSolver(
+    mfem_mgis::Context& ctx,
+    mfem_mgis::AbstractNonLinearEvolutionProblem& p,
+    const std::size_t i) noexcept {
   if (i == 0) {
-    return p.setLinearSolver(ctx, "GMRESSolver", {{"VerbosityLevel", 1},
-                                      {"AbsoluteTolerance", 1e-12},
-                                      {"RelativeTolerance", 1e-12},
-                                      {"MaximumNumberOfIterations", 5000}});
+    return p.setLinearSolver(ctx, "GMRESSolver",
+                             {{"VerbosityLevel", 1},
+                              {"AbsoluteTolerance", 1e-12},
+                              {"RelativeTolerance", 1e-12},
+                              {"MaximumNumberOfIterations", 5000}});
   } else if (i == 1) {
-    return    p.setLinearSolver(ctx, "CGSolver", {{"VerbosityLevel", 1},
-                                   {"AbsoluteTolerance", 1e-12},
-                                   {"RelativeTolerance", 1e-12},
-                                   {"MaximumNumberOfIterations", 5000}});
+    return p.setLinearSolver(ctx, "CGSolver",
+                             {{"VerbosityLevel", 1},
+                              {"AbsoluteTolerance", 1e-12},
+                              {"RelativeTolerance", 1e-12},
+                              {"MaximumNumberOfIterations", 5000}});
 #ifdef MFEM_USE_SUITESPARSE
   } else if (i == 2) {
-    return    p.setLinearSolver(ctx, "UMFPackSolver", {});
+    return p.setLinearSolver(ctx, "UMFPackSolver", {});
 #endif
 #ifdef MFEM_USE_MUMPS
   } else if (i == 3) {
-    return    p.setLinearSolver(ctx, "MUMPSSolver",
-                      {{"Symmetric", true}, {"PositiveDefinite", true}});
+    return p.setLinearSolver(ctx, "MUMPSSolver",
+                             {{"Symmetric", true}, {"PositiveDefinite", true}});
 #endif
   }
   return ctx.registerErrorMessage("unsupported linear solver");
 }
 
-static bool setSolverParameters(mfem_mgis::Context& ctx,
+static bool setSolverParameters(
+    mfem_mgis::Context& ctx,
     mfem_mgis::AbstractNonLinearEvolutionProblem& problem) {
-  return  problem.setSolverParameters(ctx, {{"VerbosityLevel", 0},
-                               {"RelativeTolerance", 1e-12},
-                               {"AbsoluteTolerance", 1e-12},
-                               {"MaximumNumberOfIterations", 10}});
+  return problem.setSolverParameters(ctx, {{"VerbosityLevel", 0},
+                                           {"RelativeTolerance", 1e-12},
+                                           {"AbsoluteTolerance", 1e-12},
+                                           {"MaximumNumberOfIterations", 10}});
 }  // end of setSolverParmeters
 
 std::optional<bool> checkSolution(mfem_mgis::Context& ctx,
@@ -196,13 +200,14 @@ int executeMFEMMGISTest(mgis::Context& ctx, const TestParameters& p) {
   // creating the finite element workspace
 
   auto fed = mfem_mgis::make_shared<mfem_mgis::FiniteElementDiscretization>(
-      ctx,
-      mfem_mgis::Parameters{{"MeshFileName", p.mesh_file},
-                            {"FiniteElementFamily", "H1"},
-                            {"FiniteElementOrder", p.order},
-                            {"UnknownsSize", dim},
-                            {"NumberOfUniformRefinements", p.parallel ? 0 : 0},
-                            {"Parallel", p.parallel}})|or_die;
+                 ctx, mfem_mgis::Parameters{{"MeshFileName", p.mesh_file},
+                                            {"FiniteElementFamily", "H1"},
+                                            {"FiniteElementOrder", p.order},
+                                            {"UnknownsSize", dim},
+                                            {"NumberOfUniformRefinements",
+                                             p.parallel ? 0 : 0},
+                                            {"Parallel", p.parallel}}) |
+             or_die;
 
   {
     if (mfem_mgis::getMPIrank() == 0)
@@ -212,22 +217,35 @@ int executeMFEMMGISTest(mgis::Context& ctx, const TestParameters& p) {
 
     std::vector<mfem_mgis::real> corner1({0., 0., 0.});
     std::vector<mfem_mgis::real> corner2({p.xmax, p.ymax, p.zmax});
-    auto problem = mfem_mgis::construct<mfem_mgis::PeriodicNonLinearEvolutionProblem>(ctx, fed, corner1,
-                                                         corner2)|or_die;
+    auto problem =
+        mfem_mgis::construct<mfem_mgis::PeriodicNonLinearEvolutionProblem>(
+            ctx, fed, corner1, corner2) |
+        or_die;
 
     //    const mfem::Mesh &m = fed->getMesh<true>();
 
-    problem.addBehaviourIntegrator(ctx, "Mechanics", 1, p.library, "Elasticity")|or_die;
-    problem.addBehaviourIntegrator(ctx, "Mechanics", 2, p.library, "Elasticity")|or_die;
+    problem.addBehaviourIntegrator(ctx, "Mechanics", 1, p.library,
+                                   "Elasticity") |
+        or_die;
+    problem.addBehaviourIntegrator(ctx, "Mechanics", 2, p.library,
+                                   "Elasticity") |
+        or_die;
     // materials
-    auto& m1 = problem.getMaterial(ctx, 1, 0)|or_die;
-    auto& m2 = problem.getMaterial(ctx, 2, 0)|or_die;
+    auto& m1 = problem.getMaterial(ctx, 1, 0) | or_die;
+    auto& m2 = problem.getMaterial(ctx, 2, 0) | or_die;
     // setting the material properties
-    auto set_properties = [&ctx, &or_die](auto& m, const double l, const double mu) {
-      mgis::behaviour::setMaterialProperty(ctx, m.s0, "FirstLameCoefficient", l)|or_die;
-      mgis::behaviour::setMaterialProperty(ctx, m.s0, "ShearModulus", mu)|or_die;
-      mgis::behaviour::setMaterialProperty(ctx, m.s1, "FirstLameCoefficient", l)|or_die;
-      mgis::behaviour::setMaterialProperty(ctx, m.s1, "ShearModulus", mu)|or_die;
+    auto set_properties = [&ctx, &or_die](auto& m, const double l,
+                                          const double mu) {
+      mgis::behaviour::setMaterialProperty(ctx, m.s0, "FirstLameCoefficient",
+                                           l) |
+          or_die;
+      mgis::behaviour::setMaterialProperty(ctx, m.s0, "ShearModulus", mu) |
+          or_die;
+      mgis::behaviour::setMaterialProperty(ctx, m.s1, "FirstLameCoefficient",
+                                           l) |
+          or_die;
+      mgis::behaviour::setMaterialProperty(ctx, m.s1, "ShearModulus", mu) |
+          or_die;
     };
 
     std::array<mfem_mgis::real, 2> lambda({100, 200});
@@ -236,8 +254,12 @@ int executeMFEMMGISTest(mgis::Context& ctx, const TestParameters& p) {
     set_properties(m2, lambda[1], mu[1]);
     //
     auto set_temperature = [&ctx, &or_die](auto& m) {
-      mgis::behaviour::setExternalStateVariable(ctx, m.s0, "Temperature", 293.15)|or_die;
-      mgis::behaviour::setExternalStateVariable(ctx, m.s1, "Temperature", 293.15)|or_die;
+      mgis::behaviour::setExternalStateVariable(ctx, m.s0, "Temperature",
+                                                293.15) |
+          or_die;
+      mgis::behaviour::setExternalStateVariable(ctx, m.s1, "Temperature",
+                                                293.15) |
+          or_die;
     };
     set_temperature(m1);
     set_temperature(m2);
@@ -251,20 +273,21 @@ int executeMFEMMGISTest(mgis::Context& ctx, const TestParameters& p) {
     }
     problem.setMacroscopicGradientsEvolution([e](const double) { return e; });
     //
-    setLinearSolver(ctx, problem, p.linearsolver)|or_die;
-    setSolverParameters(ctx, problem)|or_die;
+    setLinearSolver(ctx, problem, p.linearsolver) | or_die;
+    setSolverParameters(ctx, problem) | or_die;
 
     // Add postprocessing and outputs
-    problem.addPostProcessing(ctx,
-        "ParaviewExportResults",
-        {{"OutputFileName", "PeriodicTestOutput-" + std::to_string(p.tcase)}})|or_die;
+    problem.addPostProcessing(
+        ctx, "ParaviewExportResults",
+        {{"OutputFileName", "PeriodicTestOutput-" + std::to_string(p.tcase)}}) |
+        or_die;
     // solving the problem
-    problem.solve(ctx, 0, 1)|or_die;
-    problem.executePostProcessings(ctx, 0, 1)|or_die;
+    problem.solve(ctx, 0, 1) | or_die;
+    problem.executePostProcessings(ctx, 0, 1) | or_die;
     //
-    const auto b = checkSolution(ctx, problem, p.tcase)|or_die;
+    const auto b = checkSolution(ctx, problem, p.tcase) | or_die;
     mfem_mgis::Profiler::OutputManager::printTimeTable(ctx);
-    return b ? EXIT_SUCCESS: EXIT_FAILURE;
+    return b ? EXIT_SUCCESS : EXIT_FAILURE;
   }
 }
 

@@ -69,30 +69,31 @@ inline void print_mesh_information(Implementation& impl) {
 
 template <typename Problem>
 inline void add_post_processings(mfem_mgis::attributes::MayAbort,
-				 mfem_mgis::Context& ctx,
-				 Problem& p,
+                                 mfem_mgis::Context& ctx,
+                                 Problem& p,
                                  std::string msg,
                                  std::string field_name) {
   auto or_die = ctx.getFatalFailureHandler();
-  p.addPostProcessing(ctx,
-      "ParaviewExportResults",
-      {{"OutputFileName", msg}, {"OutputFieldName", field_name}})|or_die;
+  p.addPostProcessing(
+      ctx, "ParaviewExportResults",
+      {{"OutputFileName", msg}, {"OutputFieldName", field_name}}) |
+      or_die;
 }
 
 template <typename Problem>
 inline void execute_post_processings(mfem_mgis::attributes::MayAbort,
-				     mfem_mgis::Context& ctx,
+                                     mfem_mgis::Context& ctx,
                                      Problem& p,
                                      double start,
                                      double end) {
   CatchTimeSection(ctx, "common::post_processing_step");
   auto or_die = ctx.getFatalFailureHandler();
-  p.executePostProcessings(ctx, start, end)|or_die;
+  p.executePostProcessings(ctx, start, end) | or_die;
 }
 
 template <typename Problem>
 inline static void setLinearSolver(mfem_mgis::attributes::MayAbort,
-				   mfem_mgis::Context& ctx,
+                                   mfem_mgis::Context& ctx,
                                    Problem& p,
                                    const std::string& physics_type,
                                    const TestParameters& param,
@@ -117,19 +118,21 @@ inline static void setLinearSolver(mfem_mgis::attributes::MayAbort,
     constexpr int defaultMaxNumOfIt = 10e3;
 
     auto solverParameters = mfem_mgis::Parameters{};
-    solverParameters.insert(mfem_mgis::may_throw,
+    solverParameters.insert(
+        mfem_mgis::may_throw,
         mfem_mgis::Parameters{{"VerbosityLevel", verbosity}});
     solverParameters.insert(mfem_mgis::may_throw,
-			    mfem_mgis::Parameters{
-        {"MaximumNumberOfIterations", defaultMaxNumOfIt}});
+                            mfem_mgis::Parameters{{"MaximumNumberOfIterations",
+                                                   defaultMaxNumOfIt}});
 
     if (solver == "MINRESSolver" || solver == "BiCGSTABSolver" ||
         solver == "CGSolver" || solver == "GMRESSolver") {
-      solverParameters.insert(mfem_mgis::may_throw,
+      solverParameters.insert(
+          mfem_mgis::may_throw,
           mfem_mgis::Parameters{{"AbsoluteTolerance", Tol}});
     } else {
       solverParameters.insert(mfem_mgis::may_throw,
-			      mfem_mgis::Parameters{{"Tolerance", Tol}});
+                              mfem_mgis::Parameters{{"Tolerance", Tol}});
     }
 
     if (!precond.empty()) {
@@ -142,15 +145,16 @@ inline static void setLinearSolver(mfem_mgis::attributes::MayAbort,
       auto preconditioner =
           mfem_mgis::Parameters{{"Name", precond}, {"Options", options}};
 
-      solverParameters.insert(mfem_mgis::throwing,
+      solverParameters.insert(
+          mfem_mgis::throwing,
           mfem_mgis::Parameters{{"Preconditioner", preconditioner}});
     }
 
-    p.setLinearSolver(ctx, solver, solverParameters)|or_die;
+    p.setLinearSolver(ctx, solver, solverParameters) | or_die;
   }
 
   else if (contains(direct_solvers, solver)) {
-    p.setLinearSolver(ctx, solver, mfem_mgis::Parameters{})|or_die;
+    p.setLinearSolver(ctx, solver, mfem_mgis::Parameters{}) | or_die;
   }
 
   else {
