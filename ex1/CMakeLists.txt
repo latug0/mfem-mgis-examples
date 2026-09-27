@@ -26,8 +26,11 @@ if (NOT TARGET mfem-mgis::MFEMMGIS)
   find_package(MFEMMGIS REQUIRED)
 endif(NOT TARGET mfem-mgis::MFEMMGIS)
 
+# The sources of this example are installed by mfem-mgis
+set(MFEMMGIS_EX1_DIR "${MFEMMGIS_DIR}/../examples/ex1")
+
 # Define the executable to build for this example
-add_executable(UniaxialTensileTestEx UniaxialTensileTest.cxx)
+add_executable(UniaxialTensileTestEx ${MFEMMGIS_EX1_DIR}/UniaxialTensileTest.cxx)
 target_link_libraries(UniaxialTensileTestEx mfem-mgis::MFEMMGIS)
 target_include_directories(UniaxialTensileTestEx
     SYSTEM
@@ -36,9 +39,9 @@ target_include_directories(UniaxialTensileTestEx
 
 # Copy needed file for execution
 file(COPY
-  ${PROJECT_SOURCE_DIR}/Plasticity.mfront
-  ${PROJECT_SOURCE_DIR}/cube.mesh
-  ${PROJECT_SOURCE_DIR}/Plasticity.ref
+  ${MFEMMGIS_EX1_DIR}/Plasticity.mfront
+  ${MFEMMGIS_EX1_DIR}/cube.mesh
+  ${MFEMMGIS_EX1_DIR}/Plasticity.ref
   DESTINATION ${PROJECT_BINARY_DIR})
 
 # Use mfront to generate libBehaviour.so
