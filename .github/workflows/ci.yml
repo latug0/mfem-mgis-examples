@@ -15,6 +15,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # filled by the continuous integration of mfem-mgis, only read here
+      BUILD_CACHE: oci://ghcr.io/thelfer/mfem-mgis-spack-buildcache
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -26,8 +29,15 @@ jobs:
           buildcache: false      # the public build cache would bring older dependencies
           color: true            # Force color output (SPACK_COLOR=always)
           spack_path: spack      # Where to clone Spack
+      # the configuration of mfem-mgis, as its binaries are only reused when their hash matches
+      - name: Set up the build cache
+        uses: thelfer/mfem-mgis/.github/actions/setup-build-cache@master
       - name: Install MFEM MGIS
-        run: spack install mfem-mgis@master
+        run: |
+          # pin the master commits, as mfem-mgis does when it fills its build cache
+          tfel=$(git ls-remote https://github.com/thelfer/tfel.git refs/heads/master | cut -f1)
+          mgis=$(git ls-remote https://github.com/thelfer/MFrontGenericInterfaceSupport.git refs/heads/master | cut -f1)
+          spack install mfem-mgis@master ^tfel@master commit=$tfel ^mgis@master commit=$mgis
       - name: Build the examples
         shell: spack-sh {0}
         run: |
