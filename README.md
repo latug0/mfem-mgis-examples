@@ -44,7 +44,7 @@ For an installation on a supercomputer without internet please follow the proced
 | Name | Description | Directory
 |--|--|--|
 | TensileTest | TODO | ex1 |
-| Ssna303     | This tutorial deals with a 2D (plane strain) tensile test on a notched beam modeled by finite-strain plastic behavior. A tutorial describing this simulation is available at: https://thelfer.github.io/mfem-mgis/web/tutorial.html | ex2 |
+| Ssna303     | This tutorial deals with a 2D (plane strain) tensile test on a notched beam modeled by finite-strain plastic behavior. A tutorial describing this simulation is available at: https://thelfer.github.io/mfem-mgis/user_guide/tutorial.html | ex2 |
 | Inclusions  | This example models several inclusions in a periodic cube under imposed macroscopic strain. | ex3 |
 | Ssna303_3d  | This tutorial deals with a 3D tensile test on a notched beam modeled by finite-strain plastic behavior. | ex4 |
 | Satoh       | Modelling plate of length 1 in plane strain clamped on the left and right boundaries and submitted to a parabolic thermal gradient along the x-axis | ex5 |
