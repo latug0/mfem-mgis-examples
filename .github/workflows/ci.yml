@@ -27,14 +27,7 @@ jobs:
           color: true            # Force color output (SPACK_COLOR=always)
           spack_path: spack      # Where to clone Spack
       - name: Install MFEM MGIS
-        run: |
-          # openblas 0.3.34 overflows in its Haswell/Zen fallback kernels on AVX-512 Zen 4/5
-          # hosts (OpenMathLib/OpenBLAS#6013, #6021), fixed after 0.3.34
-          spack config add "packages:openblas:conflict:['@0.3.34']"
-          # otherwise excluding a version silently switches to another BLAS provider
-          spack config add "packages:blas:require:[openblas]"
-          spack config add "packages:lapack:require:[openblas]"
-          spack install mfem-mgis@master
+        run: spack install mfem-mgis@master
       - name: Build the examples
         shell: spack-sh {0}
         run: |
