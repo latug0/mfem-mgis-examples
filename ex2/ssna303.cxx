@@ -14,6 +14,7 @@
 
 int main(int argc, char** argv) {
   auto ctx = mgis::Context{};
+  auto or_die = ctx.getFatalFailureHandler();
   constexpr const auto dim = mfem_mgis::size_type{2};
   // Initialize mfem_mgis (it includes a call to MPI_Init)
   mfem_mgis::initialize(argc, argv);
@@ -41,60 +42,75 @@ int main(int argc, char** argv) {
   }
   args.PrintOptions(std::cout);
   // the non linear problem
-  mfem_mgis::NonLinearEvolutionProblem problem(ctx,
-                                               {{"MeshFileName", mesh_file},
+  auto problem = mfem_mgis::construct<mfem_mgis::NonLinearEvolutionProblem>(
+                     ctx, mfem_mgis::Parameters{{"MeshFileName", mesh_file},
                                                 {"FiniteElementFamily", "H1"},
                                                 {"FiniteElementOrder", order},
                                                 {"UnknownsSize", dim},
                                                 {"Hypothesis", "PlaneStrain"},
-                                                {"Parallel", parallel}});
-  problem.setMaterialsNames({{1, "NotchedBeam"}});
+                                                {"Parallel", parallel}}) |
+                 or_die;
+  problem.setMaterialsNames(ctx, {{1, "NotchedBeam"}}) | or_die;
   problem.setBoundariesNames(
-      {{3, "LowerBoundary"}, {4, "SymmetryAxis"}, {2, "UpperBoundary"}});
-  problem.addBehaviourIntegrator("Mechanics", "NotchedBeam", library,
-                                 behaviour);
+      ctx, {{3, "LowerBoundary"}, {4, "SymmetryAxis"}, {2, "UpperBoundary"}}) |
+      or_die;
+  problem.addBehaviourIntegrator(ctx, "Mechanics", "NotchedBeam", library,
+                                 behaviour) |
+      or_die;
   // materials
-  auto& m1 = problem.getMaterial("NotchedBeam");
-  mgis::behaviour::setExternalStateVariable(m1.s0, "Temperature", 293.15);
-  mgis::behaviour::setExternalStateVariable(m1.s1, "Temperature", 293.15);
+  auto& m1 = problem.getMaterial(ctx, "NotchedBeam", 0) | or_die;
+  mgis::behaviour::setExternalStateVariable(ctx, m1.s0, "Temperature", 293.15) |
+      or_die;
+  mgis::behaviour::setExternalStateVariable(ctx, m1.s1, "Temperature", 293.15) |
+      or_die;
   // boundary conditions
   problem.addUniformDirichletBoundaryCondition(
-      {{"Boundary", "LowerBoundary"}, {"Component", 1}});
+      ctx, {{"Boundary", "LowerBoundary"}, {"Component", 1}}) |
+      or_die;
   problem.addUniformDirichletBoundaryCondition(
-      {{"Boundary", "SymmetryAxis"}, {"Component", 0}});
-  problem.addUniformDirichletBoundaryCondition(
-      {{"Boundary", "UpperBoundary"},
-       {"Component", 1},
-       {"LoadingEvolution", [](const auto t) {
-          const auto u = 6e-3 * t;
-          return u;
-        }}});
+      ctx, {{"Boundary", "SymmetryAxis"}, {"Component", 0}}) |
+      or_die;
+  problem.addUniformDirichletBoundaryCondition(ctx,
+                                               {{"Boundary", "UpperBoundary"},
+                                                {"Component", 1},
+                                                {"LoadingEvolution",
+                                                 [](const auto t) {
+                                                   const auto u = 6e-3 * t;
+                                                   return u;
+                                                 }}}) |
+      or_die;
   // solving the problem
   if (!mfem_mgis::usePETSc()) {
-    problem.setSolverParameters({{"VerbosityLevel", 0},
-                                 {"RelativeTolerance", 1e-6},
-                                 {"AbsoluteTolerance", 0.},
-                                 {"MaximumNumberOfIterations", 10}});
+    problem.setSolverParameters(ctx, {{"VerbosityLevel", 0},
+                                      {"RelativeTolerance", 1e-6},
+                                      {"AbsoluteTolerance", 0.},
+                                      {"MaximumNumberOfIterations", 10}}) |
+        or_die;
     // selection of the linear solver
     if (parallel) {
-      problem.setLinearSolver("MUMPSSolver", {});
+      problem.setLinearSolver(ctx, "MUMPSSolver", {}) | or_die;
     } else {
-      problem.setLinearSolver("UMFPackSolver", {});
+      problem.setLinearSolver(ctx, "UMFPackSolver", {}) | or_die;
     }
   }
   // post-processings
-  problem.addPostProcessing("ComputeResultantForceOnBoundary",
-                            {{"Boundary", 2}, {"OutputFileName", "force.txt"}});
+  problem.addPostProcessing(
+      ctx, "ComputeResultantForceOnBoundary",
+      {{"Boundary", 2}, {"OutputFileName", "force.txt"}}) |
+      or_die;
 
-  problem.addPostProcessing("ParaviewExportResults",
-                            {{"OutputFileName", "ssna303-displacements"}});
+  problem.addPostProcessing(ctx, "ParaviewExportResults",
+                            {{"OutputFileName", "ssna303-displacements"}}) |
+      or_die;
   problem.addPostProcessing(
-      "ParaviewExportIntegrationPointResultsAtNodes",
-      {{{"Results", "Stress"}, {"OutputFileName", "ssna303-stress"}}});
+      ctx, "ParaviewExportIntegrationPointResultsAtNodes",
+      {{{"Results", "Stress"}, {"OutputFileName", "ssna303-stress"}}}) |
+      or_die;
   problem.addPostProcessing(
-      "ParaviewExportIntegrationPointResultsAtNodes",
+      ctx, "ParaviewExportIntegrationPointResultsAtNodes",
       {{{"Results", "EquivalentPlasticStrain"},
-        {"OutputFileName", "ssna303-equivalent-plastic-strain"}}});
+        {"OutputFileName", "ssna303-equivalent-plastic-strain"}}}) |
+      or_die;
   // loop over time step
   const auto nsteps = mfem_mgis::size_type{50};
   const auto dt = mfem_mgis::real{1} / nsteps;
@@ -113,23 +129,19 @@ int main(int argc, char** argv) {
       if (converged) {
         --nsteps;
         ct += dt2;
-        if (!problem.update(ctx)) {
-          mfem_mgis::raise("update failed");
-        }
+        problem.update(ctx) | or_die;
       } else {
         std::cout << "\nsubstep: " << nsubsteps << '\n';
         nsteps *= 2;
         dt2 /= 2;
         ++nsubsteps;
-        if (!problem.revert(ctx)) {
-          mfem_mgis::raise("revert failed");
-        }
+        problem.revert(ctx) | or_die;
         if (nsubsteps == 10) {
-          mfem_mgis::raise("maximum number of substeps");
+          mfem_mgis::abort("maximum number of substeps");
         }
       }
     }
-    problem.executePostProcessings(ctx, t, dt);
+    problem.executePostProcessings(ctx, t, dt) | or_die;
     t += dt;
     ++iteration;
     std::cout << '\n';

@@ -72,45 +72,56 @@ void common_parameters(mfem::OptionsParser& args, TestParameters& p) {
 }
 
 template <typename Problem>
-void add_post_processings(Problem& p, std::string msg) {
-  p.addPostProcessing("ParaviewExportResults", {{"OutputFileName", msg}});
+void add_post_processings(mfem_mgis::attributes::MayAbort,
+                          mfem_mgis::Context& ctx,
+                          Problem& p,
+                          std::string msg) {
+  auto or_die = ctx.getFatalFailureHandler();
+  p.addPostProcessing(ctx, "ParaviewExportResults", {{"OutputFileName", msg}}) |
+      or_die;
 }  // end timer add_postprocessing_and_outputs
 
 template <typename Problem>
-void execute_post_processings(mgis::Context& ctx,
+void execute_post_processings(mfem_mgis::attributes::MayAbort,
+                              mfem_mgis::Context& ctx,
                               Problem& p,
                               double start,
                               double end) {
   CatchTimeSection(ctx, "common::post_processing_step");
+  auto or_die = ctx.getFatalFailureHandler();
   p.executePostProcessings(ctx, start, end);
 }
 
-void setup_properties(mgis::Context& ctx,
+void setup_properties(mfem_mgis::attributes::MayAbort,
+                      mfem_mgis::Context& ctx,
                       const TestParameters& p,
                       mfem_mgis::PeriodicNonLinearEvolutionProblem& problem) {
   using namespace mgis::behaviour;
   using real = mfem_mgis::real;
-
+  auto or_die = ctx.getFatalFailureHandler();
   CatchTimeSection(ctx, "set_mgis_stuff");
-  problem.addBehaviourIntegrator("Mechanics", 1, p.library, p.behaviour);
-  problem.addBehaviourIntegrator("Mechanics", 2, p.library, p.behaviour);
+  problem.addBehaviourIntegrator(ctx, "Mechanics", 1, p.library, p.behaviour) |
+      or_die;
+  problem.addBehaviourIntegrator(ctx, "Mechanics", 2, p.library, p.behaviour) |
+      or_die;
   // materials
-  auto& m1 = problem.getMaterial(1);
-  auto& m2 = problem.getMaterial(2);
-  auto set_properties = [](auto& m, const double yo, const double po) {
-    setMaterialProperty(m.s0, "YoungModulus", yo);
-    setMaterialProperty(m.s0, "PoissonRatio", po);
-    setMaterialProperty(m.s1, "YoungModulus", yo);
-    setMaterialProperty(m.s1, "PoissonRatio", po);
+  auto& m1 = problem.getMaterial(ctx, 1, 0) | or_die;
+  auto& m2 = problem.getMaterial(ctx, 2, 0) | or_die;
+  auto set_properties = [&ctx, &or_die](auto& m, const double yo,
+                                        const double po) {
+    setMaterialProperty(ctx, m.s0, "YoungModulus", yo) | or_die;
+    setMaterialProperty(ctx, m.s0, "PoissonRatio", po) | or_die;
+    setMaterialProperty(ctx, m.s1, "YoungModulus", yo) | or_die;
+    setMaterialProperty(ctx, m.s1, "PoissonRatio", po) | or_die;
   };
 
   set_properties(m1, 2.0e11, 0.3);
   set_properties(m2, 8.0e11, 0.3);
 
   //
-  auto set_temperature = [](auto& m) {
-    setExternalStateVariable(m.s0, "Temperature", 293.15);
-    setExternalStateVariable(m.s1, "Temperature", 293.15);
+  auto set_temperature = [&ctx, &or_die](auto& m) {
+    setExternalStateVariable(ctx, m.s0, "Temperature", 293.15) | or_die;
+    setExternalStateVariable(ctx, m.s1, "Temperature", 293.15) | or_die;
   };
   set_temperature(m1);
   set_temperature(m2);
@@ -124,45 +135,55 @@ void setup_properties(mgis::Context& ctx,
 }
 
 template <typename Problem>
-static void setLinearSolver(mgis::Context& ctx,
+static void setLinearSolver(mfem_mgis::attributes::MayAbort,
+                            mfem_mgis::Context& ctx,
                             Problem& p,
                             const int verbosity = 0,
                             const mfem_mgis::real Tol = 1e-12) {
   CatchTimeSection(ctx, "set_linear_solver");
+  auto or_die = ctx.getFatalFailureHandler();
   // pilote
   constexpr int defaultMaxNumOfIt = 5000;   // MaximumNumberOfIterations
   constexpr int adjustMaxNumOfIt = 500000;  // MaximumNumberOfIterations
   auto solverParameters = mfem_mgis::Parameters{};
-  solverParameters.insert(mfem_mgis::Parameters{{"VerbosityLevel", verbosity}});
+  solverParameters.insert(mfem_mgis::throwing,
+                          mfem_mgis::Parameters{{"VerbosityLevel", verbosity}});
   solverParameters.insert(
+      mfem_mgis::throwing,
       mfem_mgis::Parameters{{"MaximumNumberOfIterations", defaultMaxNumOfIt}});
-  solverParameters.insert(mfem_mgis::Parameters{{"Tolerance", Tol}});
+  solverParameters.insert(mfem_mgis::throwing,
+                          mfem_mgis::Parameters{{"Tolerance", Tol}});
 
   // preconditionner hypreBoomerAMG
   auto options = mfem_mgis::Parameters{{"VerbosityLevel", verbosity}};
   auto preconditionner =
       mfem_mgis::Parameters{{"Name", "HypreBoomerAMG"}, {"Options", options}};
   solverParameters.insert(
+      mfem_mgis::throwing,
       mfem_mgis::Parameters{{"Preconditioner", preconditionner}});
   // solver HyprePCG
-  p.setLinearSolver("HyprePCG", solverParameters);
+  p.setLinearSolver(ctx, "HyprePCG", solverParameters) | or_die;
 }
 
 template <typename Problem>
-void run_solve(mgis::Context& ctx, Problem& p, double start, double end) {
+void run_solve(mfem_mgis::attributes::MayAbort,
+               mfem_mgis::Context& ctx,
+               Problem& p,
+               double start,
+               double end) {
   CatchTimeSection(ctx, "Solve");
   // solving the problem
   auto statistics = p.solve(ctx, 0, 1);
-
   // check status
   if (statistics.status) {
-    mfem::out << "INFO: FAILED\n";
-    std::exit(EXIT_FAILURE);
+    ctx.log() << "INFO: FAILED\n";
+    mfem_mgis::abort(EXIT_FAILURE);
   }
 }
 
 int main(int argc, char* argv[]) {
-  auto ctx = mgis::Context{};
+  auto ctx = mfem_mgis::Context{};
+  auto or_die = ctx.getFatalFailureHandler();
   ctx.enableProfiling(true);
   // mpi initialization here
   mfem_mgis::initialize(argc, argv);
@@ -179,28 +200,35 @@ int main(int argc, char* argv[]) {
   constexpr const auto dim = mfem_mgis::size_type{3};
 
   // creating the finite element workspace
-  auto fed = std::make_shared<mfem_mgis::FiniteElementDiscretization>(
-      ctx, mfem_mgis::Parameters{
-               {"MeshFileName", p.mesh_file},
-               {"FiniteElementFamily", "H1"},
-               {"FiniteElementOrder", p.order},
-               {"UnknownsSize", dim},
-               {"NumberOfUniformRefinements", p.parallel ? p.refinement : 0},
-               {"Parallel", p.parallel}});
-  mfem_mgis::PeriodicNonLinearEvolutionProblem problem(ctx, fed);
+  auto fed = mfem_mgis::make_shared<mfem_mgis::FiniteElementDiscretization>(
+                 ctx, mfem_mgis::Parameters{{"MeshFileName", p.mesh_file},
+                                            {"FiniteElementFamily", "H1"},
+                                            {"FiniteElementOrder", p.order},
+                                            {"UnknownsSize", dim},
+                                            {"NumberOfUniformRefinements",
+                                             p.parallel ? p.refinement : 0},
+                                            {"Parallel", p.parallel}}) |
+             or_die;
+  auto problem =
+      mfem_mgis::construct<mfem_mgis::PeriodicNonLinearEvolutionProblem>(ctx,
+                                                                         fed) |
+      or_die;
 
   // set problem
-  setup_properties(ctx, p, problem);
-  setLinearSolver(ctx, problem, p.verbosity_level);
+  setup_properties(mfem_mgis::may_abort, ctx, p, problem);
+  setLinearSolver(mfem_mgis::may_abort, ctx, problem, p.verbosity_level);
 
   // add post processings
-  if (use_post_processing)
-    add_post_processings(problem, "OutputFile-rve-non-linear-elastic");
-
+  if (use_post_processing) {
+    add_post_processings(mfem_mgis::may_abort, ctx, problem,
+                         "OutputFile-rve-non-linear-elastic");
+  }
   // main function here
-  run_solve(ctx, problem, 0, 1);
+  run_solve(mfem_mgis::may_abort, ctx, problem, 0, 1);
 
-  if (use_post_processing) execute_post_processings(ctx, problem, 0, 1);
+  if (use_post_processing) {
+    execute_post_processings(mfem_mgis::may_abort, ctx, problem, 0, 1);
+  }
 
   // print and write timetable
   mfem_mgis::Profiler::OutputManager::printTimeTable(ctx);
