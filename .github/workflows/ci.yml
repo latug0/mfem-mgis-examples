@@ -32,8 +32,18 @@ jobs:
       # the configuration of mfem-mgis, as its binaries are only reused when their hash matches
       - name: Set up the build cache
         uses: thelfer/mfem-mgis/.github/actions/setup-build-cache@master
+      - name: Set up ccache
+        id: ccache
+        uses: thelfer/mfem-mgis/.github/actions/setup-ccache@master
+        with:
+          key: examples
       - name: Install MFEM MGIS
         run: |
+          # only MFEM MGIS is compiled with ccache, the dependencies come from the build cache
+          spack config add config:ccache:true
+          # stage directories named without the hash of mfem-mgis, which changes with each commit:
+          # spack passes the path of the sources to gcc with -frandom-seed, which ccache hashes
+          spack config add "config:stage_name:spack-stage-{name}-{version}"
           # pin the master commits, as mfem-mgis does when it fills its build cache
           tfel=$(git ls-remote https://github.com/thelfer/tfel.git refs/heads/master | cut -f1)
           mgis=$(git ls-remote https://github.com/thelfer/MFrontGenericInterfaceSupport.git refs/heads/master | cut -f1)
@@ -42,10 +52,15 @@ jobs:
         shell: spack-sh {0}
         run: |
           spack load mfem-mgis
-          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake -B build -DCMAKE_BUILD_TYPE=Release \
+                -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           cmake --build build -j $(nproc)
       - name: Run the examples
         shell: spack-sh {0}
         run: |
           spack load mfem-mgis
           ctest --test-dir build -j $(nproc) --output-on-failure
+      # even when an example fails, so that the next run does not compile everything again
+      - name: Save ccache
+        if: ${{ !cancelled() && steps.ccache.outcome == 'success' }}
+        uses: thelfer/mfem-mgis/.github/actions/save-ccache@master
