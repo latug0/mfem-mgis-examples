@@ -1,4 +1,4 @@
-# mfem-mgis-data
+# mfem-mgis-examples
 
 This repository provides user oriented material for the external `mfem-mgis` [repository](https://github.com/thelfer/mfem-mgis).
 You will find here meshes and a collection of use cases for the `mfem-mgis` library.
@@ -13,32 +13,28 @@ export SPACK_ROOT=$PWD/spack
 source ${SPACK_ROOT}/share/spack/setup-env.sh
 ```
 
-Firstly, get the mfem-mgis spack repository.
+Firstly, install the development version of mfem-mgis, which the examples follow. It is
+provided by the `develop` branch of the Spack packages repository, used by default by this
+clone of Spack. With a release of Spack, first switch to this branch with
+`spack repo update builtin --branch develop`.
 
 ```
-git clone https://github.com/rprat-pro/spack-repo-mfem-mgis.git
-spack repo add $PWD/spack-repo-mfem-mgis
+spack install mfem-mgis@master
 ```
 
-Secondly, install mfem-mgis
-
-```
-spack install mfem-mgis
-```
-
-Thirdly, load mfem-mgis
+Secondly, load mfem-mgis
 
 ```
 spack load mfem-mgis
 ```
 
-Finally, build your examples:
+Finally, build and run your examples:
 
 ```
 cd mfem-mgis-examples
-mkdir build && cd build
-cmake .. -DCMAKE_PREFIX_PATH=`spack location -i tfel`/share/tfel/cmake
-make -j 4
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j 4
+ctest --test-dir build
 ```
 
 For an installation on a supercomputer without internet please follow the procedure described here for MFEM-MGIS installation: https://thelfer.github.io/mfem-mgis/installation_guide/installation_guide.html#installation-guide-on-topaze-ccrt-of-mfem-mgis-examples
@@ -47,8 +43,8 @@ For an installation on a supercomputer without internet please follow the proced
 
 | Name | Description | Directory
 |--|--|--|
-| TensileTest | TODO | ex1 |
-| Ssna303     | This tutorial deals with a 2D (plane strain) tensile test on a notched beam modeled by finite-strain plastic behavior. A tutorial describing this simulation is available at: https://thelfer.github.io/mfem-mgis/web/tutorial.html | ex2 |
+| TensileTest | Cyclic tension-compression test on a unit cube modeled by a plastic behavior with linear isotropic hardening. The imposed axial strain goes up to 0.9 %, down to -2.1 % and back up to 1.9 %. | ex1 |
+| Ssna303     | This tutorial deals with a 2D (plane strain) tensile test on a notched beam modeled by finite-strain plastic behavior. A tutorial describing this simulation is available at: https://thelfer.github.io/mfem-mgis/user_guide/tutorial.html | ex2 |
 | Inclusions  | This example models several inclusions in a periodic cube under imposed macroscopic strain. | ex3 |
 | Ssna303_3d  | This tutorial deals with a 3D tensile test on a notched beam modeled by finite-strain plastic behavior. | ex4 |
 | Satoh       | Modelling plate of length 1 in plane strain clamped on the left and right boundaries and submitted to a parabolic thermal gradient along the x-axis | ex5 |

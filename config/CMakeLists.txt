@@ -14,7 +14,6 @@ if (NOT MFEM_USE_MUMPS AND NOT MFEM_USE_SUITESPARSE)
 endif()
 
 # Specific setup for preparing the exemples
-include(ex1.cmake)
 include(ex2.cmake)
 #include(ex3.cmake)
 

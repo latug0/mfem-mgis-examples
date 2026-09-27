@@ -60,13 +60,13 @@ add_custom_target(
 target_link_libraries(Thermomechanical PRIVATE
     MPI::MPI_CXX
     OpenMP::OpenMP_CXX
-	  mfem-mgis::MFEMMGIS
+    mfem-mgis::MFEMMGIS
 )
 
 add_dependencies(check Thermomechanical generate-libBehaviour)
 
 add_test(NAME Thermomechanical_MUMPS
-    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 1
+    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
         $<TARGET_FILE:Thermomechanical>
         -m assemblage_hexa.msh
         -lU src/libU3SI2-generic.so
@@ -76,3 +76,7 @@ add_test(NAME Thermomechanical_MUMPS
         -o 1 -r 0 -p 1 -v 0
         -dur 1e5 -ns 1 -hc 5e4
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+# one OpenMP thread per process, otherwise MUMPS oversubscribes the cores
+set_tests_properties(Thermomechanical_MUMPS PROPERTIES
+    PROCESSORS 2
+    ENVIRONMENT OMP_NUM_THREADS=1)

@@ -26,8 +26,11 @@ if (NOT TARGET mfem-mgis::MFEMMGIS)
   find_package(MFEMMGIS REQUIRED)
 endif(NOT TARGET mfem-mgis::MFEMMGIS)
 
+# The sources of this example are installed by mfem-mgis
+set(MFEMMGIS_EX1_DIR "${MFEMMGIS_DIR}/../examples/ex1")
+
 # Define the executable to build for this example
-add_executable(UniaxialTensileTestEx UniaxialTensileTest.cxx)
+add_executable(UniaxialTensileTestEx ${MFEMMGIS_EX1_DIR}/UniaxialTensileTest.cxx)
 target_link_libraries(UniaxialTensileTestEx mfem-mgis::MFEMMGIS)
 target_include_directories(UniaxialTensileTestEx
     SYSTEM
@@ -36,8 +39,9 @@ target_include_directories(UniaxialTensileTestEx
 
 # Copy needed file for execution
 file(COPY
-  ${PROJECT_SOURCE_DIR}/Plasticity.mfront
-  ${PROJECT_SOURCE_DIR}/cube.mesh
+  ${MFEMMGIS_EX1_DIR}/Plasticity.mfront
+  ${MFEMMGIS_EX1_DIR}/cube.mesh
+  ${MFEMMGIS_EX1_DIR}/Plasticity.ref
   DESTINATION ${PROJECT_BINARY_DIR})
 
 # Use mfront to generate libBehaviour.so
@@ -55,7 +59,8 @@ add_dependencies(check UniaxialTensileTestEx generate-libBehaviour-ex1)
 # Define a test that will be called during the "make check"
 function(add_uniaxial_tensile_test_ex)
   set(test "UniaxialTensileTestEx")
-  add_test(NAME ${test} COMMAND UniaxialTensileTestEx)
+  add_test(NAME ${test} COMMAND UniaxialTensileTestEx
+           --reference-file Plasticity.ref)
 endfunction(add_uniaxial_tensile_test_ex)
 
 add_uniaxial_tensile_test_ex()
