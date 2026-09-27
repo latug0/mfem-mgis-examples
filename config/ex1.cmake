@@ -4,18 +4,21 @@ set(LOCAL_SOURCE_DIR "${CMAKE_SOURCE_DIR}/ex1")
 file(COPY
   ${MFEMMGIS_EXDIR}/ex1/Plasticity.mfront
   ${MFEMMGIS_EXDIR}/ex1/cube.mesh
+  ${MFEMMGIS_EXDIR}/ex1/Plasticity.ref
   ${MFEMMGIS_EXDIR}/ex1/UniaxialTensileTest.cxx
   ${MFEMMGIS_EXDIR}/ex1/UnitTestingUtilities.hxx
+  ${MFEMMGIS_EXDIR}/ex1/Makefile
   ${MFEMMGIS_EXDIR}/env.sh
   DESTINATION ${LOCAL_SOURCE_DIR})
 
 install(FILES
   ${MFEMMGIS_EXDIR}/ex1/Plasticity.mfront
   ${MFEMMGIS_EXDIR}/ex1/cube.mesh
+  ${MFEMMGIS_EXDIR}/ex1/Plasticity.ref
   ${MFEMMGIS_EXDIR}/ex1/UniaxialTensileTest.cxx
   ${MFEMMGIS_EXDIR}/ex1/UnitTestingUtilities.hxx
   ${MFEMMGIS_EXDIR}/env.sh
+  ${MFEMMGIS_EXDIR}/ex1/Makefile
   ${LOCAL_SOURCE_DIR}/CMakeLists.txt
-  ${LOCAL_SOURCE_DIR}/Makefile
   DESTINATION share/mfem-mgis-examples/ex1)
 

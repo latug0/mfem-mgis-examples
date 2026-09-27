@@ -43,7 +43,7 @@ For an installation on a supercomputer without internet please follow the proced
 
 | Name | Description | Directory
 |--|--|--|
-| TensileTest | TODO | ex1 |
+| TensileTest | Cyclic tension-compression test on a unit cube modeled by a plastic behavior with linear isotropic hardening. The imposed axial strain goes up to 0.9 %, down to -2.1 % and back up to 1.9 %. | ex1 |
 | Ssna303     | This tutorial deals with a 2D (plane strain) tensile test on a notched beam modeled by finite-strain plastic behavior. A tutorial describing this simulation is available at: https://thelfer.github.io/mfem-mgis/user_guide/tutorial.html | ex2 |
 | Inclusions  | This example models several inclusions in a periodic cube under imposed macroscopic strain. | ex3 |
 | Ssna303_3d  | This tutorial deals with a 3D tensile test on a notched beam modeled by finite-strain plastic behavior. | ex4 |
