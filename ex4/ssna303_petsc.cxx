@@ -45,7 +45,6 @@ int main(int argc, char** argv) {
   // string
   const char* reference_file = "";
   const char* petscrc_file = "rc_ex10p";
-  auto parallel = int{1};
   auto order = 1;
   auto nbsteps = 50;
   auto end_time = mfem_mgis::real{1};
@@ -59,8 +58,6 @@ int main(int argc, char** argv) {
   mfem::OptionsParser args(argc, argv);
   mfem_mgis::declareDefaultOptions(args);  // PETSc Initialize
   if (!mfem_mgis::usePETSc()) mfem_mgis::setPETSc(petscrc_file);
-  args.AddOption(&parallel, "-p", "--parallel",
-                 "Perform parallel computations.");
   args.AddOption(&order, "-o", "--order",
                  "Finite element order (polynomial degree).");
   args.AddOption(&nbsteps, "-ns", "--nbsteps", "Number of time steps.");
@@ -144,20 +141,6 @@ int main(int argc, char** argv) {
             }) |
             or_die) |
         or_die;
-
-    // solving the problem without petsc
-    if (!mfem_mgis::usePETSc()) {
-      problem.setSolverParameters(ctx, {{"VerbosityLevel", 0},
-                                        {"RelativeTolerance", 1e-8},
-                                        {"AbsoluteTolerance", 0.},
-                                        {"MaximumNumberOfIterations", 20}}) |
-          or_die;
-      if (parallel) {
-        problem.setLinearSolver(ctx, "MUMPSSolver", {}) | or_die;
-      } else {
-        problem.setLinearSolver(ctx, "UMFPackSolver", {}) | or_die;
-      }
-    }
 
     // print on file
     out << " USE_PETSc = " << mfem_mgis::usePETSc() << std::endl;
