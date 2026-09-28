@@ -153,7 +153,7 @@ int main(int argc, char** argv) {
                                //{"AbsoluteTolerance", 1e-12},
                                //{"KDim", 3},
                                {"Tolerance", 1e-12},
-                               {"MaximumNumberOfIterations", 300}}) |
+                               {"MaximumNumberOfIterations", 1000}}) |
           or_die;
     } else {
       // with the HypreBoomerAMG preconditioner
@@ -165,12 +165,14 @@ int main(int argc, char** argv) {
                //                           {"Strategy", "Elasticity"},
                {"VerbosityLevel", 0}}}};
 
+      // the number of iterations increases with the plastic strain: more
+      // than 300 iterations are needed at the end of the loading
       problem.setLinearSolver(ctx, solver,
                               {{"VerbosityLevel", 0},
                                //{"AbsoluteTolerance", 1e-12},
                                //{"RelativeTolerance", 1e-12},
                                //{"Tolerance", 1e-12},
-                               {"MaximumNumberOfIterations", 300},
+                               {"MaximumNumberOfIterations", 1000},
                                {"Preconditioner", prec_boomer}}) |
           or_die;
     }
@@ -178,7 +180,7 @@ int main(int argc, char** argv) {
     out << " SetLinearSolver" << std::endl;
     out << " VerbosityLevel = " << 0 << std::endl;
     out << " RelativeTolerance = " << 1e-12 << std::endl;
-    out << " MaximumNumberOfIterations = " << 300 << std::endl;
+    out << " MaximumNumberOfIterations = " << 1000 << std::endl;
     out << " Preconditioner = " << preconditioner << std::endl;
     out << " taille_maille = " << h << std::endl;
     out << " 1/h = " << 1 / h << std::endl;
