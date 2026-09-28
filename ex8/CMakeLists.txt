@@ -23,7 +23,7 @@ endif(CMAKE_CONFIGURATION_TYPES)
 
 get_filename_component(MFRONT_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/MFront" ABSOLUTE)
 
-file(GLOB MFRONT_LOIS "${MFRONT_INCLUDE_DIR}/*.mfront")
+file(GLOB MFRONT_LOIS CONFIGURE_DEPENDS "${MFRONT_INCLUDE_DIR}/*.mfront")
 
 set(MFRONT_OUTPUTS
     "${CMAKE_CURRENT_BINARY_DIR}/src/libU3SI2-generic.so"
@@ -45,10 +45,10 @@ add_executable(Thermomechanical
     src/RobinBC.cxx
 )
 
-# Copy the default mesh next to the executable
-file(COPY
-    ${CMAKE_CURRENT_SOURCE_DIR}/mesh/assemblage_hexa.msh
-    DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+# Copy the default mesh next to the executable. Unlike file(COPY),
+# configure_file updates the copy when the mesh is modified.
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mesh/assemblage_hexa.msh
+               ${CMAKE_CURRENT_BINARY_DIR}/assemblage_hexa.msh COPYONLY)
 
 target_include_directories(Thermomechanical PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/headers")
 
