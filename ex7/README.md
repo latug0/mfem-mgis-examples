@@ -91,7 +91,7 @@ Command line | Description
 --nbsteps or -ns | number of time steps, the end time being 5 s (default = 40)
 --order or -o | finite element order (polynomial degree) (default = 2)
 --verbosity-level or -v | verbosity level of the linear solver (default = 0)
---post-processing or -p, --no-post-processing or -no-p | export or not the results to Paraview (default = export)
+--post-processing or -pp, --no-post-processing or -no-pp | export or not the results to Paraview (default = export)
 --reference-file or -rf | file of reference values of the mean stresses in each material, no comparison if empty (default)
 --use-petsc and --petsc-configuration-file | use PETSc with the given configuration file, for example `petscrc` (requires MFEM built with PETSc)
 

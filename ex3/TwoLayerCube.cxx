@@ -28,7 +28,9 @@
  * \date   02/06/10/2021
  */
 
+#include <string>
 #include <memory>
+#include <string_view>
 #include <cstdlib>
 #include <iostream>
 #include "mfem/general/optparser.hpp"
@@ -98,30 +100,31 @@ void (*getSolution(const std::size_t i))(mfem::Vector&, const mfem::Vector&) {
 [[nodiscard]] static bool setLinearSolver(
     mfem_mgis::Context& ctx,
     mfem_mgis::AbstractNonLinearEvolutionProblem& p,
-    const std::size_t i) noexcept {
-  if (i == 0) {
+    const std::string_view s) noexcept {
+  if (s == "GMRESSolver") {
     return p.setLinearSolver(ctx, "GMRESSolver",
                              {{"VerbosityLevel", 1},
                               {"AbsoluteTolerance", 1e-12},
                               {"RelativeTolerance", 1e-12},
                               {"MaximumNumberOfIterations", 5000}});
-  } else if (i == 1) {
+  } else if (s == "CGSolver") {
     return p.setLinearSolver(ctx, "CGSolver",
                              {{"VerbosityLevel", 1},
                               {"AbsoluteTolerance", 1e-12},
                               {"RelativeTolerance", 1e-12},
                               {"MaximumNumberOfIterations", 5000}});
 #ifdef MFEM_USE_SUITESPARSE
-  } else if (i == 2) {
+  } else if (s == "UMFPackSolver") {
     return p.setLinearSolver(ctx, "UMFPackSolver", {});
 #endif
 #ifdef MFEM_USE_MUMPS
-  } else if (i == 3) {
+  } else if (s == "MUMPSSolver") {
     return p.setLinearSolver(ctx, "MUMPSSolver",
                              {{"Symmetric", true}, {"PositiveDefinite", true}});
 #endif
   }
-  return ctx.registerErrorMessage("unsupported linear solver");
+  return ctx.registerErrorMessage("unsupported linear solver '" +
+                                  std::string{s} + "'");
 }
 
 static bool setSolverParameters(
@@ -154,7 +157,7 @@ struct TestParameters {
   const char* library = "src/libBehaviour.so";
   int order = 1;
   int tcase = 1;
-  int linearsolver = 1;
+  const char* linearsolver = "CGSolver";
   double xmax = 1.;
   double ymax = 1.;
   double zmax = 1.;
@@ -183,13 +186,12 @@ TestParameters parseCommandLineOptions(int& argc, char* argv[]) {
   args.AddOption(&p.tcase, "-t", "--test-case",
                  "identifier of the case : Exx->0, Eyy->1, Ezz->2, Exy->3, "
                  "Exz->4, Eyz->5");
-  args.AddOption(
-      &p.linearsolver, "-ls", "--linearsolver",
-      "identifier of the linear solver: 0 -> GMRES, 1 -> CG, 2 -> UMFPack "
-      "(sequential only), 3 -> MUMPS (parallel only)");
+  args.AddOption(&p.linearsolver, "-ls", "--linearsolver",
+                 "Linear solver: GMRESSolver, CGSolver, UMFPackSolver "
+                 "(sequential only) or MUMPSSolver (parallel only).");
   args.AddOption(&p.parallel, "-p", "--parallel", "-no-p", "--no-parallel",
                  "Perform parallel computations.");
-  args.AddOption(&p.check, "-c", "--check", "-nc", "--no-check",
+  args.AddOption(&p.check, "-c", "--check", "-no-c", "--no-check",
                  "Compare the solution to the analytical solution of the "
                  "two-layer cube, only valid for the provided meshes.");
   args.Parse();

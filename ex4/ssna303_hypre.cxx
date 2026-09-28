@@ -36,8 +36,8 @@ int main(int argc, char** argv) {
   // string
   const char* reference_file = "";
   auto solver = "HypreFGMRES";
-  auto preconditioner = "HypreBoomerAMG";  //"";//
-  auto ref_para = 0;
+  auto preconditioner = "HypreBoomerAMG";
+  auto refinement = 0;
   auto order = 1;
   auto nbsteps = 50;
   auto end_time = mfem_mgis::real{1};
@@ -50,36 +50,38 @@ int main(int argc, char** argv) {
   args.AddOption(
       &end_time, "-et", "--end-time",
       "End time. The displacement of the upper boundary is 6e-3 * t.");
-  args.AddOption(&reference_file, "-r", "--reference-file",
+  args.AddOption(&reference_file, "-rf", "--reference-file",
                  "Reference values of the resultant force on the upper "
                  "boundary, no comparison if empty.");
-  args.AddOption(&solver, "-s", "--solver", "Solver of the Problem.");
-  args.AddOption(&preconditioner, "-p", "--preconditioner",
-                 "Preconditioner for the Problem.");
-  args.AddOption(&ref_para, "-rp", "--refinement_parallel",
-                 "Number of Refinement for parallel call.");
+  args.AddOption(&solver, "-ls", "--linearsolver", "Linear solver.");
+  args.AddOption(&preconditioner, "-pc", "--preconditioner",
+                 "Preconditioner of the linear solver.");
+  args.AddOption(&refinement, "-r", "--refinement",
+                 "Number of uniform refinements of the mesh.");
   args.Parse();
   if (args.Help()) {
-    args.PrintUsage(std::cout);
+    args.PrintUsage(mfem_mgis::getOutputStream());
+    mfem_mgis::finalize();
     return EXIT_SUCCESS;
   }
   if (!args.Good()) {
-    args.PrintUsage(std::cout);
-    return EXIT_FAILURE;
+    args.PrintUsage(mfem_mgis::getOutputStream());
+    mfem_mgis::abort(EXIT_FAILURE);
   }
-  args.PrintOptions(std::cout);
+  args.PrintOptions(mfem_mgis::getOutputStream());
 
   // loading the mesh
   {
     auto problem =
         mfem_mgis::construct<mfem_mgis::NonLinearEvolutionProblem>(
-            ctx, mfem_mgis::Parameters{{"MeshFileName", mesh_file},
-                                       {"FiniteElementFamily", "H1"},
-                                       {"FiniteElementOrder", order},
-                                       {"UnknownsSize", dim},
-                                       {"NumberOfUniformRefinements", ref_para},
-                                       {"Hypothesis", "Tridimensional"},
-                                       {"Parallel", true}}) |
+            ctx,
+            mfem_mgis::Parameters{{"MeshFileName", mesh_file},
+                                  {"FiniteElementFamily", "H1"},
+                                  {"FiniteElementOrder", order},
+                                  {"UnknownsSize", dim},
+                                  {"NumberOfUniformRefinements", refinement},
+                                  {"Hypothesis", "Tridimensional"},
+                                  {"Parallel", true}}) |
         or_die;
 
     // 2 1 "Volume"

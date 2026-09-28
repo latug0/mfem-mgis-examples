@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
   // not null, since mfem::OptionsParser::PrintUsage stops at the first null
   // string
   const char* reference_file = "";
-  auto parallel = int{1};
+  auto parallel = true;
   auto order = 1;
   auto nbsteps = 50;
   auto end_time = mfem_mgis::real{1};
@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
   // options treatment
   mfem::OptionsParser args(argc, argv);
   mfem_mgis::declareDefaultOptions(args);
-  args.AddOption(&parallel, "-p", "--parallel",
+  args.AddOption(&parallel, "-p", "--parallel", "-no-p", "--no-parallel",
                  "Perform parallel computations.");
   args.AddOption(&order, "-o", "--order",
                  "Finite element order (polynomial degree).");
@@ -59,19 +59,20 @@ int main(int argc, char** argv) {
   args.AddOption(
       &end_time, "-et", "--end-time",
       "End time. The displacement of the upper boundary is 6e-3 * t.");
-  args.AddOption(&reference_file, "-r", "--reference-file",
+  args.AddOption(&reference_file, "-rf", "--reference-file",
                  "Reference values of the resultant force on the upper "
                  "boundary, no comparison if empty.");
   args.Parse();
   if (args.Help()) {
-    args.PrintUsage(std::cout);
+    args.PrintUsage(mfem_mgis::getOutputStream());
+    mfem_mgis::finalize();
     return EXIT_SUCCESS;
   }
   if (!args.Good()) {
-    args.PrintUsage(std::cout);
-    return EXIT_FAILURE;
+    args.PrintUsage(mfem_mgis::getOutputStream());
+    mfem_mgis::abort(EXIT_FAILURE);
   }
-  args.PrintOptions(std::cout);
+  args.PrintOptions(mfem_mgis::getOutputStream());
 
   // loading the mesh
   auto problem =
@@ -81,7 +82,7 @@ int main(int argc, char** argv) {
                                      {"FiniteElementOrder", order},
                                      {"UnknownsSize", dim},
                                      {"Hypothesis", "Tridimensional"},
-                                     {"Parallel", bool(parallel)}}) |
+                                     {"Parallel", parallel}}) |
       or_die;
 
   // 2 1 "Volume"

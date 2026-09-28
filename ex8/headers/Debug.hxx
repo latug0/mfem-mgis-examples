@@ -143,7 +143,7 @@ inline bool checkSwelling(const FieldStatistics& s, const TestParameters& p) {
   // per fission, 200 MeV per fission)
   constexpr auto A = 6.2e-29 / (200 * 1.60218e-13);
   // energy released per unit of volume at the end of the simulation
-  const auto t = p.duree;
+  const auto t = p.end_time;
   const auto E = (t <= p.t_ramp) ? p.source * t * t / (2 * p.t_ramp)
                                  : p.source * (t - p.t_ramp / 2);
   const auto S = A * E;

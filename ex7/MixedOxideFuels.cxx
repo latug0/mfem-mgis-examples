@@ -66,16 +66,16 @@ void common_parameters(mfem::OptionsParser& args, TestParameters& p) {
   args.AddOption(&p.order, "-o", "--order",
                  "Finite element order (polynomial degree).");
   args.AddOption(&p.refinement, "-r", "--refinement",
-                 "refinement level of the mesh, default = 0");
+                 "Number of uniform refinements of the mesh.");
   args.AddOption(&p.nbsteps, "-ns", "--nbsteps",
                  "Number of time steps, the end time being 5 s.");
-  args.AddOption(&p.post_processing, "-p", "--post-processing", "-no-p",
+  args.AddOption(&p.post_processing, "-pp", "--post-processing", "-no-pp",
                  "--no-post-processing", "Export the results to Paraview.");
   args.AddOption(&p.reference_file, "-rf", "--reference-file",
                  "Reference values of the mean stresses in each material, "
                  "no comparison if empty.");
   args.AddOption(&p.verbosity_level, "-v", "--verbosity-level",
-                 "choose the verbosity level");
+                 "Verbosity level of the linear solvers.");
   // PETSc options, handled by mfem_mgis::initialize
   mfem_mgis::declareDefaultOptions(args);
 

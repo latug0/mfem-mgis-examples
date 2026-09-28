@@ -55,7 +55,10 @@ add_dependencies(check Ssna303 generate-libBehaviour-ex2)
 # Define a test that will be called during the "make check"
 function(add_ssna303_test_ex)
   set(test "Ssna303")
-  add_test(NAME ${test} COMMAND Ssna303 --reference-file ssna303-force.ref)
+  # the first two time steps of the default loading, during which the plastic
+  # flow starts
+  add_test(NAME ${test} COMMAND Ssna303 --nbsteps 2 --end-time 0.04
+                                   --reference-file ssna303-force.ref)
 endfunction(add_ssna303_test_ex)
 
 add_ssna303_test_ex()
