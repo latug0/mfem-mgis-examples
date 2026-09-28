@@ -158,10 +158,10 @@ int main(int argc, char** argv) {
         or_die;
 
     // selection of the linear solver without preconditioner
-    if (solver == "") {
+    if (std::string_view{solver}.empty()) {
       return EXIT_FAILURE;
     }
-    if (preconditioner == "") {
+    if (std::string_view{preconditioner}.empty()) {
       problem.setLinearSolver(ctx, solver,
                               {{"VerbosityLevel", 0},
                                //{"AbsoluteTolerance", 1e-12},
