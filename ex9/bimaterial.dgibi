@@ -1,0 +1,55 @@
+'OPTION' 'DIMENSION' 2;
+'OPTION' 'ELEMENT' 'TRI3';
+
+l = 12e-3;
+e = 3e-3;
+eps = 1e-12;
+
+nl = 20;
+ne = 7;
+
+O = (0. 0.);
+A = ((l '/' 3) 0.);
+B = ((l '/' 3) e);
+C = (0 (e '/' 2));
+D = (0 e);
+
+lOA = 'DROIT' O A nl;
+lAB = 'DROIT' A B ne;
+lBC = 'CERCLE' B D C nl;
+lCO = 'DROIT' C O ne;
+
+tr = lOA 'ET' lAB 'ET' lBC 'ET' LCO;
+m1 = 'SURF' tr;
+
+m2b = DEPLACER ('INVERSE' ('SYMETRIE' m1 'DROIT' A B))
+     'PLUS' ((l '/' 3) 0.);
+
+c = CONTOUR m2b;
+lABb  = 'ELEMENT' c 'APPUYE' 'STRICTEMENT'
+        ((COORDONNEE 1 c) 'POINT' 'COMPRIS'
+           (((2 '*' l) '/' 3) '-' eps)
+           (((2 '*' l) '/' 3) '+' eps));
+
+m2a = 'INVERSE' (REGLER nl LAB ('INVERSE' lABb));
+
+m2 = m2a 'ET' m2b;
+
+*'TRACER' (('COULEUR' m1 'ROUG') 'ET'
+*          ('COULEUR' m2 'BLEU'));
+
+meshes = 'TABLE';
+meshes.'FirstMaterial' = 'INVERSE' m1;
+meshes.'SecondMaterial' = 'INVERSE' m2;
+meshes.'left' = lCO;
+meshes.'right' = 'ELEMENT' c 'APPUYE' 'STRICTEMENT'
+                 ((COORDONNEE 1 c) 'POINT' 'COMPRIS'
+                  (l '-' eps) (l '+' eps));
+c2 = CONTOUR (m1 'ET' m2);
+meshes.'bottom' = 'ELEMENT' c2 'APPUYE' 'STRICTEMENT'
+                 ((COORDONNEE 2 c2) 'POINT' 'COMPRIS'
+                  (-1 '*' eps) eps);
+
+'OPTION' 'SORTIR' 'bimaterial.med';
+'SORTIR' 'MED' meshes;
+
