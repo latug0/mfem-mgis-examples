@@ -30,7 +30,6 @@ int main(int argc, char** argv) {
   auto or_die = ctx.getFatalFailureHandler();
   // ctx.enableProfiling(true);
   mfem_mgis::initialize(argc, argv);
-  bool parallel = true;
   constexpr const auto dim = mfem_mgis::size_type{3};
   const char* mesh_file = "ssna303_3d.msh";
   const char* behaviour = "Plasticity";
@@ -41,7 +40,6 @@ int main(int argc, char** argv) {
   auto solver = "HypreFGMRES";
   auto preconditioner = "HypreBoomerAMG";  //"";//
   auto ref_para = 0;
-  auto ref_seq = 0;
   auto order = 1;
   auto nbsteps = 50;
   auto end_time = mfem_mgis::real{1};
@@ -66,8 +64,6 @@ int main(int argc, char** argv) {
                  "Preconditioner for the Problem.");
   args.AddOption(&ref_para, "-rp", "--refinement_parallel",
                  "Number of Refinement for parallel call.");
-  args.AddOption(&ref_seq, "-rs", "--refinement_sequential",
-                 "Number of Refinement for sequential call.");
   args.Parse();
   if (!args.Good()) {
     args.PrintUsage(std::cout);
@@ -83,8 +79,7 @@ int main(int argc, char** argv) {
                                        {"FiniteElementFamily", "H1"},
                                        {"FiniteElementOrder", order},
                                        {"UnknownsSize", dim},
-                                       {"NumberOfUniformRefinements",
-                                        parallel ? ref_para : ref_seq},
+                                       {"NumberOfUniformRefinements", ref_para},
                                        {"Hypothesis", "Tridimensional"},
                                        {"Parallel", true}}) |
         or_die;
@@ -198,7 +193,6 @@ int main(int argc, char** argv) {
     out << " taille_maille = " << h << std::endl;
     out << " 1/h = " << 1 / h << std::endl;
     out << " nbr_ref_parallel = " << ref_para << std::endl;
-    out << " nbr_ref_sequential = " << ref_seq << std::endl;
     out << " numbers_of_vertices = " << numbers_of_vertices << std::endl;
     out << " numbers_of_elements = " << numbers_of_elements << std::endl;
 
