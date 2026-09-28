@@ -156,9 +156,7 @@ std::optional<bool> checkSolution(mfem_mgis::Context& ctx,
 
 struct TestParameters {
   const char* mesh_file = "cube_2mat_per.mesh";
-  const char* behaviour = "Elasticity";
   const char* library = "src/libBehaviour.so";
-  const char* reference_file = "Elasticity.ref";
   int order = 1;
   int tcase = 1;
   int linearsolver = 1;
@@ -209,12 +207,6 @@ TestParameters parseCommandLineOptions(int& argc, char* argv[]) {
     args.PrintUsage(mfem_mgis::getOutputStream());
     mfem_mgis::abort(EXIT_FAILURE);
   }
-  if (p.mesh_file == nullptr) {
-    if (mfem_mgis::getMPIrank() == 0)
-      std::cout << "ERROR: Mesh file missing" << std::endl;
-    args.PrintUsage(std::cout);
-    mfem_mgis::abort(EXIT_FAILURE);
-  }
   if (mfem_mgis::getMPIrank() == 0) args.PrintOptions(std::cout);
   if ((p.tcase < 0) || (p.tcase > 5)) {
     std::cerr << "Invalid test case\n";
@@ -233,8 +225,6 @@ int executeMFEMMGISTest(mgis::Context& ctx, const TestParameters& p) {
                                             {"FiniteElementFamily", "H1"},
                                             {"FiniteElementOrder", p.order},
                                             {"UnknownsSize", dim},
-                                            {"NumberOfUniformRefinements",
-                                             p.parallel ? 0 : 0},
                                             {"Parallel", p.parallel}}) |
              or_die;
 
@@ -308,7 +298,7 @@ int executeMFEMMGISTest(mgis::Context& ctx, const TestParameters& p) {
     // Add postprocessing and outputs
     problem.addPostProcessing(
         ctx, "ParaviewExportResults",
-        {{"OutputFileName", "PeriodicTestOutput-" + std::to_string(p.tcase)}}) |
+        {{"OutputFileName", "InclusionsExOutput-" + std::to_string(p.tcase)}}) |
         or_die;
     // solving the problem
     problem.solve(ctx, 0, 1) | or_die;
