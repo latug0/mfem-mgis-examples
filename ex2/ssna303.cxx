@@ -98,6 +98,10 @@ int main(int argc, char** argv) {
   args.AddOption(&parallel, "-p", "--parallel", "-no-p", "--no-parallel",
                  "Perform parallel computations.");
   args.Parse();
+  if (args.Help()) {
+    args.PrintUsage(std::cout);
+    return EXIT_SUCCESS;
+  }
   if (!args.Good()) {
     args.PrintUsage(std::cout);
     mfem_mgis::abort(EXIT_FAILURE);
