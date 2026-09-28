@@ -37,6 +37,7 @@ target_include_directories(Ssna303
 file(COPY
   ${PROJECT_SOURCE_DIR}/Plasticity.mfront
   ${PROJECT_SOURCE_DIR}/ssna303.msh
+  ${PROJECT_SOURCE_DIR}/ssna303-force.ref
   DESTINATION ${PROJECT_BINARY_DIR})
 
 # Use mfront to generate libBehaviour.so
@@ -54,7 +55,7 @@ add_dependencies(check Ssna303 generate-libBehaviour-ex2)
 # Define a test that will be called during the "make check"
 function(add_ssna303_test_ex)
   set(test "Ssna303")
-  add_test(NAME ${test} COMMAND Ssna303)
+  add_test(NAME ${test} COMMAND Ssna303 --reference-file ssna303-force.ref)
 endfunction(add_ssna303_test_ex)
 
 add_ssna303_test_ex()
