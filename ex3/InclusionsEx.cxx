@@ -1,19 +1,16 @@
 /*!
  * \file   InclusionsEx.cxx
  * \brief
- * This example models a periodic cube under an imposed macroscopic strain.
+ * This example models a periodic unit cube made of two layers, split at
+ * x = 0.5, under an imposed macroscopic strain. The solution is compared to
+ * the analytical solution of this case, for the loading case selected by the
+ * --test-case option.
  *
- * By default, the cube is made of two layers (cube_2mat_per.mesh) and the
- * solution is compared to the analytical solution of this case, for the
- * loading case selected by the --test-case option.
+ * The cube is meshed by cube_2mat_per.mesh (4x4x4 hexahedra) and, more
+ * finely, by Box.med (8x8x8 hexahedra), whose periodicity is described by
+ * Box.per. Reading Box.med requires MFEM built with MED support:
  *
- * The file Box.med describes a cube with several inclusions, whose
- * periodicity is described by Box.per. Reading this file requires MFEM
- * built with MED support. There is no analytical solution in this case:
- *
- *   ./InclusionsEx --mesh Box.med --no-check -xm <x> -ym <y> -zm <z>
- *
- * where <x>, <y> and <z> are the coordinates of the upper corner of the cube.
+ *   ./InclusionsEx --mesh Box.med
  *
  * Mechanical strain:
  *                 eps = E + grad_s v
@@ -194,7 +191,7 @@ TestParameters parseCommandLineOptions(int& argc, char* argv[]) {
                  "Perform parallel computations.");
   args.AddOption(&p.check, "-c", "--check", "-nc", "--no-check",
                  "Compare the solution to the analytical solution of the "
-                 "two-layer cube, only valid with the default mesh.");
+                 "two-layer cube, only valid for the provided meshes.");
   args.Parse();
   if (args.Help()) {
     args.PrintUsage(mfem_mgis::getOutputStream());
