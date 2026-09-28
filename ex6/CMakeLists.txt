@@ -34,14 +34,14 @@ foreach(input SaintVenantKirchhoffElasticity.mfront cube_2mat_per.mesh
   configure_file(${PROJECT_SOURCE_DIR}/${input} ${PROJECT_BINARY_DIR}/${input}
                  COPYONLY)
 endforeach()
-  
-  # Use mfront to generate libBehaviour.so
+
+# Use mfront to generate libBehaviour.so
 add_custom_command(
   OUTPUT "src/libBehaviour.so"
   COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/SaintVenantKirchhoffElasticity.mfront
   DEPENDS ${PROJECT_BINARY_DIR}/SaintVenantKirchhoffElasticity.mfront
   COMMENT "Performing mfront code generation")
-  
+
 add_custom_target(generate-libBehaviour-ex6 ALL
   DEPENDS "src/libBehaviour.so")
 
@@ -55,6 +55,4 @@ target_include_directories(rve
 add_dependencies(check rve generate-libBehaviour-ex6)
 
 set(test "RveNonLinearElasticTest")
-add_test(NAME ${test} COMMAND rve --postprocessings 0)
-
-
+add_test(NAME ${test} COMMAND rve --no-post-processing)

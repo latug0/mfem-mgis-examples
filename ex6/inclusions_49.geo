@@ -9,12 +9,12 @@
 // Please use GMSH version 4.7
 SetFactory("OpenCASCADE");
 
-nb = 50;
+nb = 49;
 radius = 0.12;
 default_edge_size = .015;
 box_edge_size=1.;
 
-// margin is taken a bit larger than radius to avoid the sphere beeing close to boundary
+// minimal distance between a sphere and the boundaries of the box
 margin = .02;
 
 //-------------------------------
@@ -30,7 +30,7 @@ nbfails = 0;
 t = 0;
 For count In {0:1000*nb-1}
   If (t < nb)
-    r[t]=radius/6+Rand(radius(1-1/6));
+    r[t]=radius/6+Rand(radius*(1-1/6));
     x[t]=r[t]+Rand(1.-2*(r[t]+margin));
     y[t]=r[t]+Rand(1.-2*(r[t]+margin));
     z[t]=r[t]+Rand(1.-2*(r[t]+margin));
@@ -59,7 +59,7 @@ For count In {0:1000*nb-1}
   EndIf
 EndFor
 If (t != nb)
-  Printf("Fail to create the precscribed number of spheres");
+  Printf("Fail to create the prescribed number of spheres");
   Exit;
 EndIf
 // Delete all objects and create new ones by BooleanFragment operator
@@ -77,7 +77,7 @@ Physical Volume(2) = {v(0):v(nb-1)};
 
 
 eps = 1e-4;
-// Select the corner point by searching for it geometrically:
+// Select the faces of the box by searching for them geometrically:
 sxmin() = Surface In BoundingBox{0.-eps, 0.-eps, 0.-eps,
                                  0+eps, 1.+eps, 1.+eps};
 sxmax() = Surface In BoundingBox{1.-eps, 0.-eps, 0.-eps,
