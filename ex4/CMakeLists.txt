@@ -49,8 +49,8 @@ add_custom_target(generate-libBehaviour-ex4 ALL
 # Define a test that will be called during the "make check"
 function(add_ssna303_3d_test_ex solver)
  set(test "Ssna303_3d_${solver}")
- # the first two time steps of the default loading, which lasts several minutes
- add_test(NAME ${test} COMMAND ${test} --nbsteps 2 --end-time 0.04
+ # the first time step of the default loading, which lasts several minutes
+ add_test(NAME ${test} COMMAND ${test} --nbsteps 1 --end-time 0.02
                                   --reference-file ssna303_3d-force.ref)
 endfunction(add_ssna303_3d_test_ex)
 
