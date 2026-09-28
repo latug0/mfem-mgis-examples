@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
   args.AddOption(
       &end_time, "-et", "--end-time",
       "End time. The displacement of the upper boundary is 6e-3 * t.");
-  args.AddOption(&reference_file, "-rf", "--reference-file",
+  args.AddOption(&reference_file, "-r", "--reference-file",
                  "Reference values of the resultant force on the upper "
                  "boundary, no comparison if empty.");
   args.AddOption(&solver, "-s", "--solver", "Solver of the Problem.");
