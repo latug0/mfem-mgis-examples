@@ -21,7 +21,6 @@
 
 #include "MFEMMGIS/Config.hxx"
 
-
 #include "MFEMMGIS/Profiler.hxx"
 #include <functional>
 
@@ -30,15 +29,12 @@
 
 #include "ThirdMediumUtils.hxx"
 
-
-
 int main(int argc, char **argv) {
-   // options treatment (contains default values for the parameters)
+  // options treatment (contains default values for the parameters)
   thirdmedium_utils::TestParameters p;
-  p.mesh_file = "bending3D_thin.msh"; // Default mesh for 3D 
-  mfem::OptionsParser args = parse_options(p,argc,argv);
+  p.mesh_file = "bending3D_thin.msh";  // Default mesh for 3D
+  mfem::OptionsParser args = parse_options(p, argc, argv);
 
-    
   constexpr const auto dim = mfem_mgis::size_type{3};
   constexpr auto nsteps = mfem_mgis::size_type{50};
   constexpr auto H = mfem_mgis::real{0.6};
@@ -52,7 +48,7 @@ int main(int argc, char **argv) {
   mfem_mgis::initialize(argc, argv);
   //
   // init timers (deprecated)
-  //mfem_mgis::Profiler::timers::init_timers();
+  // mfem_mgis::Profiler::timers::init_timers();
 
   auto ctx = mfem_mgis::Context{};
   auto or_die = ctx.getFatalFailureHandler();
@@ -63,41 +59,41 @@ int main(int argc, char **argv) {
   const char *behaviour1 = "Elasticity";
   const char *behaviour2 = "ThirdMediumContactHyperElasticBehaviour";
   std::string library = p.library;
- #if defined(MFEM_USE_MUMPS) && defined(MFEM_USE_MPI)
-     constexpr bool parallel = true;
-   #else
+#if defined(MFEM_USE_MUMPS) && defined(MFEM_USE_MPI)
+  constexpr bool parallel = true;
+#else
   constexpr bool parallel = false;
-  #endif
+#endif
   /*
   auto order = 1;
   auto refinement = 0;
   auto solver = 0;
-  auto preconditioner = -1; // Other way to do this ? Default value for preconditioner
-  auto newton_iterations = 20;
-  auto linear_iterations = 500;
-  auto tolerance = 1e-12;
-  auto gamma = 1e-11;
+  auto preconditioner = -1; // Other way to do this ? Default value for
+  preconditioner auto newton_iterations = 20; auto linear_iterations = 500; auto
+  tolerance = 1e-12; auto gamma = 1e-11;
   */
 
-  if (mfem_mgis::getMPIrank() == 0){
-  args.PrintOptions(std::cout);
-   std::cout << "Parallel : " << parallel << '\n';
+  if (mfem_mgis::getMPIrank() == 0) {
+    args.PrintOptions(std::cout);
+    std::cout << "Parallel : " << parallel << '\n';
   }
 
-
   // the non linear problem
-  mfem_mgis::NonLinearEvolutionProblem mechanics(ctx,{{"MeshFileName", p.mesh_file},
-                                                  {"FiniteElementFamily", "H1"},
-                                                  {"FiniteElementOrder", p.order},
-                                                  {"UnknownsSize", dim},
-                                                  {"NumberOfUniformRefinements", p.parallel ? p.refinement : 0},
-                                                  {"Hypothesis", "Tridimensional"},
-                                                  {"Parallel", p.parallel}});
+  mfem_mgis::NonLinearEvolutionProblem mechanics(
+      ctx, {{"MeshFileName", p.mesh_file},
+            {"FiniteElementFamily", "H1"},
+            {"FiniteElementOrder", p.order},
+            {"UnknownsSize", dim},
+            {"NumberOfUniformRefinements", p.parallel ? p.refinement : 0},
+            {"Hypothesis", "Tridimensional"},
+            {"Parallel", p.parallel}});
 
-    // Mesh and memory info
-  thirdmedium_utils::print_mesh_information(mechanics.getImplementation<parallel>());
+  // Mesh and memory info
+  thirdmedium_utils::print_mesh_information(
+      mechanics.getImplementation<parallel>());
   thirdmedium_utils::print_memory_footprint("After_problem:");
-  thirdmedium_utils::save_unknowns_info(mechanics.getImplementation<parallel>(),p.output_dir);
+  thirdmedium_utils::save_unknowns_info(mechanics.getImplementation<parallel>(),
+                                        p.output_dir);
 
   //
   auto faltus_parameters = mfem_mgis::Parameters{
@@ -105,7 +101,6 @@ int main(int argc, char **argv) {
        mfem_mgis::Parameters{
            {"Faltus2026",
             mfem_mgis::Parameters{{"PenalizationCoefficient", p.alpha}}}}}};
-
 
   mechanics.addBehaviourIntegrator(ctx, "Mechanics", "VOID1_3D", library,
                                    behaviour2, faltus_parameters) |
@@ -130,104 +125,115 @@ int main(int argc, char **argv) {
   setMaterialProperty(ctx, m.s0, "PoissonRatio", nu) | or_die;
   setMaterialProperty(ctx, m.s1, "PoissonRatio", nu) | or_die;
 
-  // X-Axis and Y-Axis constraints 
+  // X-Axis and Y-Axis constraints
   for (const auto &n : {"LPOUG", "LVOI1G", "LVOI1D", "LBOD1D"}) {
-    mechanics.addUniformDirichletBoundaryCondition(ctx,
-        {{"Boundary", n}, {"Component", 0}})|or_die;
+    mechanics.addUniformDirichletBoundaryCondition(
+        ctx, {{"Boundary", n}, {"Component", 0}}) |
+        or_die;
   }
-  mechanics.addUniformDirichletBoundaryCondition(ctx,
-      {{"Boundary", "LBOD1D"},
-       {"Component", 1},
-       {"LoadingEvolution", [](const auto t) {
-          const auto u = -H * (t / te);
-          return u;
-        }}})|or_die;
-  mechanics.addUniformDirichletBoundaryCondition(ctx,
-      {{"Boundary", "LBOD2H"}, {"Component", 0}})|or_die;
-  mechanics.addUniformDirichletBoundaryCondition(ctx,
-      {{"Boundary", "LBOD2H"}, {"Component", 1}})|or_die;
-  
-  // NEW: REQUIRED Z-Axis constraints to prevent singular matrix.
-  mechanics.addUniformDirichletBoundaryCondition(ctx,
-      {{"Boundary", "Z_BACK_FACE"}, {"Component", 2}})|or_die;
-  mechanics.addUniformDirichletBoundaryCondition(ctx,
-      {{"Boundary", "Z_FRONT_FACE"}, {"Component", 2}})|or_die;
+  mechanics.addUniformDirichletBoundaryCondition(ctx, {{"Boundary", "LBOD1D"},
+                                                       {"Component", 1},
+                                                       {"LoadingEvolution",
+                                                        [](const auto t) {
+                                                          const auto u =
+                                                              -H * (t / te);
+                                                          return u;
+                                                        }}}) |
+      or_die;
+  mechanics.addUniformDirichletBoundaryCondition(
+      ctx, {{"Boundary", "LBOD2H"}, {"Component", 0}}) |
+      or_die;
+  mechanics.addUniformDirichletBoundaryCondition(
+      ctx, {{"Boundary", "LBOD2H"}, {"Component", 1}}) |
+      or_die;
 
-  
+  // NEW: REQUIRED Z-Axis constraints to prevent singular matrix.
+  mechanics.addUniformDirichletBoundaryCondition(
+      ctx, {{"Boundary", "Z_BACK_FACE"}, {"Component", 2}}) |
+      or_die;
+  mechanics.addUniformDirichletBoundaryCondition(
+      ctx, {{"Boundary", "Z_FRONT_FACE"}, {"Component", 2}}) |
+      or_die;
+
   // solving the problem
   mechanics.setPredictionPolicy(
       {.strategy =
-       mfem_mgis::PredictionStrategy::BEGINNING_OF_TIME_STEP_PREDICTION});
+           mfem_mgis::PredictionStrategy::BEGINNING_OF_TIME_STEP_PREDICTION});
 
-       // mfem_mgis::PredictionStrategy::
-       //     CONSTANT_GRADIENTS_INTEGRATION_PREDICTION});
+  // mfem_mgis::PredictionStrategy::
+  //     CONSTANT_GRADIENTS_INTEGRATION_PREDICTION});
 
-  mechanics.setSolverParameters(ctx, {{"VerbosityLevel", 0},
-                                      {"RelativeTolerance", 1e-4},
-                                      {"AbsoluteTolerance", 0.},
-                                      {"MaximumNumberOfIterations", p.newton_iterations}}) |
+  mechanics.setSolverParameters(
+      ctx, {{"VerbosityLevel", 0},
+            {"RelativeTolerance", 1e-4},
+            {"AbsoluteTolerance", 0.},
+            {"MaximumNumberOfIterations", p.newton_iterations}}) |
       or_die;
 
-    char* solver_name;
-  // returns the solver parameters and sets the solver name string and number of iterations.  
-  auto solverParameters = thirdmedium_utils::set_solver_parameters(p); 
+  char *solver_name;
+  // returns the solver parameters and sets the solver name string and number of
+  // iterations.
+  auto solverParameters = thirdmedium_utils::set_solver_parameters(p);
 
-  char* preconditioner_name;
-  mfem_mgis::Parameters prec = thirdmedium_utils::set_preconditioner_parameters(p);
- 
+  char *preconditioner_name;
+  mfem_mgis::Parameters prec =
+      thirdmedium_utils::set_preconditioner_parameters(p);
+
   // Print out TestParameters once the solver has been selectioned
-  if (mfem_mgis::getMPIrank()==0) std::cout << p << '\n';
- 
-    // selection of the linear solver
+  if (mfem_mgis::getMPIrank() == 0) std::cout << p << '\n';
+
+  // selection of the linear solver
   if constexpr (parallel) {
     if (p.preconditioner != -1)
-      solverParameters.insert(mfem_mgis::may_throw,mfem_mgis::Parameters{{"Preconditioner",prec}});
+      solverParameters.insert(mfem_mgis::may_throw,
+                              mfem_mgis::Parameters{{"Preconditioner", prec}});
 
-    mechanics.setLinearSolver(ctx, p.solver_name, solverParameters) | or_die; 
+    mechanics.setLinearSolver(ctx, p.solver_name, solverParameters) | or_die;
   } else {
     mechanics.setLinearSolver(ctx, "UMFPackSolver", {}) | or_die;
   }
   //
   // Enable or disable post-processing for benchmarks
-  if (p.post_processing){
+  if (p.post_processing) {
     mechanics.addPostProcessing(
-      ctx, "ParaviewExportResults",
-      {{"OutputFileName", p.output_dir + std::string("displacements3D")}}) |
-      or_die;
+        ctx, "ParaviewExportResults",
+        {{"OutputFileName", p.output_dir + std::string("displacements3D")}}) |
+        or_die;
   }
   // loop over time steps
- // const auto times = mfem_mgis::Simulation::TimesDescription{0, te, nsteps};
- // auto s = mfem_mgis::Simulation{mechanics, times};
- // std::ignore = s.run(ctx);
- // std::cout << ctx.getErrorMessage() << '\n';
+  // const auto times = mfem_mgis::Simulation::TimesDescription{0, te, nsteps};
+  // auto s = mfem_mgis::Simulation{mechanics, times};
+  // std::ignore = s.run(ctx);
+  // std::cout << ctx.getErrorMessage() << '\n';
 
-   auto [exit_status, sim_output] = thirdmedium_utils::run_solve(ctx, mechanics, 0, te, nsteps);
-    if (mfem_mgis::getMPIrank()==0){
-        std::cout << "Exit status : " << (exit_status == mfem_mgis::ExitStatus::success ? "Success\n" : "Failed\n");
-        
-        std::ofstream status(p.output_dir + "run.status");
+  auto [exit_status, sim_output] =
+      thirdmedium_utils::run_solve(ctx, mechanics, 0, te, nsteps);
+  if (mfem_mgis::getMPIrank() == 0) {
+    std::cout << "Exit status : "
+              << (exit_status == mfem_mgis::ExitStatus::success ? "Success\n"
+                                                                : "Failed\n");
 
-        if (exit_status == mfem_mgis::ExitStatus::success)
-        {
-                status << "SUCCESS\n";
-        }
-        else
-        {
-                status << "FAILED\n";
-        }
-                
-        if (sim_output.has_value()) {
-            thirdmedium_utils::check_and_save_convergence_info(sim_output.value(), exit_status);
-        }else{
-            std::cout<< "No value !!!!!!\n" ;
-        }
+    std::ofstream status(p.output_dir + "run.status");
+
+    if (exit_status == mfem_mgis::ExitStatus::success) {
+      status << "SUCCESS\n";
+    } else {
+      status << "FAILED\n";
     }
 
+    if (sim_output.has_value()) {
+      thirdmedium_utils::check_and_save_convergence_info(sim_output.value(),
+                                                         exit_status);
+    } else {
+      std::cout << "No value !!!!!!\n";
+    }
+  }
 
-  //print and write timetable
+  // print and write timetable
   thirdmedium_utils::print_memory_footprint("After Solving:");
   mfem_mgis::Profiler::OutputManager::printTimeTable(ctx);
-  mfem_mgis::Profiler::OutputManager::writeFile(ctx,p.output_dir + mfem_mgis::Profiler::OutputManager::build_name());
+  mfem_mgis::Profiler::OutputManager::writeFile(
+      ctx, p.output_dir + mfem_mgis::Profiler::OutputManager::build_name());
   std::flush(std::cout);
   std::flush(std::cerr);
   return EXIT_SUCCESS;
