@@ -33,6 +33,7 @@ file(COPY
   ${PROJECT_SOURCE_DIR}/Plasticity.mfront
   ${PROJECT_SOURCE_DIR}/ssna303_3d.msh
   ${PROJECT_SOURCE_DIR}/rc_ex10p
+  ${PROJECT_SOURCE_DIR}/ssna303_3d-force.ref
   DESTINATION ${PROJECT_BINARY_DIR})
 
 # Use mfront to generate libBehaviour.so
@@ -49,7 +50,8 @@ add_custom_target(generate-libBehaviour-ex4 ALL
 function(add_ssna303_3d_test_ex solver)
  set(test "Ssna303_3d_${solver}")
  # the first two time steps of the default loading, which lasts several minutes
- add_test(NAME ${test} COMMAND ${test} --nbsteps 2 --end-time 0.04)
+ add_test(NAME ${test} COMMAND ${test} --nbsteps 2 --end-time 0.04
+                                  --reference-file ssna303_3d-force.ref)
 endfunction(add_ssna303_3d_test_ex)
 
 foreach(tg IN ITEMS mumps hypre petsc)

@@ -6,6 +6,7 @@
  */
 
 #include <memory>
+#include <string_view>
 #include <cstdlib>
 #include <iostream>
 #include "mfem/general/optparser.hpp"
@@ -28,6 +29,7 @@
 #include "MFEMMGIS/NonLinearEvolutionProblem.hxx"
 #include "MFEMMGIS/NonLinearEvolutionProblemImplementation.hxx"
 #include "MFEMMGIS/LinearSolverFactory.hxx"
+#include "CheckResultantForce.hxx"
 
 #define PRINT_DEBUG (std::cout << __FILE__ << ":" << __LINE__ << std::endl)
 
@@ -40,6 +42,9 @@ int main(int argc, char** argv) {
   const char* mesh_file = "ssna303_3d.msh";
   const char* behaviour = "Plasticity";
   const char* library = "src/libBehaviour.so";
+  // not null, since mfem::OptionsParser::PrintUsage stops at the first null
+  // string
+  const char* reference_file = "";
   const char* petscrc_file = "";
   auto parallel = int{1};
   auto ref_para = 0;
@@ -59,6 +64,9 @@ int main(int argc, char** argv) {
   args.AddOption(
       &end_time, "-et", "--end-time",
       "End time. The displacement of the upper boundary is 6e-3 * t.");
+  args.AddOption(&reference_file, "-rf", "--reference-file",
+                 "Reference values of the resultant force on the upper "
+                 "boundary, no comparison if empty.");
   args.Parse();
   if (!args.Good()) {
     args.PrintUsage(std::cout);
@@ -185,6 +193,14 @@ int main(int argc, char** argv) {
     t += dt;
     ++iteration;
     std::cout << '\n';
+  }
+  // comparison to the reference values, only on the process writing the
+  // resultant force
+  if ((!std::string_view{reference_file}.empty()) &&
+      (mfem_mgis::isMainProcess(problem.getFiniteElementDiscretization()))) {
+    if (!checkVerticalForce("force.txt", reference_file)) {
+      return EXIT_FAILURE;
+    }
   }
   // mfem_mgis::Profiler::OutputManager::printTimeTable(ctx);
   return EXIT_SUCCESS;
