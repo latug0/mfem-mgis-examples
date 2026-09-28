@@ -145,12 +145,10 @@ std::optional<bool> checkSolution(mfem_mgis::Context& ctx,
     return {};
   }
   if (!(*ob)) {
-    if (mfem_mgis::getMPIrank() == 0)
-      std::cerr << "Error is greater than threshold\n";
+    mfem_mgis::getErrorStream() << "Error is greater than threshold\n";
     return false;
   }
-  if (mfem_mgis::getMPIrank() == 0)
-    std::cerr << "Error is lower than threshold\n";
+  mfem_mgis::getErrorStream() << "Error is lower than threshold\n";
   return true;
 }
 
@@ -207,7 +205,7 @@ TestParameters parseCommandLineOptions(int& argc, char* argv[]) {
     args.PrintUsage(mfem_mgis::getOutputStream());
     mfem_mgis::abort(EXIT_FAILURE);
   }
-  if (mfem_mgis::getMPIrank() == 0) args.PrintOptions(std::cout);
+  args.PrintOptions(mfem_mgis::getOutputStream());
   if ((p.tcase < 0) || (p.tcase > 5)) {
     std::cerr << "Invalid test case\n";
     mfem_mgis::abort(EXIT_FAILURE);
@@ -229,9 +227,10 @@ int executeMFEMMGISTest(mgis::Context& ctx, const TestParameters& p) {
              or_die;
 
   {
-    if (mfem_mgis::getMPIrank() == 0)
-      std::cout << "Number of processes: " << mfem_mgis::getMPIsize()
-                << std::endl;
+    auto nprocs = int{};
+    MPI_Comm_size(mfem_mgis::getMPICommunicator(*fed), &nprocs);
+    mfem_mgis::getOutputStream()
+        << "Number of processes: " << nprocs << std::endl;
     // building the non linear problem
 
     std::vector<mfem_mgis::real> corner1({0., 0., 0.});
