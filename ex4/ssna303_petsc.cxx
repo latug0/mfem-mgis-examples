@@ -42,6 +42,8 @@ int main(int argc, char** argv) {
   const char* petscrc_file = "rc_ex10p";
   auto parallel = int{1};
   auto order = 1;
+  auto nbsteps = 50;
+  auto end_time = mfem_mgis::real{1};
   auto refinement = 0;
 
   // file creation
@@ -56,6 +58,10 @@ int main(int argc, char** argv) {
                  "Perform parallel computations.");
   args.AddOption(&order, "-o", "--order",
                  "Finite element order (polynomial degree).");
+  args.AddOption(&nbsteps, "-ns", "--nbsteps", "Number of time steps.");
+  args.AddOption(
+      &end_time, "-et", "--end-time",
+      "End time. The displacement of the upper boundary is 6e-3 * t.");
   args.AddOption(&refinement, "-r", "--refinement", "Number of Refinement.");
   args.Parse();
   if (!args.Good()) {
@@ -164,10 +170,8 @@ int main(int argc, char** argv) {
         or_die;
 
     // loop over time step
-    //  const auto nsteps = mfem_mgis::size_type{100};
-    //  const auto dt = mfem_mgis::real{1} / nsteps;
-    const auto nsteps = mfem_mgis::size_type{2};
-    const auto dt = mfem_mgis::real{0.001};
+    const auto nsteps = mfem_mgis::size_type(nbsteps);
+    const auto dt = end_time / nsteps;
     auto t = mfem_mgis::real{0};
     auto iteration = mfem_mgis::size_type{};
     for (mfem_mgis::size_type i = 0; i != nsteps; ++i) {

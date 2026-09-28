@@ -48,7 +48,8 @@ add_custom_target(generate-libBehaviour-ex4 ALL
 # Define a test that will be called during the "make check"
 function(add_ssna303_3d_test_ex solver)
  set(test "Ssna303_3d_${solver}")
- add_test(NAME ${test} COMMAND ${test})
+ # the first two time steps of the default loading, which lasts several minutes
+ add_test(NAME ${test} COMMAND ${test} --nbsteps 2 --end-time 0.04)
 endfunction(add_ssna303_3d_test_ex)
 
 foreach(tg IN ITEMS mumps hypre petsc)
