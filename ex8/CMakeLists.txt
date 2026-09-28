@@ -78,7 +78,7 @@ add_test(NAME Thermomechanical_MUMPS
     COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
         $<TARGET_FILE:Thermomechanical>
         -m assemblage_hexa_coarse.msh
-        -svMc MUMPSSolver
+        -lsMc MUMPSSolver
         -rf assemblage_hexa_coarse-statistics.ref
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 # one OpenMP thread per process, otherwise MUMPS oversubscribes the cores

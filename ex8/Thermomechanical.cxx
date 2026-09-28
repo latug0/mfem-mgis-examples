@@ -27,40 +27,40 @@
 void common_parameters(mfem::OptionsParser& args, TestParameters& p) {
   args.AddOption(&p.mesh_file, "-m", "--mesh", "Mesh file to use.");
   args.AddOption(&p.libraryU3SI2, "-lU", "--libraryU3SI2",
-                 "Material library for said material.");
+                 "Material library of the U3Si2 fuel.");
   args.AddOption(&p.libraryALFENI, "-lA", "--libraryALFENI",
-                 "Material library for said material.");
-  args.AddOption(&p.solver_thermo, "-svTh", "--solverTh",
-                 "Solver for heat_transfer.");
-  args.AddOption(&p.precond_thermo, "-pcTh", "--preconditionnerTh",
-                 "Preconditionner for heat transfer.");
-  args.AddOption(&p.solver_meca, "-svMc", "--solverMc",
-                 "Solver for mechanics.");
-  args.AddOption(&p.precond_meca, "-pcMc", "--preconditionnerMc",
-                 "Preconditionner for mechanics.");
+                 "Material library of the ALFENI cladding and stiffeners.");
+  args.AddOption(&p.solver_thermo, "-lsTh", "--linearsolver-thermal",
+                 "Linear solver of the heat transfer problem.");
+  args.AddOption(&p.precond_thermo, "-pcTh", "--preconditioner-thermal",
+                 "Preconditioner of the linear solver of the heat transfer "
+                 "problem.");
+  args.AddOption(&p.solver_meca, "-lsMc", "--linearsolver-mechanics",
+                 "Linear solver of the mechanical problem.");
+  args.AddOption(&p.precond_meca, "-pcMc", "--preconditioner-mechanics",
+                 "Preconditioner of the linear solver of the mechanical "
+                 "problem.");
   args.AddOption(&p.order, "-o", "--order",
                  "Finite element order (polynomial degree).");
   args.AddOption(&p.refinement, "-r", "--refinement",
-                 "refinement level of the mesh, default = 0");
-  args.AddOption(&p.post_processing, "-p", "--post-processing", "-no-p",
+                 "Number of uniform refinements of the mesh.");
+  args.AddOption(&p.post_processing, "-pp", "--post-processing", "-no-pp",
                  "--no-post-processing", "Export the results to Paraview.");
   args.AddOption(&p.verbosity_level, "-v", "--verbosity-level",
                  "Verbosity level of the linear solvers.");
-  args.AddOption(&p.debug, "-d", "--debug", "-nd", "--nodebug",
+  args.AddOption(&p.debug, "-d", "--debug", "-no-d", "--no-debug",
                  "Print the statistics of the fields.");
   args.AddOption(&p.reference_file, "-rf", "--reference-file",
                  "Reference statistics of the fields, no comparison if "
                  "empty.");
-  args.AddOption(&p.duree, "-dur", "--duree",
-                 "Total simulation duration, default = 1e5");
-  args.AddOption(&p.nbsteps, "-ns", "--nbsteps",
-                 "Number of time steps, default = 1");
+  args.AddOption(&p.end_time, "-et", "--end-time", "End time.");
+  args.AddOption(&p.nbsteps, "-ns", "--nbsteps", "Number of time steps.");
   args.AddOption(&p.t_ramp, "-tr", "--t-ramp",
-                 "Duration of the power ramp (0 disables it), default = 1e5");
+                 "Duration of the power ramp, 0 disables it.");
   args.AddOption(&p.h_conv, "-hc", "--h-conv",
-                 "Thermal convection coefficient, default = 5e4");
+                 "Thermal convection coefficient.");
   args.AddOption(&p.water_pressure, "-wp", "--water-pressure",
-                 "Coolant pressure, default = 1e6");
+                 "Coolant pressure.");
 
   mfem_mgis::declareDefaultOptions(args);
   args.Parse();
@@ -96,8 +96,8 @@ int main(int argc, char* argv[]) {
     finalize();
     return EXIT_FAILURE;
   }
-  const auto ramp_steps = p.t_ramp * p.nbsteps / p.duree;
-  if ((p.t_ramp < p.duree) &&
+  const auto ramp_steps = p.t_ramp * p.nbsteps / p.end_time;
+  if ((p.t_ramp < p.end_time) &&
       (std::abs(ramp_steps - std::round(ramp_steps)) > 1e-9)) {
     ctx.log() << "the end of the power ramp (t = " << p.t_ramp
               << " s) must be a time step boundary\n";
@@ -206,7 +206,7 @@ int main(int argc, char* argv[]) {
 
   // declaring the simulation
   const auto times =
-      construct<Simulation::TimesDescription>(ctx, 0, p.duree, p.nbsteps) |
+      construct<Simulation::TimesDescription>(ctx, 0, p.end_time, p.nbsteps) |
       or_die;
   auto s = construct<Simulation>(ctx, ctx, ps, times) | or_die;
   // running the simulation

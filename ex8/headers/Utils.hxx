@@ -30,7 +30,7 @@ inline const std::vector<std::string> iterative_solvers = {
     "CGSolver",  "GMRESSolver", "BiCGSTABSolver", "MINRESSolver",
     "SLISolver", "HyprePCG",    "HypreGMRES",     "HypreFGMRES"};
 
-inline const std::vector<std::string> preconditionners = {
+inline const std::vector<std::string> preconditioners = {
     "HypreBoomerAMG", "HypreDiagScale", "HypreEuclid", "HypreILU",
     "HypreParaSails"};
 
@@ -113,7 +113,7 @@ inline static void setLinearSolver(mfem_mgis::attributes::MayAbort,
     }
 
     if (!precond.empty()) {
-      if (!contains(preconditionners, precond)) {
+      if (!contains(preconditioners, precond)) {
         mfem_mgis::abort("Invalid preconditioner: " + precond);
       }
 

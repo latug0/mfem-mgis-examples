@@ -51,14 +51,14 @@ void common_parameters(mfem::OptionsParser& args, TestParameters& p) {
   args.AddOption(&p.order, "-o", "--order",
                  "Finite element order (polynomial degree).");
   args.AddOption(&p.refinement, "-r", "--refinement",
-                 "refinement level of the mesh, default = 0");
+                 "Number of uniform refinements of the mesh.");
   args.AddOption(&p.post_processing, "-pp", "--post-processing", "-no-pp",
                  "--no-post-processing", "Export the results to Paraview.");
-  args.AddOption(&p.check, "-c", "--check", "-nc", "--no-check",
+  args.AddOption(&p.check, "-c", "--check", "-no-c", "--no-check",
                  "Compare the solution to the analytical solution of the "
                  "two-layer cube, only valid for cube_2mat_per.mesh.");
   args.AddOption(&p.verbosity_level, "-v", "--verbosity-level",
-                 "choose the verbosity level");
+                 "Verbosity level of the solvers.");
 
   args.Parse();
 

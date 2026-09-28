@@ -38,7 +38,7 @@ struct TestParameters {
   double Te = 315.0;            // external/convection temperature (K)
   double source = 1e10;         // volumetric power source term
   double water_pressure = 1e6;  // coolant pressure
-  double duree = 1e5;           // total simulation duration
+  double end_time = 1e5;        // end time of the simulation
   int nbsteps = 1;              // number of time steps
   double t_ramp = 1e5;          // duration of the power ramp
   double h_conv = 5e4;          // thermal convection coefficient
