@@ -1,5 +1,5 @@
 /*!
- * \file   InclusionsEx.cxx
+ * \file   TwoLayerCube.cxx
  * \brief
  * This example models a periodic unit cube made of two layers, split at
  * x = 0.5, under an imposed macroscopic strain. The solution is compared to
@@ -10,7 +10,7 @@
  * finely, by Box.med (8x8x8 hexahedra), whose periodicity is described by
  * Box.per. Reading Box.med requires MFEM built with MED support:
  *
- *   ./InclusionsEx --mesh Box.med
+ *   ./TwoLayerCubeEx --mesh Box.med
  *
  * Mechanical strain:
  *                 eps = E + grad_s v
@@ -294,7 +294,8 @@ int executeMFEMMGISTest(mgis::Context& ctx, const TestParameters& p) {
     // Add postprocessing and outputs
     problem.addPostProcessing(
         ctx, "ParaviewExportResults",
-        {{"OutputFileName", "InclusionsExOutput-" + std::to_string(p.tcase)}}) |
+        {{"OutputFileName",
+          "TwoLayerCubeExOutput-" + std::to_string(p.tcase)}}) |
         or_die;
     // solving the problem
     problem.solve(ctx, 0, 1) | or_die;
