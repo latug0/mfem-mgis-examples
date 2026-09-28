@@ -79,12 +79,14 @@ int main(int argc, char** argv) {
     // loading the mesh and timer
     auto problem =
         mfem_mgis::construct<mfem_mgis::NonLinearEvolutionProblem>(
-            ctx, mfem_mgis::Parameters{{"MeshFileName", mesh_file},
-                                       {"FiniteElementFamily", "H1"},
-                                       {"FiniteElementOrder", order},
-                                       {"UnknownsSize", dim},
-                                       {"Hypothesis", "Tridimensional"},
-                                       {"Parallel", true}}) |
+            ctx,
+            mfem_mgis::Parameters{{"MeshFileName", mesh_file},
+                                  {"FiniteElementFamily", "H1"},
+                                  {"FiniteElementOrder", order},
+                                  {"UnknownsSize", dim},
+                                  {"NumberOfUniformRefinements", refinement},
+                                  {"Hypothesis", "Tridimensional"},
+                                  {"Parallel", true}}) |
         or_die;
 
     auto mesh =
