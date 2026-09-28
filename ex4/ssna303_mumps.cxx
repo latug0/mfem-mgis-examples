@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
                                      {"FiniteElementOrder", order},
                                      {"UnknownsSize", dim},
                                      {"Hypothesis", "Tridimensional"},
-                                     {"Parallel", true},
+                                     {"Parallel", bool(parallel)},
                                      {"NumberOfUniformRefinements",
                                       parallel ? ref_para : ref_seq}}) |
       or_die;
