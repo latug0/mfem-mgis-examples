@@ -1,5 +1,5 @@
 /*!
- * \file   ssna303.cxx
+ * \file   ssna303_mumps.cxx
  * \brief
  * \author Thomas Helfer
  * \date   14/12/2020
@@ -31,8 +31,6 @@
 #include "MFEMMGIS/LinearSolverFactory.hxx"
 #include "CheckResultantForce.hxx"
 
-#define PRINT_DEBUG (std::cout << __FILE__ << ":" << __LINE__ << std::endl)
-
 int main(int argc, char** argv) {
   auto ctx = mgis::Context{};
   auto or_die = ctx.getFatalFailureHandler();
@@ -45,10 +43,7 @@ int main(int argc, char** argv) {
   // not null, since mfem::OptionsParser::PrintUsage stops at the first null
   // string
   const char* reference_file = "";
-  const char* petscrc_file = "";
   auto parallel = int{1};
-  auto ref_para = 0;
-  auto ref_seq = 0;
   auto order = 1;
   auto nbsteps = 50;
   auto end_time = mfem_mgis::real{1};
@@ -68,6 +63,10 @@ int main(int argc, char** argv) {
                  "Reference values of the resultant force on the upper "
                  "boundary, no comparison if empty.");
   args.Parse();
+  if (args.Help()) {
+    args.PrintUsage(std::cout);
+    return EXIT_SUCCESS;
+  }
   if (!args.Good()) {
     args.PrintUsage(std::cout);
     return EXIT_FAILURE;
@@ -82,9 +81,7 @@ int main(int argc, char** argv) {
                                      {"FiniteElementOrder", order},
                                      {"UnknownsSize", dim},
                                      {"Hypothesis", "Tridimensional"},
-                                     {"Parallel", bool(parallel)},
-                                     {"NumberOfUniformRefinements",
-                                      parallel ? ref_para : ref_seq}}) |
+                                     {"Parallel", bool(parallel)}}) |
       or_die;
 
   // 2 1 "Volume"

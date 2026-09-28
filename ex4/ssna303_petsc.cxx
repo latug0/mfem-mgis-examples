@@ -1,5 +1,5 @@
 /*!
- * \file   ssna303.cxx
+ * \file   ssna303_petsc.cxx
  * \brief
  * \author Thomas Helfer
  * \date   14/12/2020
@@ -31,8 +31,6 @@
 #include "MFEMMGIS/LinearSolverFactory.hxx"
 #include "CheckResultantForce.hxx"
 
-#define PRINT_DEBUG (std::cout << __FILE__ << ":" << __LINE__ << std::endl)
-
 int main(int argc, char** argv) {
   auto ctx = mgis::Context{};
   auto or_die = ctx.getFatalFailureHandler();
@@ -50,10 +48,6 @@ int main(int argc, char** argv) {
   auto end_time = mfem_mgis::real{1};
   auto refinement = 0;
 
-  // file creation
-  std::string const myFile("./data.txt");
-  std::ofstream out(myFile.c_str());
-
   // options treatment
   mfem::OptionsParser args(argc, argv);
   mfem_mgis::declareDefaultOptions(args);  // PETSc Initialize
@@ -69,6 +63,10 @@ int main(int argc, char** argv) {
                  "boundary, no comparison if empty.");
   args.AddOption(&refinement, "-rp", "--refinement", "Number of Refinement.");
   args.Parse();
+  if (args.Help()) {
+    args.PrintUsage(std::cout);
+    return EXIT_SUCCESS;
+  }
   if (!args.Good()) {
     args.PrintUsage(std::cout);
     return EXIT_FAILURE;
@@ -88,15 +86,6 @@ int main(int argc, char** argv) {
                                   {"Hypothesis", "Tridimensional"},
                                   {"Parallel", true}}) |
         or_die;
-
-    auto mesh =
-        problem.getImplementation<true>().getFiniteElementSpace().GetMesh();
-    // get the number of vertices
-    int numbers_of_vertices = mesh->GetNV();
-    // get the number of elements
-    int numbers_of_elements = mesh->GetNE();
-    // get the element size
-    double h = mesh->GetElementSize(0);
 
     // 2 1 "Volume"
     problem.addBehaviourIntegrator(ctx, "Mechanics", 1, library, behaviour) |
@@ -143,14 +132,6 @@ int main(int argc, char** argv) {
             }) |
             or_die) |
         or_die;
-
-    // print on file
-    out << " USE_PETSc = " << mfem_mgis::usePETSc() << std::endl;
-    out << " taille_maille = " << h << std::endl;
-    out << " 1/h = " << 1 / h << std::endl;
-    out << " nbr_refinement = " << refinement << std::endl;
-    out << " numbers_of_vertices = " << numbers_of_vertices << std::endl;
-    out << " numbers_of_elements = " << numbers_of_elements << std::endl;
 
     // vtk export
     problem.addPostProcessing(

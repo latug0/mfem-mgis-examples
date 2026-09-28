@@ -1,5 +1,5 @@
 /*!
- * \file   ssna303.cxx
+ * \file   ssna303_hypre.cxx
  * \brief
  * \author Thomas Helfer
  * \date   14/12/2020
@@ -23,8 +23,6 @@
 #include "MFEMMGIS/LinearSolverFactory.hxx"
 #include "CheckResultantForce.hxx"
 
-#define PRINT_DEBUG (std::cout << __FILE__ << ":" << __LINE__ << std::endl)
-
 int main(int argc, char** argv) {
   auto ctx = mgis::Context{};
   auto or_die = ctx.getFatalFailureHandler();
@@ -44,10 +42,6 @@ int main(int argc, char** argv) {
   auto nbsteps = 50;
   auto end_time = mfem_mgis::real{1};
 
-  // file creation
-  std::string const myFile("test.txt");
-  std::ofstream out(myFile.c_str());
-
   // options treatment
   mfem::OptionsParser args(argc, argv);
   args.AddOption(&order, "-o", "--order",
@@ -65,6 +59,10 @@ int main(int argc, char** argv) {
   args.AddOption(&ref_para, "-rp", "--refinement_parallel",
                  "Number of Refinement for parallel call.");
   args.Parse();
+  if (args.Help()) {
+    args.PrintUsage(std::cout);
+    return EXIT_SUCCESS;
+  }
   if (!args.Good()) {
     args.PrintUsage(std::cout);
     return EXIT_FAILURE;
@@ -83,15 +81,6 @@ int main(int argc, char** argv) {
                                        {"Hypothesis", "Tridimensional"},
                                        {"Parallel", true}}) |
         or_die;
-
-    auto mesh =
-        problem.getImplementation<true>().getFiniteElementSpace().GetMesh();
-    // get the number of vertices
-    int numbers_of_vertices = mesh->GetNV();
-    // get the number of elements
-    int numbers_of_elements = mesh->GetNE();
-    // get the element size
-    double h = mesh->GetElementSize(0);
 
     // 2 1 "Volume"
     problem.addBehaviourIntegrator(ctx, "Mechanics", 1, library, behaviour) |
@@ -185,16 +174,6 @@ int main(int argc, char** argv) {
                                {"Preconditioner", prec_boomer}}) |
           or_die;
     }
-    // print on file
-    out << " SetLinearSolver" << std::endl;
-    out << " VerbosityLevel = " << 0 << std::endl;
-    out << " MaximumNumberOfIterations = " << 1000 << std::endl;
-    out << " Preconditioner = " << preconditioner << std::endl;
-    out << " taille_maille = " << h << std::endl;
-    out << " 1/h = " << 1 / h << std::endl;
-    out << " nbr_ref_parallel = " << ref_para << std::endl;
-    out << " numbers_of_vertices = " << numbers_of_vertices << std::endl;
-    out << " numbers_of_elements = " << numbers_of_elements << std::endl;
 
     // vtk export
     problem.addPostProcessing(

@@ -8,7 +8,6 @@ find_package(MFEMMGIS REQUIRED)
 
 include(CTest)
 # testing
-set(CTEST_CONFIGURATION_TYPE "${JOB_BUILD_CONFIGURATION}")
 # (must be placed *before* any add_subdirectory)
 enable_testing()
 if(CMAKE_CONFIGURATION_TYPES)
