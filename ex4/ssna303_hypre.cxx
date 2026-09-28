@@ -193,7 +193,6 @@ int main(int argc, char** argv) {
     // print on file
     out << " SetLinearSolver" << std::endl;
     out << " VerbosityLevel = " << 0 << std::endl;
-    out << " RelativeTolerance = " << 1e-12 << std::endl;
     out << " MaximumNumberOfIterations = " << 1000 << std::endl;
     out << " Preconditioner = " << preconditioner << std::endl;
     out << " taille_maille = " << h << std::endl;
