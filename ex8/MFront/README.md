@@ -4,7 +4,7 @@ This file contains the constitutive laws implemented via **TFEL/MFront** for the
 
 ---
 
-## Material 1: ALFENI (Cladding / Structure)
+## ALFENI (Cladding and stiffeners, materials 2 and 3 of the mesh)
 
 ALFENI is modeled with an elasto-plastic behavior coupled with temperature, accounting for large strains and solving the heat equation after considering the effects of
 the deformation.
@@ -36,7 +36,7 @@ The heat equation is solved taking into account the geometry deformation.
 
 ---
 
-## Material 2: U3Si2 (Fuel)
+## U3Si2 (Fuel, material 1 of the mesh)
 
 The U3Si2 fuel is subjected to in-pile irradiation phenomena. Its mechanical behavior is dominated by irradiation creep and solid swelling induced by fissions.
 

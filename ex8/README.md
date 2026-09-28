@@ -47,6 +47,12 @@ cd mesh
 python3 assemblage_hexa.py --output_file assemblage_hexa.msh
 ```
 
+The coarser mesh `mesh/assemblage_hexa_coarse.msh`, used by the tests, is generated with:
+
+```bash
+python3 assemblage_hexa.py --densHaut 5 --densFuelLength 8 --densFuelThick 3 --densCladConn 3 --densStifThick 3 --densStifConn 3 --output_file assemblage_hexa_coarse.msh
+```
+
 Available options (all optional, with defaults):
 
 | Option | Description |
@@ -69,50 +75,39 @@ Here is a summary table of the available options:
 
 | Short Option | Long Option | Description |
 | :--- | :--- | :--- |
-| `-m` | `--mesh` | Path to the mesh file (e.g., `.msh`, `.vtk`). |
-| `-lU` | `--libraryU3SI2` | Path to the compiled MFront library (`.so`) for the U3Si2 material. |
-| `-lA` | `--libraryALFENI` | Path to the compiled MFront library (`.so`) for the ALFENI material. |
-| `-svTh` | `--solverTh` | Name of the linear solver to use for the heat transfer problem: an iterative solver (e.g., `HypreGMRES`) or a direct solver (`MUMPSSolver`, `UMFPackSolver`). |
-| `-pcTh` | `--preconditionnerTh` | Preconditioner associated with the thermal solver (e.g., `HypreBoomerAMG`), ignored for direct solvers. |
-| `-svMc` | `--solverMc` | Name of the linear solver to use for the mechanics problem: an iterative solver (e.g., `HyprePCG`) or a direct solver (`MUMPSSolver`, `UMFPackSolver`). |
-| `-pcMc` | `--preconditionnerMc` | Preconditioner associated with the mechanics solver. |
-| `-o` | `--order` | Finite element order (polynomial degree, default is usually 1). |
+| `-m` | `--mesh` | Path to the mesh file (default: `assemblage_hexa.msh`). |
+| `-lU` | `--libraryU3SI2` | Path to the compiled MFront library (`.so`) for the U3Si2 material (default: `src/libU3SI2-generic.so`). |
+| `-lA` | `--libraryALFENI` | Path to the compiled MFront library (`.so`) for the ALFENI material (default: `src/libALFENI-generic.so`). |
+| `-svTh` | `--solverTh` | Name of the linear solver to use for the heat transfer problem: an iterative solver (default: `HypreGMRES`) or the direct solver `MUMPSSolver`. |
+| `-pcTh` | `--preconditionnerTh` | Preconditioner associated with the thermal solver (default: `HypreBoomerAMG`), ignored for direct solvers. |
+| `-svMc` | `--solverMc` | Name of the linear solver to use for the mechanics problem: the direct solver `MUMPSSolver` (default) or an iterative solver (e.g., `HyprePCG`). |
+| `-pcMc` | `--preconditionnerMc` | Preconditioner associated with the mechanics solver (default: `HypreBoomerAMG`), ignored for direct solvers. |
+| `-o` | `--order` | Finite element order (polynomial degree, default: `1`). |
 | `-r` | `--refinement` | Uniform refinement level of the mesh (default: `0`). |
-| `-p` | `--post-processing` | Enables (`1`) or disables (`0`) the export of results for ParaView. |
-| `-v` | `--verbosity-level` | Verbosity level of the console logs (`0` = minimal, higher levels = increased details). |
+| `-p`, `-no-p` | `--post-processing`, `--no-post-processing` | Enables (default) or disables the export of results for ParaView. |
+| `-v` | `--verbosity-level` | Verbosity level of the linear solvers (default: `0`). |
+| `-d`, `-nd` | `--debug`, `--nodebug` | Prints (default) or not the minimum, maximum and mean values of the temperature, of the norm of the displacement, of the swelling and of the power density at the end of the simulation. |
+| `-rf` | `--reference-file` | File of reference values of these statistics, one line per field, in the printed format (default: no comparison). |
 | `-dur` | `--duree` | Total simulation duration (default: `1e5`). |
 | `-ns` | `--nbsteps` | Number of time steps (default: `1`). |
 | `-tr` | `--t-ramp` | Duration of the power ramp (default: `1e5`). Its end must be a time step boundary, otherwise the run stops. `0` disables the ramp. |
 | `-hc` | `--h-conv` | Thermal convection coefficient (default: `5e4`). |
 | `-wp` | `--water-pressure` | Coolant pressure applied on the cladding and the stiffeners (default: `1e6`). |
 
+At the end of the simulation, the swelling is compared to its exact value: since the end of the power ramp is a time step boundary, the power density is linear over each time step and the swelling model integrates it exactly. The run fails if they differ.
+
 ### Parallel Execution Example
 
 ```bash
 mpirun -np 4 ./Thermomechanical \
   -m assemblage_hexa.msh \
-  -lU src/libU3SI2-generic.so \
-  -lA src/libALFENI-generic.so \
-  -svTh HypreGMRES -pcTh HypreBoomerAMG \
-  -svMc HyprePCG -pcMc HypreBoomerAMG \
-  -o 1 -r 0 -p 1 -v 1 \
-  -dur 1e5 -ns 1 -hc 5e4
-```
-
-### Direct Solver Example (MUMPS)
-
-```bash
-mpirun -np 1 ./Thermomechanical \
-  -m assemblage_hexa.msh \
-  -lU src/libU3SI2-generic.so \
-  -lA src/libALFENI-generic.so \
   -svTh HypreGMRES -pcTh HypreBoomerAMG \
   -svMc MUMPSSolver \
-  -o 1 -r 0 -p 1 -v 0 \
+  -o 1 -r 0 -v 0 \
   -dur 1e5 -ns 1 -hc 5e4
 ```
 
-This configuration is also registered as the `Thermomechanical_MUMPS` CTest test.
+Iterative solvers are much slower than MUMPS for the mechanics of this problem. With the default mesh, the simulation takes 8 s on 2 processes with MUMPS, about 2 minutes on 2 processes with `CGSolver` or `MINRESSolver` preconditioned by `HypreBoomerAMG`, and 165 s on 4 processes with `HyprePCG`. `GMRESSolver`, `SLISolver` and `BiCGSTABSolver` did not converge within 5 minutes.
 
 Resulting mechanical displacement field (`Displacement Magnitude`) obtained with this test case, visualized with ParaView:
 
@@ -121,3 +116,11 @@ paraview Results/Mechanics/Mechanics.pvd
 ```
 
 ![Mechanical displacement magnitude](Picture/mini-rjh.png)
+
+## Tests
+
+Three tests are run by `ctest`:
+
+- `Thermomechanical_MUMPS` runs the simulation on 2 processes with the coarser mesh `assemblage_hexa_coarse.msh`, which is faster than the default one, and compares the statistics of the temperature and of the displacement to the reference values of `assemblage_hexa_coarse-statistics.ref`;
+- `U3Si2SwellingMTest` compares the swelling model to its exact value under a power ramp (`mtest/Swelling.mtest`);
+- `RobinTest` compares the Robin boundary condition to the exact solution of a bar (see `Robin/README.md`).

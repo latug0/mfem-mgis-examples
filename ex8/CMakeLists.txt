@@ -5,13 +5,14 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(MPI REQUIRED)
-find_package(OpenMP REQUIRED)
 find_package(MFEMMGIS REQUIRED)
 
+include(CTest)
+enable_testing()
 if(CMAKE_CONFIGURATION_TYPES)
 if (NOT TARGET check)
 add_custom_target(check COMMAND
-${CMAKE_CTEST_COMMAND} -T test -C $)
+${CMAKE_CTEST_COMMAND} -T test -C $<CONFIGURATION>)
 endif(NOT TARGET check)
 else(CMAKE_CONFIGURATION_TYPES)
 if (NOT TARGET check)
@@ -24,6 +25,8 @@ endif(CMAKE_CONFIGURATION_TYPES)
 get_filename_component(MFRONT_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/MFront" ABSOLUTE)
 
 file(GLOB MFRONT_LOIS CONFIGURE_DEPENDS "${MFRONT_INCLUDE_DIR}/*.mfront")
+# headers included by the MFront files
+file(GLOB MFRONT_HEADERS CONFIGURE_DEPENDS "${MFRONT_INCLUDE_DIR}/*.hxx")
 
 set(MFRONT_OUTPUTS
     "${CMAKE_CURRENT_BINARY_DIR}/src/libU3SI2-generic.so"
@@ -34,7 +37,7 @@ set(MFRONT_OUTPUTS
 add_custom_command(
     OUTPUT ${MFRONT_OUTPUTS}
     COMMAND mfront --obuild --interface=generic --include=${MFRONT_INCLUDE_DIR} ${MFRONT_LOIS}
-    DEPENDS ${MFRONT_LOIS}
+    DEPENDS ${MFRONT_LOIS} ${MFRONT_HEADERS}
     COMMENT "Generating laws for thermomechanical simulation."
     VERBATIM
 )
@@ -45,10 +48,14 @@ add_executable(Thermomechanical
     src/RobinBC.cxx
 )
 
-# Copy the default mesh next to the executable. Unlike file(COPY),
-# configure_file updates the copy when the mesh is modified.
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mesh/assemblage_hexa.msh
-               ${CMAKE_CURRENT_BINARY_DIR}/assemblage_hexa.msh COPYONLY)
+# Copy the files needed at run time next to the executable. Unlike
+# file(COPY), configure_file updates the copies when these files are modified.
+foreach(input mesh/assemblage_hexa.msh mesh/assemblage_hexa_coarse.msh
+              assemblage_hexa_coarse-statistics.ref mtest/Swelling.mtest)
+  get_filename_component(name ${input} NAME)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${input}
+                 ${CMAKE_CURRENT_BINARY_DIR}/${name} COPYONLY)
+endforeach()
 
 target_include_directories(Thermomechanical PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/headers")
 
@@ -59,24 +66,30 @@ add_custom_target(
 
 target_link_libraries(Thermomechanical PRIVATE
     MPI::MPI_CXX
-    OpenMP::OpenMP_CXX
     mfem-mgis::MFEMMGIS
 )
 
 add_dependencies(check Thermomechanical generate-libBehaviour)
 
+# The test uses a coarser mesh than the default one to be faster, and compares
+# the statistics of the temperature and of the displacement to reference
+# values. The swelling is always compared to its exact value.
 add_test(NAME Thermomechanical_MUMPS
     COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
         $<TARGET_FILE:Thermomechanical>
-        -m assemblage_hexa.msh
-        -lU src/libU3SI2-generic.so
-        -lA src/libALFENI-generic.so
-        -svTh HypreGMRES -pcTh HypreBoomerAMG
+        -m assemblage_hexa_coarse.msh
         -svMc MUMPSSolver
-        -o 1 -r 0 -p 1 -v 0
-        -dur 1e5 -ns 1 -hc 5e4
+        -rf assemblage_hexa_coarse-statistics.ref
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 # one OpenMP thread per process, otherwise MUMPS oversubscribes the cores
 set_tests_properties(Thermomechanical_MUMPS PROPERTIES
     PROCESSORS 2
     ENVIRONMENT OMP_NUM_THREADS=1)
+
+# comparison of the swelling model to its exact value
+add_test(NAME U3Si2SwellingMTest
+    COMMAND mtest Swelling.mtest
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+
+# comparison of the Robin boundary condition to an exact solution
+add_subdirectory(Robin)

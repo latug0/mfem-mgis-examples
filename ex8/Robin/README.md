@@ -15,3 +15,5 @@ The problem consists of a steady-state heat conduction test in a three-dimension
 where \(h\) is the heat transfer coefficient and \(T_\infty\) is the ambient temperature.
 
 Because the analytical solution is known, this example provides a straightforward verification of the implementation by comparing the numerical and exact solutions. It also validates the residual and tangent contributions associated with the Robin boundary condition.
+
+The test `RobinTest`, run by `ctest` on 2 processes, fails if the L2 norm of the difference between the numerical and exact temperatures exceeds 1e-8.
