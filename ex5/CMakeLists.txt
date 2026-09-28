@@ -30,7 +30,7 @@ endif(NOT TARGET mfem-mgis::MFEMMGIS)
 if(MFEM_USE_SUITESPARSE)
   # Copy the files needed at run time. Unlike file(COPY), configure_file updates
   # the copies when these files are modified.
-  foreach(input Elasticity.mfront cube.msh)
+  foreach(input Elasticity.mfront square.msh)
     configure_file(${PROJECT_SOURCE_DIR}/${input} ${PROJECT_BINARY_DIR}/${input}
                    COPYONLY)
   endforeach()
