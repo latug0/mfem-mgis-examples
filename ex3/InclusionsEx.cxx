@@ -192,15 +192,22 @@ TestParameters parseCommandLineOptions(int& argc, char* argv[]) {
                  "Exz->4, Eyz->5");
   args.AddOption(
       &p.linearsolver, "-ls", "--linearsolver",
-      "identifier of the linear solver: 0 -> GMRES, 1 -> CG, 2 -> UMFPack");
+      "identifier of the linear solver: 0 -> GMRES, 1 -> CG, 2 -> UMFPack "
+      "(sequential only), 3 -> MUMPS (parallel only)");
+  args.AddOption(&p.parallel, "-p", "--parallel", "-no-p", "--no-parallel",
+                 "Perform parallel computations.");
   args.AddOption(&p.check, "-c", "--check", "-nc", "--no-check",
                  "Compare the solution to the analytical solution of the "
                  "two-layer cube, only valid with the default mesh.");
   args.Parse();
-  if (!args.Good()) {
-    if (mfem_mgis::getMPIrank() == 0) args.PrintUsage(std::cout);
+  if (args.Help()) {
+    args.PrintUsage(mfem_mgis::getOutputStream());
     mfem_mgis::finalize();
-    exit(0);
+    std::exit(EXIT_SUCCESS);
+  }
+  if (!args.Good()) {
+    args.PrintUsage(mfem_mgis::getOutputStream());
+    mfem_mgis::abort(EXIT_FAILURE);
   }
   if (p.mesh_file == nullptr) {
     if (mfem_mgis::getMPIrank() == 0)
