@@ -35,18 +35,18 @@ file(GLOB_RECURSE directory_files CONFIGURE_DEPENDS
      ${PROJECT_SOURCE_DIR}/mesh/*
      ${PROJECT_SOURCE_DIR}/file_geo/*
      ${PROJECT_SOURCE_DIR}/script_merope/*)
-foreach(input matrixlaw.mfront petscrc ${directory_files})
+foreach(input matrixlaw.mfront petscrc OneSphere-avgStress.ref ${directory_files})
   configure_file(${PROJECT_SOURCE_DIR}/${input} ${PROJECT_BINARY_DIR}/${input}
                  COPYONLY)
 endforeach()
-  
-  # Use mfront to generate libBehaviour.so
+
+# Use mfront to generate libBehaviour.so
 add_custom_command(
   OUTPUT "src/libBehaviour.so"
   COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/matrixlaw.mfront
   DEPENDS ${PROJECT_BINARY_DIR}/matrixlaw.mfront
   COMMENT "Performing mfront code generation")
-  
+
 add_custom_target(generate-libBehaviour-ex7 ALL
   DEPENDS "src/libBehaviour.so")
 
@@ -60,9 +60,15 @@ target_include_directories(mox2
 add_dependencies(check mox2 generate-libBehaviour-ex7)
 
 set(test "MixedOxideFuelsTest")
-add_test(NAME ${test} COMMAND mox2 --post-processing 0 --order 1 --mesh mesh/OneSphere.msh)
+add_test(NAME ${test}
+         COMMAND mox2 --no-post-processing --order 2 --mesh mesh/OneSphere.msh
+                 --nbsteps 5 --reference-file OneSphere-avgStress.ref)
 
 if(MFEM_USE_PETSC)
-	add_test(NAME ${test}_PETSC COMMAND mox2 --post-processing 0 --order 1 --mesh mesh/OneSphere.msh --use-petsc true --petsc-configuration-file petscrc) 
+  add_test(NAME ${test}_PETSC
+           COMMAND mox2 --no-post-processing --order 2 --mesh mesh/OneSphere.msh
+                   --nbsteps 5 --reference-file OneSphere-avgStress.ref
+                   --use-petsc --petsc-configuration-file petscrc)
+  # both tests write the mean stresses in the same file
+  set_tests_properties(${test} ${test}_PETSC PROPERTIES RESOURCE_LOCK avgStress)
 endif()
-
