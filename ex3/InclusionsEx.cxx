@@ -1,7 +1,19 @@
 /*!
  * \file   InclusionsEx.cxx
  * \brief
- * This example is modelling several inclusion within a periodic cube.
+ * This example models a periodic cube under an imposed macroscopic strain.
+ *
+ * By default, the cube is made of two layers (cube_2mat_per.mesh) and the
+ * solution is compared to the analytical solution of this case, for the
+ * loading case selected by the --test-case option.
+ *
+ * The file Box.med describes a cube with several inclusions, whose
+ * periodicity is described by Box.per. Reading this file requires MFEM
+ * built with MED support. There is no analytical solution in this case:
+ *
+ *   ./InclusionsEx --mesh Box.med --no-check -xm <x> -ym <y> -zm <z>
+ *
+ * where <x>, <y> and <z> are the coordinates of the upper corner of the cube.
  *
  * Mechanical strain:
  *                 eps = E + grad_s v
@@ -154,6 +166,7 @@ struct TestParameters {
   double ymax = 1.;
   double zmax = 1.;
   bool parallel = true;
+  bool check = true;
 };
 
 TestParameters parseCommandLineOptions(int& argc, char* argv[]) {
@@ -165,15 +178,24 @@ TestParameters parseCommandLineOptions(int& argc, char* argv[]) {
   args.AddOption(&p.library, "-l", "--library", "Material library.");
   args.AddOption(&p.order, "-o", "--order",
                  "Finite element order (polynomial degree).");
-  args.AddOption(&p.xmax, "-xm", "--xmax", "Corner, coordinate x direction.");
-  args.AddOption(&p.ymax, "-ym", "--ymax", "Corner coordinate y direction.");
-  args.AddOption(&p.zmax, "-zm", "--zmax", "Corner coordinate z direction.");
+  args.AddOption(&p.xmax, "-xm", "--xmax",
+                 "x coordinate of the upper corner of the cube, which must "
+                 "match the mesh.");
+  args.AddOption(&p.ymax, "-ym", "--ymax",
+                 "y coordinate of the upper corner of the cube, which must "
+                 "match the mesh.");
+  args.AddOption(&p.zmax, "-zm", "--zmax",
+                 "z coordinate of the upper corner of the cube, which must "
+                 "match the mesh.");
   args.AddOption(&p.tcase, "-t", "--test-case",
                  "identifier of the case : Exx->0, Eyy->1, Ezz->2, Exy->3, "
                  "Exz->4, Eyz->5");
   args.AddOption(
       &p.linearsolver, "-ls", "--linearsolver",
       "identifier of the linear solver: 0 -> GMRES, 1 -> CG, 2 -> UMFPack");
+  args.AddOption(&p.check, "-c", "--check", "-nc", "--no-check",
+                 "Compare the solution to the analytical solution of the "
+                 "two-layer cube, only valid with the default mesh.");
   args.Parse();
   if (!args.Good()) {
     if (mfem_mgis::getMPIrank() == 0) args.PrintUsage(std::cout);
@@ -285,7 +307,8 @@ int executeMFEMMGISTest(mgis::Context& ctx, const TestParameters& p) {
     problem.solve(ctx, 0, 1) | or_die;
     problem.executePostProcessings(ctx, 0, 1) | or_die;
     //
-    const auto b = checkSolution(ctx, problem, p.tcase) | or_die;
+    const auto b =
+        p.check ? (checkSolution(ctx, problem, p.tcase) | or_die) : true;
     mfem_mgis::Profiler::OutputManager::printTimeTable(ctx);
     return b ? EXIT_SUCCESS : EXIT_FAILURE;
   }
