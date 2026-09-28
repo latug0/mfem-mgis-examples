@@ -54,13 +54,16 @@ if(MFEM_USE_MPI)
   
   add_dependencies(check InclusionsEx generate-libBehaviour-ex3)
   
-  # Define a test that will be called during the "make check"
-  function(add_inclusions_ex)
-    set(test "InclusionsEx")
-    add_test(NAME ${test} COMMAND InclusionsEx)
+  # Define the tests that will be called during the "make check", one per
+  # loading case, each one being compared to its analytical solution
+  function(add_inclusions_ex tcase)
+    set(test "InclusionsEx-${tcase}")
+    add_test(NAME ${test} COMMAND InclusionsEx --test-case ${tcase})
   endfunction(add_inclusions_ex)
 
-  add_inclusions_ex()
+  foreach(tcase RANGE 0 5)
+    add_inclusions_ex(${tcase})
+  endforeach()
 
 endif()
 

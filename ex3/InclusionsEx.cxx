@@ -1,7 +1,16 @@
 /*!
  * \file   InclusionsEx.cxx
  * \brief
- * This example is modelling several inclusion within a periodic cube.
+ * This example models a periodic unit cube made of two layers, split at
+ * x = 0.5, under an imposed macroscopic strain. The solution is compared to
+ * the analytical solution of this case, for the loading case selected by the
+ * --test-case option.
+ *
+ * The cube is meshed by cube_2mat_per.mesh (4x4x4 hexahedra) and, more
+ * finely, by Box.med (8x8x8 hexahedra), whose periodicity is described by
+ * Box.per. Reading Box.med requires MFEM built with MED support:
+ *
+ *   ./InclusionsEx --mesh Box.med
  *
  * Mechanical strain:
  *                 eps = E + grad_s v
@@ -133,20 +142,16 @@ std::optional<bool> checkSolution(mfem_mgis::Context& ctx,
     return {};
   }
   if (!(*ob)) {
-    if (mfem_mgis::getMPIrank() == 0)
-      std::cerr << "Error is greater than threshold\n";
+    mfem_mgis::getErrorStream() << "Error is greater than threshold\n";
     return false;
   }
-  if (mfem_mgis::getMPIrank() == 0)
-    std::cerr << "Error is lower than threshold\n";
+  mfem_mgis::getErrorStream() << "Error is lower than threshold\n";
   return true;
 }
 
 struct TestParameters {
   const char* mesh_file = "cube_2mat_per.mesh";
-  const char* behaviour = "Elasticity";
   const char* library = "src/libBehaviour.so";
-  const char* reference_file = "Elasticity.ref";
   int order = 1;
   int tcase = 1;
   int linearsolver = 1;
@@ -154,6 +159,7 @@ struct TestParameters {
   double ymax = 1.;
   double zmax = 1.;
   bool parallel = true;
+  bool check = true;
 };
 
 TestParameters parseCommandLineOptions(int& argc, char* argv[]) {
@@ -165,28 +171,38 @@ TestParameters parseCommandLineOptions(int& argc, char* argv[]) {
   args.AddOption(&p.library, "-l", "--library", "Material library.");
   args.AddOption(&p.order, "-o", "--order",
                  "Finite element order (polynomial degree).");
-  args.AddOption(&p.xmax, "-xm", "--xmax", "Corner, coordinate x direction.");
-  args.AddOption(&p.ymax, "-ym", "--ymax", "Corner coordinate y direction.");
-  args.AddOption(&p.zmax, "-zm", "--zmax", "Corner coordinate z direction.");
+  args.AddOption(&p.xmax, "-xm", "--xmax",
+                 "x coordinate of the upper corner of the cube, which must "
+                 "match the mesh.");
+  args.AddOption(&p.ymax, "-ym", "--ymax",
+                 "y coordinate of the upper corner of the cube, which must "
+                 "match the mesh.");
+  args.AddOption(&p.zmax, "-zm", "--zmax",
+                 "z coordinate of the upper corner of the cube, which must "
+                 "match the mesh.");
   args.AddOption(&p.tcase, "-t", "--test-case",
                  "identifier of the case : Exx->0, Eyy->1, Ezz->2, Exy->3, "
                  "Exz->4, Eyz->5");
   args.AddOption(
       &p.linearsolver, "-ls", "--linearsolver",
-      "identifier of the linear solver: 0 -> GMRES, 1 -> CG, 2 -> UMFPack");
+      "identifier of the linear solver: 0 -> GMRES, 1 -> CG, 2 -> UMFPack "
+      "(sequential only), 3 -> MUMPS (parallel only)");
+  args.AddOption(&p.parallel, "-p", "--parallel", "-no-p", "--no-parallel",
+                 "Perform parallel computations.");
+  args.AddOption(&p.check, "-c", "--check", "-nc", "--no-check",
+                 "Compare the solution to the analytical solution of the "
+                 "two-layer cube, only valid for the provided meshes.");
   args.Parse();
-  if (!args.Good()) {
-    if (mfem_mgis::getMPIrank() == 0) args.PrintUsage(std::cout);
+  if (args.Help()) {
+    args.PrintUsage(mfem_mgis::getOutputStream());
     mfem_mgis::finalize();
-    exit(0);
+    std::exit(EXIT_SUCCESS);
   }
-  if (p.mesh_file == nullptr) {
-    if (mfem_mgis::getMPIrank() == 0)
-      std::cout << "ERROR: Mesh file missing" << std::endl;
-    args.PrintUsage(std::cout);
+  if (!args.Good()) {
+    args.PrintUsage(mfem_mgis::getOutputStream());
     mfem_mgis::abort(EXIT_FAILURE);
   }
-  if (mfem_mgis::getMPIrank() == 0) args.PrintOptions(std::cout);
+  args.PrintOptions(mfem_mgis::getOutputStream());
   if ((p.tcase < 0) || (p.tcase > 5)) {
     std::cerr << "Invalid test case\n";
     mfem_mgis::abort(EXIT_FAILURE);
@@ -204,15 +220,14 @@ int executeMFEMMGISTest(mgis::Context& ctx, const TestParameters& p) {
                                             {"FiniteElementFamily", "H1"},
                                             {"FiniteElementOrder", p.order},
                                             {"UnknownsSize", dim},
-                                            {"NumberOfUniformRefinements",
-                                             p.parallel ? 0 : 0},
                                             {"Parallel", p.parallel}}) |
              or_die;
 
   {
-    if (mfem_mgis::getMPIrank() == 0)
-      std::cout << "Number of processes: " << mfem_mgis::getMPIsize()
-                << std::endl;
+    auto nprocs = int{};
+    MPI_Comm_size(mfem_mgis::getMPICommunicator(*fed), &nprocs);
+    mfem_mgis::getOutputStream()
+        << "Number of processes: " << nprocs << std::endl;
     // building the non linear problem
 
     std::vector<mfem_mgis::real> corner1({0., 0., 0.});
@@ -279,13 +294,14 @@ int executeMFEMMGISTest(mgis::Context& ctx, const TestParameters& p) {
     // Add postprocessing and outputs
     problem.addPostProcessing(
         ctx, "ParaviewExportResults",
-        {{"OutputFileName", "PeriodicTestOutput-" + std::to_string(p.tcase)}}) |
+        {{"OutputFileName", "InclusionsExOutput-" + std::to_string(p.tcase)}}) |
         or_die;
     // solving the problem
     problem.solve(ctx, 0, 1) | or_die;
     problem.executePostProcessings(ctx, 0, 1) | or_die;
     //
-    const auto b = checkSolution(ctx, problem, p.tcase) | or_die;
+    const auto b =
+        p.check ? (checkSolution(ctx, problem, p.tcase) | or_die) : true;
     mfem_mgis::Profiler::OutputManager::printTimeTable(ctx);
     return b ? EXIT_SUCCESS : EXIT_FAILURE;
   }
