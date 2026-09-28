@@ -33,12 +33,12 @@ target_include_directories(Ssna303
     PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
     PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
 
-# Copy needed file for execution
-file(COPY
-  ${PROJECT_SOURCE_DIR}/Plasticity.mfront
-  ${PROJECT_SOURCE_DIR}/ssna303.msh
-  ${PROJECT_SOURCE_DIR}/ssna303-force.ref
-  DESTINATION ${PROJECT_BINARY_DIR})
+# Copy the files needed at run time. Unlike file(COPY), configure_file updates
+# the copies when these files are modified.
+foreach(input Plasticity.mfront ssna303.msh ssna303-force.ref)
+  configure_file(${PROJECT_SOURCE_DIR}/${input} ${PROJECT_BINARY_DIR}/${input}
+                 COPYONLY)
+endforeach()
 
 # Use mfront to generate libBehaviour.so
 add_custom_command(

@@ -36,12 +36,12 @@ target_include_directories(UniaxialTensileTestEx
     PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
     PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
 
-# Copy needed file for execution
-file(COPY
-  ${MFEMMGIS_EX1_DIR}/Plasticity.mfront
-  ${MFEMMGIS_EX1_DIR}/cube.mesh
-  ${MFEMMGIS_EX1_DIR}/Plasticity.ref
-  DESTINATION ${PROJECT_BINARY_DIR})
+# Copy the files needed at run time. Unlike file(COPY), configure_file updates
+# the copies when these files are modified.
+foreach(input Plasticity.mfront cube.mesh Plasticity.ref)
+  configure_file(${MFEMMGIS_EX1_DIR}/${input} ${PROJECT_BINARY_DIR}/${input}
+                 COPYONLY)
+endforeach()
 
 # Use mfront to generate libBehaviour.so
 add_custom_command(

@@ -34,13 +34,12 @@ if(MFEM_USE_MPI)
       PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
       PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
   
-  # Copy needed file for execution
-  file(COPY
-    ${PROJECT_SOURCE_DIR}/Elasticity.mfront
-    ${PROJECT_SOURCE_DIR}/cube_2mat_per.mesh
-    ${PROJECT_SOURCE_DIR}/Box.med
-    ${PROJECT_SOURCE_DIR}/Box.per
-    DESTINATION ${PROJECT_BINARY_DIR})
+  # Copy the files needed at run time. Unlike file(COPY), configure_file updates
+  # the copies when these files are modified.
+  foreach(input Elasticity.mfront cube_2mat_per.mesh Box.med Box.per)
+    configure_file(${PROJECT_SOURCE_DIR}/${input} ${PROJECT_BINARY_DIR}/${input}
+                   COPYONLY)
+  endforeach()
   
   # Use mfront to generate libBehaviour.so
   add_custom_command(
