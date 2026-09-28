@@ -170,11 +170,11 @@ int main(int argc, char** argv) {
     // vtk export
     problem.addPostProcessing(
         ctx, "ParaviewExportResults",
-        {{"OutputFileName", std::string("ssna303-displacements")}}) |
+        {{"OutputFileName", std::string("ssna303-displacements-petsc")}}) |
         or_die;
     problem.addPostProcessing(
         ctx, "ComputeResultantForceOnBoundary",
-        {{"Boundary", 2}, {"OutputFileName", "force.txt"}}) |
+        {{"Boundary", 2}, {"OutputFileName", "force-petsc.txt"}}) |
         or_die;
 
     // loop over time step
@@ -218,7 +218,7 @@ int main(int argc, char** argv) {
     // resultant force
     if ((!std::string_view{reference_file}.empty()) &&
         (mfem_mgis::isMainProcess(problem.getFiniteElementDiscretization()))) {
-      if (!checkVerticalForce("force.txt", reference_file)) {
+      if (!checkVerticalForce("force-petsc.txt", reference_file)) {
         return EXIT_FAILURE;
       }
     }
