@@ -113,6 +113,12 @@ int main(int argc, char** argv) {
                or_die) |
       or_die;
 
+  // the default prediction concentrates the increment of the imposed
+  // displacement in the elements next to the upper boundary
+  problem.setPredictionPolicy(
+      {.strategy =
+           mfem_mgis::PredictionStrategy::BEGINNING_OF_TIME_STEP_PREDICTION});
+
   // solving the problem without petsc
   if (!mfem_mgis::usePETSc()) {
     problem.setSolverParameters(ctx, {{"VerbosityLevel", 2},
