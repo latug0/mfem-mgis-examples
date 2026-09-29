@@ -83,6 +83,7 @@ int main(int argc, char** argv) {
   // not null, since mfem::OptionsParser::PrintUsage stops at the first null
   // string
   const char* reference_file = "";
+  const char* standard_reference_file = "";
 #if defined(MFEM_USE_MUMPS) && defined(MFEM_USE_MPI)
   bool parallel = true;
 #else
@@ -107,7 +108,11 @@ int main(int argc, char** argv) {
                  "Perform parallel computations.");
 #ifdef MGIS_HAVE_TFEL
   args.AddOption(&use_fbar, "-fb", "--use-fbar", "-no-fb", "--no-use-fbar",
-                 "Use Fbar formulation.");
+                 "Use the FBar formulation.");
+  args.AddOption(&standard_reference_file, "-srf", "--standard-reference-file",
+                 "Reference values of the resultant force on the upper "
+                 "boundary computed without FBar, compared with a larger "
+                 "tolerance, no comparison if empty.");
 #endif /* MGIS_HAVE_TFEL */
   args.Parse();
   if (args.Help()) {
@@ -120,7 +125,6 @@ int main(int argc, char** argv) {
     mfem_mgis::abort(EXIT_FAILURE);
   }
   args.PrintOptions(mfem_mgis::getOutputStream());
-  //
   const auto* const output_file = use_fbar ? "force-fbar.txt" : "force.txt";
   // the non linear problem
   auto problem = construct<NonLinearEvolutionProblem>(
@@ -175,6 +179,8 @@ int main(int argc, char** argv) {
       or_die;
   // solving the problem
   if (!usePETSc()) {
+    // the default prediction concentrates the increment of the imposed
+    // displacement in the elements next to the upper boundary
     problem.setPredictionPolicy(
         {.strategy =
              mfem_mgis::PredictionStrategy::BEGINNING_OF_TIME_STEP_PREDICTION});
@@ -243,14 +249,17 @@ int main(int argc, char** argv) {
     std::cout << '\n';
   }
   // comparison to the reference values, only on the process writing the
-  // resultant force
-  if ((!std::string_view{reference_file}.empty()) &&
-      (mfem_mgis::isMainProcess(problem.getFiniteElementDiscretization()))) {
-    // relative tolerance, above the rounding of the forces which are written
-    // with 6 significant digits. The reference values are computed without
-    // FBar, so the tolerance is relaxed with FBar.
-    const auto eps = use_fbar ? mfem_mgis::real{1e-3} : mfem_mgis::real{1e-4};
-    if (!checkVerticalForce(output_file, reference_file, eps)) {
+  // resultant force. The tolerance is above the rounding of the forces, which
+  // are written with 6 significant digits. It is larger for the reference
+  // values computed without FBar, which are only close to the results with
+  // FBar.
+  if (mfem_mgis::isMainProcess(problem.getFiniteElementDiscretization())) {
+    if ((!std::string_view{reference_file}.empty()) &&
+        (!checkVerticalForce(output_file, reference_file, 1e-4))) {
+      return EXIT_FAILURE;
+    }
+    if ((!std::string_view{standard_reference_file}.empty()) &&
+        (!checkVerticalForce(output_file, standard_reference_file, 1e-3))) {
       return EXIT_FAILURE;
     }
   }

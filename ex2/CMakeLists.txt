@@ -35,7 +35,8 @@ target_include_directories(ssna303
 
 # Copy the files needed at run time. Unlike file(COPY), configure_file updates
 # the copies when these files are modified.
-foreach(input IsotropicLinearHardeningPlasticity.mfront ssna303.msh ssna303-force.ref)
+foreach(input IsotropicLinearHardeningPlasticity.mfront ssna303.msh ssna303-force.ref
+              ssna303-force-fbar.ref)
   configure_file(${PROJECT_SOURCE_DIR}/${input} ${PROJECT_BINARY_DIR}/${input}
                  COPYONLY)
 endforeach()
@@ -61,7 +62,8 @@ function(add_ssna303_test_ex)
                                    --reference-file ssna303-force.ref)
   if(MGIS_HAVE_TFEL)
     add_test(NAME ${test}-fbar COMMAND ssna303 --use-fbar --nbsteps 40 --end-time 1
-                                     --reference-file ssna303-force.ref)
+                                     --reference-file ssna303-force-fbar.ref
+                                     --standard-reference-file ssna303-force.ref)
   endif(MGIS_HAVE_TFEL)
 endfunction(add_ssna303_test_ex)
 

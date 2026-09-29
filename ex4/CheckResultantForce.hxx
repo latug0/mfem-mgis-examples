@@ -43,7 +43,8 @@ inline std::vector<mfem_mgis::real> readVerticalForce(const std::string& f) {
  * \param[in] f: file written by the `ComputeResultantForceOnBoundary`
  * post-processing
  * \param[in] r: reference file
- * \param[in] eps: relative tolerance
+ * \param[in] eps: relative tolerance. The default value is above the rounding
+ * of the forces, which are written with 6 significant digits.
  */
 inline bool checkVerticalForce(const std::string& f,
                                const std::string& r,

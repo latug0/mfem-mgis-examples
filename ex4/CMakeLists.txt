@@ -29,7 +29,9 @@ endif(NOT TARGET mfem-mgis::MFEMMGIS)
 
 # Copy the files needed at run time. Unlike file(COPY), configure_file updates
 # the copies when these files are modified.
-foreach(input IsotropicLinearHardeningPlasticity.mfront ssna303_3d.msh rc_ex10p ssna303_3d-force-1step.ref ssna303_3d-force-10steps.ref)
+foreach(input IsotropicLinearHardeningPlasticity.mfront ssna303_3d.msh rc_ex10p
+              ssna303_3d-force-1step.ref ssna303_3d-force-10steps.ref
+              ssna303_3d-force-10steps-fbar.ref)
   configure_file(${PROJECT_SOURCE_DIR}/${input} ${PROJECT_BINARY_DIR}/${input}
                  COPYONLY)
 endforeach()
@@ -52,9 +54,11 @@ function(add_ssna303_3d_test_ex solver nsteps end_time reference_file use_fbar)
                                   --reference-file ${reference_file})
  if(${use_fbar})
    if(MGIS_HAVE_TFEL)
+     string(REPLACE ".ref" "-fbar.ref" fbar_reference_file ${reference_file})
      add_test(NAME ${test}-fbar COMMAND ${test} --use-fbar
                                                  --nbsteps ${nsteps} --end-time ${end_time}
-                                                 --reference-file ${reference_file})
+                                                 --reference-file ${fbar_reference_file}
+                                                 --standard-reference-file ${reference_file})
    endif(MGIS_HAVE_TFEL)
  endif()
 endfunction(add_ssna303_3d_test_ex)
