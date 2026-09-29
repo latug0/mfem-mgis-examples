@@ -49,7 +49,6 @@ add_custom_target(generate-libBehaviour-ex4 ALL
 # Define a test that will be called during the "make check"
 function(add_ssna303_3d_test_ex solver nsteps end_time reference_file use_fbar)
  set(test "ssna303_3d_${solver}")
- # the first time step of the default loading, which lasts several minutes
  add_test(NAME ${test} COMMAND ${test} --nbsteps ${nsteps} --end-time ${end_time}
                                   --reference-file ${reference_file})
  if(${use_fbar})
@@ -62,6 +61,19 @@ function(add_ssna303_3d_test_ex solver nsteps end_time reference_file use_fbar)
    endif(MGIS_HAVE_TFEL)
  endif()
 endfunction(add_ssna303_3d_test_ex)
+
+# The optimised builds compute the complete loading in 10 time steps. The debug
+# and coverage builds, which are much slower, only compute its first time step,
+# during which the plastic flow starts. In both cases, the results are compared
+# to the first values of the reference files. The PETSc case always computes a
+# single small time step.
+if(CMAKE_BUILD_TYPE MATCHES "^(Debug|Coverage)$")
+  set(ssna303_3d_nsteps 1)
+  set(ssna303_3d_end_time 0.1)
+else()
+  set(ssna303_3d_nsteps 10)
+  set(ssna303_3d_end_time 1)
+endif()
 
 foreach(tg IN ITEMS mumps hypre petsc)
   # Define the executable to build for this example
@@ -79,9 +91,11 @@ foreach(tg IN ITEMS mumps hypre petsc)
       add_ssna303_3d_test_ex(${tg} 1 0.02 ssna303_3d-force-1step.ref OFF)
     else()
       if(${tg} STREQUAL "mumps")
-        add_ssna303_3d_test_ex(${tg} 10 1 ssna303_3d-force-10steps.ref ON)
+        add_ssna303_3d_test_ex(${tg} ${ssna303_3d_nsteps} ${ssna303_3d_end_time}
+                               ssna303_3d-force-10steps.ref ON)
       else()
-        add_ssna303_3d_test_ex(${tg} 10 1 ssna303_3d-force-10steps.ref OFF)
+        add_ssna303_3d_test_ex(${tg} ${ssna303_3d_nsteps} ${ssna303_3d_end_time}
+                               ssna303_3d-force-10steps.ref OFF)
       endif()
     endif()
   endif()

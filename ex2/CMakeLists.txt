@@ -53,15 +53,23 @@ add_custom_target(generate-libBehaviour-ex2 ALL
 
 add_dependencies(check ssna303 generate-libBehaviour-ex2)
 
-# Define a test that will be called during the "make check"
+# Define the tests that will be called during the "make check". The optimised
+# builds compute the complete loading. The debug and coverage builds, which are
+# much slower, only compute its first two time steps, during which the plastic
+# flow starts. In both cases, the results are compared to the first values of
+# the reference files.
+if(CMAKE_BUILD_TYPE MATCHES "^(Debug|Coverage)$")
+  set(ssna303_loading --nbsteps 2 --end-time 0.05)
+else()
+  set(ssna303_loading --nbsteps 40 --end-time 1)
+endif()
+
 function(add_ssna303_test_ex)
   set(test "ssna303")
-  # the first two time steps of the default loading, during which the plastic
-  # flow starts
-  add_test(NAME ${test} COMMAND ssna303 --nbsteps 40 --end-time 1
+  add_test(NAME ${test} COMMAND ssna303 ${ssna303_loading}
                                    --reference-file ssna303-force.ref)
   if(MGIS_HAVE_TFEL)
-    add_test(NAME ${test}-fbar COMMAND ssna303 --use-fbar --nbsteps 40 --end-time 1
+    add_test(NAME ${test}-fbar COMMAND ssna303 --use-fbar ${ssna303_loading}
                                      --reference-file ssna303-force-fbar.ref
                                      --standard-reference-file ssna303-force.ref)
   endif(MGIS_HAVE_TFEL)
