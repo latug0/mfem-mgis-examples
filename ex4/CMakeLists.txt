@@ -56,6 +56,8 @@ function(add_ssna303_3d_test_ex solver nsteps end_time reference_file use_fbar)
  set(test "ssna303_3d_${solver}")
  add_test(NAME ${test} COMMAND ${test} --nbsteps ${nsteps} --end-time ${end_time}
                                   --reference-file ${reference_file})
+ # one OpenMP thread per process, otherwise MUMPS oversubscribes the cores
+ set_tests_properties(${test} PROPERTIES ENVIRONMENT OMP_NUM_THREADS=1)
  if(${use_fbar})
    if(MGIS_HAVE_TFEL)
      string(REPLACE ".ref" "-fbar.ref" fbar_reference_file ${reference_file})
@@ -63,6 +65,7 @@ function(add_ssna303_3d_test_ex solver nsteps end_time reference_file use_fbar)
                                                  --nbsteps ${nsteps} --end-time ${end_time}
                                                  --reference-file ${fbar_reference_file}
                                                  --standard-reference-file ${reference_file})
+     set_tests_properties(${test}-fbar PROPERTIES ENVIRONMENT OMP_NUM_THREADS=1)
    endif(MGIS_HAVE_TFEL)
  endif()
 endfunction(add_ssna303_3d_test_ex)

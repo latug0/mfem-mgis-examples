@@ -72,10 +72,13 @@ function(add_ssna303_test_ex)
   set(test "ssna303")
   add_test(NAME ${test} COMMAND ssna303 ${ssna303_loading}
                                    --reference-file ssna303-force.ref)
+  # one OpenMP thread per process, otherwise MUMPS oversubscribes the cores
+  set_tests_properties(${test} PROPERTIES ENVIRONMENT OMP_NUM_THREADS=1)
   if(MGIS_HAVE_TFEL)
     add_test(NAME ${test}-fbar COMMAND ssna303 --use-fbar ${ssna303_loading}
                                      --reference-file ssna303-force-fbar.ref
                                      --standard-reference-file ssna303-force.ref)
+    set_tests_properties(${test}-fbar PROPERTIES ENVIRONMENT OMP_NUM_THREADS=1)
   endif(MGIS_HAVE_TFEL)
 endfunction(add_ssna303_test_ex)
 
