@@ -25,9 +25,12 @@ if (NOT TARGET mfem-mgis::MFEMMGIS)
   find_package(MFEMMGIS REQUIRED)
 endif(NOT TARGET mfem-mgis::MFEMMGIS)
 
+# The sources of this example are installed by mfem-mgis
+set(MFEMMGIS_EX3_DIR "${MFEMMGIS_DIR}/../examples/ex3")
+
 if(MFEM_USE_MPI)
   # Define the executable to build for this example
-  add_executable(two_layer_cube TwoLayerCube.cxx)
+  add_executable(two_layer_cube ${MFEMMGIS_EX3_DIR}/TwoLayerCube.cxx)
   target_link_libraries(two_layer_cube mfem-mgis::MFEMMGIS)
   target_include_directories(two_layer_cube
       SYSTEM
@@ -37,7 +40,7 @@ if(MFEM_USE_MPI)
   # Copy the files needed at run time. Unlike file(COPY), configure_file updates
   # the copies when these files are modified.
   foreach(input IsotropicLinearElasticity.mfront cube_2mat_per.mesh Box.med Box.per)
-    configure_file(${PROJECT_SOURCE_DIR}/${input} ${PROJECT_BINARY_DIR}/${input}
+    configure_file(${MFEMMGIS_EX3_DIR}/${input} ${PROJECT_BINARY_DIR}/${input}
                    COPYONLY)
   endforeach()
 
@@ -67,7 +70,3 @@ if(MFEM_USE_MPI)
   endforeach()
 
 endif()
-
-
-
-
