@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
                  "Reference values of the resultant force on the upper "
                  "boundary, no comparison if empty.");
 #ifdef MGIS_HAVE_TFEL
-  args.AddOption(&use_fbar, "", "--use-fbar", "", "--no-use-fbar",
+  args.AddOption(&use_fbar, "-fb", "--use-fbar", "-no-fb", "--no-use-fbar",
                  "Use Fbar formulation.");
 #endif /* MGIS_HAVE_TFEL */
   args.Parse();
