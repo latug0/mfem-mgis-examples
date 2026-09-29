@@ -10,7 +10,7 @@
  * finely, by Box.med (8x8x8 hexahedra), whose periodicity is described by
  * Box.per. Reading Box.med requires MFEM built with MED support:
  *
- *   ./TwoLayerCubeEx --mesh Box.med
+ *   ./two_layer_cube --mesh Box.med
  *
  * Mechanical strain:
  *                 eps = E + grad_s v
@@ -242,10 +242,10 @@ int executeMFEMMGISTest(mgis::Context& ctx, const TestParameters& p) {
     //    const mfem::Mesh &m = fed->getMesh<true>();
 
     problem.addBehaviourIntegrator(ctx, "Mechanics", 1, p.library,
-                                   "Elasticity") |
+                                   "IsotropicLinearElasticity") |
         or_die;
     problem.addBehaviourIntegrator(ctx, "Mechanics", 2, p.library,
-                                   "Elasticity") |
+                                   "IsotropicLinearElasticity") |
         or_die;
     // materials
     auto& m1 = problem.getMaterial(ctx, 1, 0) | or_die;

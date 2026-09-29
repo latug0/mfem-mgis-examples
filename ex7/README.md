@@ -122,10 +122,11 @@ ccc_mprun -n 2048 -c 1 -p milan ./mox2 -r 2 -o 1 --mesh file_geo/634Spheres.msh
 
 ### Test
 
-The test runs the default simulation (`mesh/OneSphere.msh`, order 2) with 5 time steps instead
-of 40 to be faster, and compares the mean stresses in each material to the reference values of
-`OneSphere-avgStress.ref`. With 5 time steps, the average stress SZZ differs by less than 6 % from
-the one computed with 40 time steps.
+The test runs the default simulation (`mesh/OneSphere.msh`, order 2) and compares the mean stresses
+in each material to the reference values of `OneSphere-avgStress-40steps.ref`. In the restricted
+test mode, used by default in the debug and coverage builds, it uses 5 time steps instead of 40 and
+compares the mean stresses to `OneSphere-avgStress-5steps.ref`. With 5 time steps, the average stress SZZ differs by
+less than 6 % from the one computed with 40 time steps.
 
 ## Post-processing of simulation data
 

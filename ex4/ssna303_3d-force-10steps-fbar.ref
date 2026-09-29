@@ -1,0 +1,14 @@
+# first column: time
+# 2th column: 1 component of the resultant of the inner forces on boundary '2'
+# 3th column: 2 component of the resultant of the inner forces on boundary '2'
+# 4th column: 3 component of the resultant of the inner forces on boundary '2'
+0.1 0.00518698 3127.35 -0.000108434
+0.2 0.084399 4255.87 -0.000398995
+0.3 0.10008 5316.74 0.00039311
+0.4 0.0905476 6314.83 0.000919665
+0.5 0.0718562 7253.9 0.00109578
+0.6 0.0509447 8137.24 0.00101706
+0.7 0.0307796 8967.79 0.000776871
+0.8 0.0125268 9748.15 0.000442992
+0.9 -0.0034683 10480.6 6.13437e-05
+1 -0.0172217 11167.1 -0.000338638

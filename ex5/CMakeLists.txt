@@ -30,7 +30,7 @@ endif(NOT TARGET mfem-mgis::MFEMMGIS)
 if(MFEM_USE_SUITESPARSE)
   # Copy the files needed at run time. Unlike file(COPY), configure_file updates
   # the copies when these files are modified.
-  foreach(input Elasticity.mfront square.msh)
+  foreach(input IsotropicLinearThermoElasticity.mfront square.msh)
     configure_file(${PROJECT_SOURCE_DIR}/${input} ${PROJECT_BINARY_DIR}/${input}
                    COPYONLY)
   endforeach()
@@ -38,26 +38,29 @@ if(MFEM_USE_SUITESPARSE)
   # Use mfront to generate libBehaviour.so
   add_custom_command(
     OUTPUT "src/libBehaviour.so"
-    COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/Elasticity.mfront
-    DEPENDS ${PROJECT_BINARY_DIR}/Elasticity.mfront
+    COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/IsotropicLinearThermoElasticity.mfront
+    DEPENDS ${PROJECT_BINARY_DIR}/IsotropicLinearThermoElasticity.mfront
     COMMENT "Performing mfront code generation")
   
   add_custom_target(generate-libBehaviour-ex5 ALL
     DEPENDS "src/libBehaviour.so")
 
-  add_executable("SatohTest" SatohTest.cxx)
-  target_link_libraries(SatohTest mfem-mgis::MFEMMGIS)
-  target_include_directories(SatohTest
+  add_executable(satoh SatohTest.cxx)
+  target_link_libraries(satoh mfem-mgis::MFEMMGIS)
+  target_include_directories(satoh
     SYSTEM
     PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
     PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
     
-  add_dependencies(check SatohTest generate-libBehaviour-ex5)
+  add_dependencies(check satoh generate-libBehaviour-ex5)
 
-  set(test "SatohTest")
+  # The test is the same in the full and restricted test modes, since it is a
+  # single computation on a coarse mesh, whose reference reaction depends on
+  # the mesh.
+  set(test "satoh")
   add_test(NAME ${test} COMMAND ${test})
 else()
-  message(STATUS "Disabling SatohTest. Compile MFEM with SuiteSparse support to enable it")
+  message(STATUS "Disabling satoh. Compile MFEM with SuiteSparse support to enable it")
 endif()
 
 

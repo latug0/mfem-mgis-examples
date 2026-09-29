@@ -104,7 +104,7 @@ inline SetupPropertiesResult setup_properties(
   }
 
   mechanics.addBehaviourIntegrator(ctx, "Mechanics", 1, p.libraryU3SI2,
-                                   "U3SI2_NortonPRQ") |
+                                   "U3SI2_IrradiationCreep") |
       or_die;
   mechanics.addBehaviourIntegrator(
       ctx, "Mechanics", 2, p.libraryALFENI,
@@ -117,15 +117,15 @@ inline SetupPropertiesResult setup_properties(
 
   heat_transfer.addBehaviourIntegrator(ctx, "StationaryNonLinearHeatTransfer",
                                        1, p.libraryU3SI2,
-                                       "U3SI2_ThermiqueCouplee") |
+                                       "U3SI2_CoupledHeatTransfer") |
       or_die;
   heat_transfer.addBehaviourIntegrator(ctx, "StationaryNonLinearHeatTransfer",
                                        2, p.libraryALFENI,
-                                       "ALFENI_ThermiqueCouplee") |
+                                       "ALFENI_CoupledHeatTransfer") |
       or_die;
   heat_transfer.addBehaviourIntegrator(ctx, "StationaryNonLinearHeatTransfer",
                                        3, p.libraryALFENI,
-                                       "ALFENI_ThermiqueCouplee") |
+                                       "ALFENI_CoupledHeatTransfer") |
       or_die;
 
   for (const int mat_id : {1, 2, 3}) {

@@ -33,7 +33,7 @@ Imposed strain : eps = a * t, with a = 0.012 s^-1
 Solver : HypreGMRES
 Preconditioner : HypreBoomerAMG
 
-Behavior law parameters : ImplicitNortonThreshold
+Behavior law parameters : NortonViscoplasticityWithThreshold
 [ parameters       , matrix   , inclusions ]
 [ Young Modulus    , 8.182e9  , 2*8.182e9  ];
 [ Poisson Ratio    , 0.364    , 0.364      ];
@@ -50,7 +50,7 @@ Order 2
 // command line options
 struct TestParameters {
   const char* mesh_file = "mesh/OneSphere.msh";
-  const char* behaviour = "ImplicitNortonThreshold";
+  const char* behaviour = "NortonViscoplasticityWithThreshold";
   const char* library = "src/libBehaviour.so";
   const char* reference_file = "";
   int order = 2;
@@ -286,7 +286,11 @@ static bool checkMeanStresses(const std::string& f, const std::string& r) {
   constexpr auto eps = mfem_mgis::real{1e-4};
   const auto values = readMeanStresses(f);
   const auto references = readMeanStresses(r);
-  if ((references.empty()) || (values.size() != references.size())) {
+  if (references.empty()) {
+    mfem_mgis::getErrorStream() << "no value read in '" << r << "'\n";
+    return false;
+  }
+  if (values.size() != references.size()) {
     mfem_mgis::getErrorStream() << "'" << f << "' and '" << r
                                 << "' do not have the same number of rows\n";
     return false;

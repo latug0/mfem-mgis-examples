@@ -159,7 +159,8 @@ int main(int argc, char** argv) {
       or_die;
   // materials
   problem.addBehaviourIntegrator(ctx, "Mechanics", "plate",
-                                 "./src/libBehaviour.so", "Elasticity") |
+                                 "./src/libBehaviour.so",
+                                 "IsotropicLinearThermoElasticity") |
       or_die;
   auto& m1 = problem.getMaterial(ctx, "plate", 0) | or_die;
   // material properties at the beginning and the end of the time step

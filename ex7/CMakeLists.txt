@@ -25,6 +25,11 @@ if (NOT TARGET mfem-mgis::MFEMMGIS)
   find_package(MFEMMGIS REQUIRED)
 endif(NOT TARGET mfem-mgis::MFEMMGIS)
 
+# Test mode of the examples, see ../config/TestMode.cmake
+if(NOT DEFINED MFEM_MGIS_EXAMPLES_FULL_TESTS)
+  include(${CMAKE_CURRENT_SOURCE_DIR}/../config/TestMode.cmake)
+endif()
+
 # Define a test that will be called during the "make check"
 
 # Copy the files needed at run time. Unlike file(COPY), configure_file updates
@@ -35,7 +40,9 @@ file(GLOB_RECURSE directory_files CONFIGURE_DEPENDS
      ${PROJECT_SOURCE_DIR}/mesh/*
      ${PROJECT_SOURCE_DIR}/file_geo/*
      ${PROJECT_SOURCE_DIR}/script_merope/*)
-foreach(input matrixlaw.mfront petscrc OneSphere-avgStress.ref ${directory_files})
+foreach(input NortonViscoplasticityWithThreshold.mfront petscrc
+              OneSphere-avgStress-5steps.ref OneSphere-avgStress-40steps.ref
+              ${directory_files})
   configure_file(${PROJECT_SOURCE_DIR}/${input} ${PROJECT_BINARY_DIR}/${input}
                  COPYONLY)
 endforeach()
@@ -43,8 +50,8 @@ endforeach()
 # Use mfront to generate libBehaviour.so
 add_custom_command(
   OUTPUT "src/libBehaviour.so"
-  COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/matrixlaw.mfront
-  DEPENDS ${PROJECT_BINARY_DIR}/matrixlaw.mfront
+  COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/NortonViscoplasticityWithThreshold.mfront
+  DEPENDS ${PROJECT_BINARY_DIR}/NortonViscoplasticityWithThreshold.mfront
   COMMENT "Performing mfront code generation")
 
 add_custom_target(generate-libBehaviour-ex7 ALL
@@ -59,16 +66,26 @@ target_include_directories(mox2
     
 add_dependencies(check mox2 generate-libBehaviour-ex7)
 
-set(test "MixedOxideFuelsTest")
-add_test(NAME ${test}
-         COMMAND mox2 --no-post-processing --order 2 --mesh mesh/OneSphere.msh
-                 --nbsteps 5 --reference-file OneSphere-avgStress.ref)
+# The full test mode computes the complete loading in 40 time steps. The
+# restricted test mode computes it in 5 time steps only. The mean stresses are
+# compared to the reference values computed with the same number of time
+# steps.
+if(MFEM_MGIS_EXAMPLES_FULL_TESTS)
+  set(mox2_nbsteps 40)
+else()
+  set(mox2_nbsteps 5)
+endif()
+set(mox2_test_options --no-post-processing --order 2 --mesh mesh/OneSphere.msh
+    --nbsteps ${mox2_nbsteps}
+    --reference-file OneSphere-avgStress-${mox2_nbsteps}steps.ref)
+
+set(test "mox2")
+add_test(NAME ${test} COMMAND mox2 ${mox2_test_options})
 
 if(MFEM_USE_PETSC)
-  add_test(NAME ${test}_PETSC
-           COMMAND mox2 --no-post-processing --order 2 --mesh mesh/OneSphere.msh
-                   --nbsteps 5 --reference-file OneSphere-avgStress.ref
+  add_test(NAME ${test}-petsc
+           COMMAND mox2 ${mox2_test_options}
                    --use-petsc --petsc-configuration-file petscrc)
   # both tests write the mean stresses in the same file
-  set_tests_properties(${test} ${test}_PETSC PROPERTIES RESOURCE_LOCK avgStress)
+  set_tests_properties(${test} ${test}-petsc PROPERTIES RESOURCE_LOCK avgStress)
 endif()
