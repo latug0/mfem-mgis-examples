@@ -6,7 +6,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(CTest)
 # testing
-set(CTEST_CONFIGURATION_TYPE "${JOB_BUILD_CONFIGURATION}")
 # (must be placed *before* any add_subdirectory, cmake bug ?)
 enable_testing()
 if(CMAKE_CONFIGURATION_TYPES)
@@ -28,20 +27,21 @@ endif(NOT TARGET mfem-mgis::MFEMMGIS)
 
 # Define a test that will be called during the "make check"
 
-# Copy needed file for execution
-file(COPY
-  ${PROJECT_SOURCE_DIR}/SaintVenantKirchhoffElasticity.mfront
-  ${PROJECT_SOURCE_DIR}/cube_2mat_per.mesh
-  ${PROJECT_SOURCE_DIR}/inclusions_49.geo
-  DESTINATION ${PROJECT_BINARY_DIR})
-  
-  # Use mfront to generate libBehaviour.so
+# Copy the files needed at run time. Unlike file(COPY), configure_file updates
+# the copies when these files are modified.
+foreach(input SaintVenantKirchhoffElasticity.mfront cube_2mat_per.mesh
+              inclusions_49.geo)
+  configure_file(${PROJECT_SOURCE_DIR}/${input} ${PROJECT_BINARY_DIR}/${input}
+                 COPYONLY)
+endforeach()
+
+# Use mfront to generate libBehaviour.so
 add_custom_command(
   OUTPUT "src/libBehaviour.so"
   COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/SaintVenantKirchhoffElasticity.mfront
   DEPENDS ${PROJECT_BINARY_DIR}/SaintVenantKirchhoffElasticity.mfront
   COMMENT "Performing mfront code generation")
-  
+
 add_custom_target(generate-libBehaviour-ex6 ALL
   DEPENDS "src/libBehaviour.so")
 
@@ -55,6 +55,4 @@ target_include_directories(rve
 add_dependencies(check rve generate-libBehaviour-ex6)
 
 set(test "RveNonLinearElasticTest")
-add_test(NAME ${test} COMMAND rve --postprocessings 0)
-
-
+add_test(NAME ${test} COMMAND rve --no-post-processing)

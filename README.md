@@ -43,11 +43,11 @@ For an installation on a supercomputer without internet please follow the proced
 
 | Name | Description | Directory
 |--|--|--|
-| TensileTest | Cyclic tension-compression test on a unit cube modeled by a plastic behavior with linear isotropic hardening. The imposed axial strain goes up to 0.9 %, down to -2.1 % and back up to 1.9 %. | ex1 |
-| Ssna303     | This tutorial deals with a 2D (plane strain) tensile test on a notched beam modeled by finite-strain plastic behavior. A tutorial describing this simulation is available at: https://thelfer.github.io/mfem-mgis/user_guide/tutorial.html | ex2 |
-| Inclusions  | This example models several inclusions in a periodic cube under imposed macroscopic strain. | ex3 |
-| Ssna303_3d  | This tutorial deals with a 3D tensile test on a notched beam modeled by finite-strain plastic behavior. | ex4 |
-| Satoh       | Modelling plate of length 1 in plane strain clamped on the left and right boundaries and submitted to a parabolic thermal gradient along the x-axis | ex5 |
-| Rve-elastic | Simulation of a Representative Volume Element (RVE) with a non-linear elastic behavior law. A geometry mesh is provided : "inclusions_49.geo". The mesh can be generated using the following command: gmsh -3 `inclusions_49.geo`. By modifying the parameters within the `.geo` file, such as the number of spheres and the size of the element mesh, you can control and customize the simulation accordingly  | ex6 |
-| Mox2        | Simulation of a Representative Volume Element (RVE) Mixed OxideFuels  with a viscoplastic behavior law. A mesh with one inclusion is provided : inclusion.msh. More information in ex7/README.md  | ex7 |
+| TensileTest | Cyclic tension-compression of a unit cube made of a plastic material with linear isotropic hardening. | ex1 |
+| Ssna303     | 2D (plane strain) tensile test on a notched beam with a finite-strain plastic behaviour, described in the [tutorial](https://thelfer.github.io/mfem-mgis/user_guide/tutorial.html) of mfem-mgis. | ex2 |
+| TwoLayerCube | Periodic cube made of two elastic layers under an imposed macroscopic strain. | ex3 |
+| Ssna303_3d  | 3D tensile test on a notched beam with a finite-strain plastic behaviour, solved with MUMPS, hypre or PETSc. | ex4 |
+| Satoh       | Thermo-elastic plate in plane strain, clamped on its left and right boundaries and subjected to a parabolic temperature profile. | ex5 |
+| Rve-elastic | Periodic Representative Volume Element (RVE) made of two materials with a Saint Venant-Kirchhoff hyperelastic behaviour under an imposed macroscopic deformation gradient: a two-layer cube, or spherical inclusions. | ex6 |
+| Mox2        | Representative Volume Element (RVE) of a mixed oxide fuel: elastic inclusions in a viscoplastic matrix under an imposed macroscopic strain. More information in ex7/README.md | ex7 |
 | RJH plate   | Thermomechanical simulation of one ring of a RJH fuel assembly. The fuel is U3Si2, the cladding and stiffeners are ALFENI. The heat transfer is non-linear with convective boundary conditions. The mechanics is in finite strain with thermal expansion, irradiation creep, swelling and plasticity. Both are strongly coupled at each time step. More information in ex8/README.md | ex8 |

@@ -1,11 +1,12 @@
 /*!
- * \file   ssna303.cxx
+ * \file   ssna303_mumps.cxx
  * \brief
  * \author Thomas Helfer
  * \date   14/12/2020
  */
 
 #include <memory>
+#include <string_view>
 #include <cstdlib>
 #include <iostream>
 #include "mfem/general/optparser.hpp"
@@ -28,8 +29,7 @@
 #include "MFEMMGIS/NonLinearEvolutionProblem.hxx"
 #include "MFEMMGIS/NonLinearEvolutionProblemImplementation.hxx"
 #include "MFEMMGIS/LinearSolverFactory.hxx"
-
-#define PRINT_DEBUG (std::cout << __FILE__ << ":" << __LINE__ << std::endl)
+#include "CheckResultantForce.hxx"
 
 int main(int argc, char** argv) {
   auto ctx = mgis::Context{};
@@ -40,25 +40,39 @@ int main(int argc, char** argv) {
   const char* mesh_file = "ssna303_3d.msh";
   const char* behaviour = "Plasticity";
   const char* library = "src/libBehaviour.so";
-  const char* petscrc_file = "";
-  auto parallel = int{1};
-  auto ref_para = 0;
-  auto ref_seq = 0;
+  // not null, since mfem::OptionsParser::PrintUsage stops at the first null
+  // string
+  const char* reference_file = "";
+  auto parallel = true;
   auto order = 1;
+  auto nbsteps = 50;
+  auto end_time = mfem_mgis::real{1};
 
   // options treatment
   mfem::OptionsParser args(argc, argv);
   mfem_mgis::declareDefaultOptions(args);
-  args.AddOption(&parallel, "-p", "--parallel",
+  args.AddOption(&parallel, "-p", "--parallel", "-no-p", "--no-parallel",
                  "Perform parallel computations.");
   args.AddOption(&order, "-o", "--order",
                  "Finite element order (polynomial degree).");
+  args.AddOption(&nbsteps, "-ns", "--nbsteps", "Number of time steps.");
+  args.AddOption(
+      &end_time, "-et", "--end-time",
+      "End time. The displacement of the upper boundary is 6e-3 * t.");
+  args.AddOption(&reference_file, "-rf", "--reference-file",
+                 "Reference values of the resultant force on the upper "
+                 "boundary, no comparison if empty.");
   args.Parse();
-  if (!args.Good()) {
-    args.PrintUsage(std::cout);
-    return EXIT_FAILURE;
+  if (args.Help()) {
+    args.PrintUsage(mfem_mgis::getOutputStream());
+    mfem_mgis::finalize();
+    return EXIT_SUCCESS;
   }
-  args.PrintOptions(std::cout);
+  if (!args.Good()) {
+    args.PrintUsage(mfem_mgis::getOutputStream());
+    mfem_mgis::abort(EXIT_FAILURE);
+  }
+  args.PrintOptions(mfem_mgis::getOutputStream());
 
   // loading the mesh
   auto problem =
@@ -68,9 +82,7 @@ int main(int argc, char** argv) {
                                      {"FiniteElementOrder", order},
                                      {"UnknownsSize", dim},
                                      {"Hypothesis", "Tridimensional"},
-                                     {"Parallel", true},
-                                     {"NumberOfUniformRefinements",
-                                      parallel ? ref_para : ref_seq}}) |
+                                     {"Parallel", parallel}}) |
       or_die;
 
   // 2 1 "Volume"
@@ -113,6 +125,12 @@ int main(int argc, char** argv) {
                or_die) |
       or_die;
 
+  // the default prediction concentrates the increment of the imposed
+  // displacement in the elements next to the upper boundary
+  problem.setPredictionPolicy(
+      {.strategy =
+           mfem_mgis::PredictionStrategy::BEGINNING_OF_TIME_STEP_PREDICTION});
+
   // solving the problem without petsc
   if (!mfem_mgis::usePETSc()) {
     problem.setSolverParameters(ctx, {{"VerbosityLevel", 2},
@@ -138,8 +156,8 @@ int main(int argc, char** argv) {
       or_die;
 
   // loop over time step
-  const auto nsteps = mfem_mgis::size_type{2};
-  const auto dt = mfem_mgis::real{0.001};
+  const auto nsteps = mfem_mgis::size_type(nbsteps);
+  const auto dt = end_time / nsteps;
   auto t = mfem_mgis::real{0};
   auto iteration = mfem_mgis::size_type{};
   for (mfem_mgis::size_type i = 0; i != nsteps; ++i) {
@@ -173,6 +191,14 @@ int main(int argc, char** argv) {
     t += dt;
     ++iteration;
     std::cout << '\n';
+  }
+  // comparison to the reference values, only on the process writing the
+  // resultant force
+  if ((!std::string_view{reference_file}.empty()) &&
+      (mfem_mgis::isMainProcess(problem.getFiniteElementDiscretization()))) {
+    if (!checkVerticalForce("force.txt", reference_file)) {
+      return EXIT_FAILURE;
+    }
   }
   // mfem_mgis::Profiler::OutputManager::printTimeTable(ctx);
   return EXIT_SUCCESS;

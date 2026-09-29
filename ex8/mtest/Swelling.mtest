@@ -1,7 +1,7 @@
 @Author RIGAL Julien;
 @Description {"Gonflement sous puissance constante - Pow=1e10 W/m3"};
 
-@Behaviour<generic> '../build/src/libU3SI2-generic.so' 'U3SI2_SolidSwelling';
+@Behaviour<generic> 'src/libU3SI2-generic.so' 'U3SI2_SolidSwelling';
 
 @ExternalStateVariable 'Temperature' 293.15;
 // Puissance volumique constante
@@ -54,3 +54,9 @@
 //   S ~ 0.0377 
 // 
 // Therefore, the swelling should progress from ~0% initially to ~3.77% at the end of the simulation.
+
+// Check of the swelling against its exact value, the swelling per unit of
+// energy released being A = 6.2e-29 / (fe * 1.60218e-13) with fe = 200 MeV
+@Real 'A' '6.2e-29 / (200 * 1.60218e-13)';
+@Test<function> 'SolidSwelling'
+  'A * 1e10 * (min(t, 1e5) * min(t, 1e5) / 2e5 + max(t - 1e5, 0))' 1e-12;

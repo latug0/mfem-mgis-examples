@@ -4,15 +4,13 @@
 #include <memory>
 #include <functional>
 
-// #include "MFEMMGIS/Context.hxx"
 #include "MFEMMGIS/NonLinearEvolutionProblem.hxx"
 #include "MFEMMGIS/PointWiseModel.hxx"
 #include "MFEMMGIS/Profiler.hxx"
 #include "MGIS/Behaviour/MaterialStateManager.hxx"
 
 struct TestParameters {
-  const char* mesh_file =
-      "../mesh/assemblage_hexa.msh";  // path to the mesh file
+  const char* mesh_file = "assemblage_hexa.msh";  // path to the mesh file
   const char* libraryALFENI =
       "src/libALFENI-generic.so";  // MFront ALFENI library
                                    // (behaviours/models)
@@ -23,22 +21,24 @@ struct TestParameters {
   const char* precond_thermo =
       "HypreBoomerAMG";  // preconditioner associated with the thermal solver
   const char* solver_meca =
-      "HyprePCG";  // linear solver used for the mechanical problem
+      "MUMPSSolver";  // linear solver used for the mechanical problem
   const char* precond_meca =
-      "HypreBoomerAMG";  // preconditioner associated with the mechanical solver
-  int order = 1;         // finite element order
-  bool parallel = true;  // enable parallel execution (MPI)
-  bool debug = true;     // enable debug output/checks
-  int refinement = 0;    // number of uniform mesh refinements
-  int post_processing = 1;  // enable the export of results for ParaView
-  int verbosity_level = 0;  // default value : lower level
+      "HypreBoomerAMG";  // preconditioner associated with the mechanical
+                         // solver, ignored by direct solvers
+  // reference statistics of the fields, no comparison if empty
+  const char* reference_file = "";
+  int order = 1;                // finite element order
+  bool debug = true;            // print the statistics of the fields
+  int refinement = 0;           // number of uniform mesh refinements
+  bool post_processing = true;  // export the results for ParaView
+  int verbosity_level = 0;      // verbosity level of the linear solvers
 
   // Physical properties
   double Ti = 293.15;           // initial temperature (K)
   double Te = 315.0;            // external/convection temperature (K)
   double source = 1e10;         // volumetric power source term
   double water_pressure = 1e6;  // coolant pressure
-  double duree = 1e5;           // total simulation duration
+  double end_time = 1e5;        // end time of the simulation
   int nbsteps = 1;              // number of time steps
   double t_ramp = 1e5;          // duration of the power ramp
   double h_conv = 5e4;          // thermal convection coefficient
@@ -91,7 +91,6 @@ inline SetupPropertiesResult setup_properties(
     const std::function<double(double)>& power_history) {
   using namespace mfem_mgis;
   using namespace mgis::behaviour;
-  // using namespace mgis::model;
   using real = mfem_mgis::real;
 
   CatchTimeSection(ctx, "set_mgis_stuff");

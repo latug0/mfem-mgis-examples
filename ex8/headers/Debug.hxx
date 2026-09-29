@@ -1,261 +1,213 @@
 #pragma once
 
+#include <map>
 #include <cmath>
 #include <limits>
-#include <iostream>
 #include <string>
+#include <vector>
+#include <fstream>
+#include <ostream>
+#include <sstream>
+#include <algorithm>
 
-#include "MFEMMGIS/NonLinearEvolutionProblem.hxx"
-#include "MFEMMGIS/Material.hxx"
-
-#ifdef MFEM_USE_MPI
 #include <mpi.h>
-#endif
 
-inline void debug_print_physics_stats(
-    mfem_mgis::Context& ctx,
+#include "mfem/fem/pgridfunc.hpp"
+#include "MFEMMGIS/Config.hxx"
+#include "MFEMMGIS/NonLinearEvolutionProblem.hxx"
+
+#include "Setup.hxx"
+
+//! \brief minimum, maximum and mean values of a field
+struct FieldStatistics {
+  double min = 0;
+  double max = 0;
+  double mean = 0;
+};
+
+/*!
+ * \return the statistics of values distributed over all processes
+ * \param[in] values: values of the current process
+ * \param[in] comm: communicator
+ */
+inline FieldStatistics computeFieldStatistics(const std::vector<double>& values,
+                                              MPI_Comm comm) {
+  auto s = FieldStatistics{std::numeric_limits<double>::max(),
+                           -std::numeric_limits<double>::max(), 0};
+  for (const auto v : values) {
+    s.min = std::min(s.min, v);
+    s.max = std::max(s.max, v);
+    s.mean += v;
+  }
+  auto n = static_cast<long long>(values.size());
+  MPI_Allreduce(MPI_IN_PLACE, &s.min, 1, MPI_DOUBLE, MPI_MIN, comm);
+  MPI_Allreduce(MPI_IN_PLACE, &s.max, 1, MPI_DOUBLE, MPI_MAX, comm);
+  MPI_Allreduce(MPI_IN_PLACE, &s.mean, 1, MPI_DOUBLE, MPI_SUM, comm);
+  MPI_Allreduce(MPI_IN_PLACE, &n, 1, MPI_LONG_LONG, MPI_SUM, comm);
+  s.mean /= n;
+  return s;
+}  // end of computeFieldStatistics
+
+/*!
+ * \return the values of a nodal field at the nodes owned by the current
+ * process, or the norm of the field at these nodes for a vector field
+ * \param[in] f: nodal field
+ */
+inline std::vector<double> getOwnedNodalValues(const mfem::ParGridFunction& f) {
+  const auto& fes = *(f.ParFESpace());
+  auto values = std::vector<double>{};
+  for (int i = 0; i != fes.GetNDofs(); ++i) {
+    // a node shared between processes is counted by its owner only
+    if (fes.GetLocalTDofNumber(fes.DofToVDof(i, 0)) < 0) {
+      continue;
+    }
+    if (fes.GetVDim() == 1) {
+      values.push_back(f(fes.DofToVDof(i, 0)));
+    } else {
+      auto n2 = 0.0;
+      for (int d = 0; d != fes.GetVDim(); ++d) {
+        const auto c = f(fes.DofToVDof(i, d));
+        n2 += c * c;
+      }
+      values.push_back(std::sqrt(n2));
+    }
+  }
+  return values;
+}  // end of getOwnedNodalValues
+
+/*!
+ * \return the statistics of the temperature, of the norm of the
+ * displacement, of the swelling and of the power density in the fuel at the
+ * end of the simulation
+ * \param[in] heat_transfer: heat transfer problem
+ * \param[in] mechanics: mechanical problem
+ * \param[in] setup: field storages and swelling model
+ */
+inline std::map<std::string, FieldStatistics> computePhysicsStatistics(
     mfem_mgis::NonLinearEvolutionProblem& heat_transfer,
     mfem_mgis::NonLinearEvolutionProblem& mechanics,
-    bool parallel,
     const SetupPropertiesResult& setup) {
-  // Helper lambda for nodal fields
-  auto print_nodal_stats = [&](const mfem::GridFunction& gf,
-                               const std::string& name, bool is_vector) {
-    const mfem::FiniteElementSpace* fes = gf.FESpace();
-    int ndofs = fes->GetNDofs();
-    int vdim = fes->GetVDim();
+  auto stats = std::map<std::string, FieldStatistics>{};
+  auto& thermal_fes = heat_transfer.getFiniteElementDiscretization()
+                          .getFiniteElementSpace<true>();
+  auto& mechanical_fes =
+      mechanics.getFiniteElementDiscretization().getFiniteElementSpace<true>();
+  const auto comm = thermal_fes.GetComm();
+  // nodal fields, synchronized with the nodes shared between processes
+  mfem::ParGridFunction T(&thermal_fes);
+  T.SetFromTrueDofs(heat_transfer.getUnknowns(mfem_mgis::bts));
+  stats["Temperature"] = computeFieldStatistics(getOwnedNodalValues(T), comm);
+  mfem::ParGridFunction U(&mechanical_fes);
+  U.SetFromTrueDofs(mechanics.getUnknowns(mfem_mgis::bts));
+  stats["DisplacementNorm"] =
+      computeFieldStatistics(getOwnedNodalValues(U), comm);
+  // fields at the integration points of the fuel
+  const auto& swelling =
+      setup.swelling_model->getMaterial().s1.internal_state_variables;
+  stats["Swelling"] = computeFieldStatistics(
+      std::vector<double>(swelling.begin(), swelling.end()), comm);
+  stats["PowerDensity"] =
+      computeFieldStatistics(*(setup.fields[0].Pow_s1_sw), comm);
+  return stats;
+}  // end of computePhysicsStatistics
 
-    double local_min = std::numeric_limits<double>::max();
-    double local_max = -std::numeric_limits<double>::max();
-    double local_sum = 0.0;
-    double local_sum_sq = 0.0;
-    long long local_count = 0;
-#ifdef MFEM_USE_MPI
-    const auto* pfes = dynamic_cast<const mfem::ParFiniteElementSpace*>(fes);
-#endif
-
-    for (int i = 0; i < ndofs; ++i) {
-#ifdef MFEM_USE_MPI
-      // a dof shared between ranks is counted by its owner only
-      if ((pfes != nullptr) &&
-          (pfes->GetLocalTDofNumber(fes->DofToVDof(i, 0)) < 0)) {
-        continue;
-      }
-#endif
-      ++local_count;
-      double val = 0.0;
-      if (is_vector) {
-        double mag_sq = 0.0;
-        for (int d = 0; d < vdim; ++d) {
-          double comp = gf(fes->DofToVDof(i, d));
-          mag_sq += comp * comp;
-        }
-        val = std::sqrt(mag_sq);
-      } else {
-        val = gf(fes->DofToVDof(i, 0));
-      }
-
-      if (val < local_min) local_min = val;
-      if (val > local_max) local_max = val;
-      local_sum += val;
-      local_sum_sq += val * val;
-    }
-
-    double g_min = local_min, g_max = local_max, g_sum = local_sum,
-           g_sum_sq = local_sum_sq;
-    long long g_count = local_count;
-
-#ifdef MFEM_USE_MPI
-    if (parallel) {
-      MPI_Comm comm = MPI_COMM_WORLD;
-      if (pfes != nullptr) {
-        comm = pfes->GetComm();
-      }
-
-      MPI_Allreduce(&local_min, &g_min, 1, MPI_DOUBLE, MPI_MIN, comm);
-      MPI_Allreduce(&local_max, &g_max, 1, MPI_DOUBLE, MPI_MAX, comm);
-      MPI_Allreduce(&local_sum, &g_sum, 1, MPI_DOUBLE, MPI_SUM, comm);
-      MPI_Allreduce(&local_sum_sq, &g_sum_sq, 1, MPI_DOUBLE, MPI_SUM, comm);
-      MPI_Allreduce(&local_count, &g_count, 1, MPI_LONG_LONG, MPI_SUM, comm);
-    }
-#endif
-
-    if (mfem_mgis::getMPIrank() == 0 && g_count > 0) {
-      double mean = g_sum / g_count;
-      double var = (g_sum_sq / g_count) - (mean * mean);
-      double std_dev = (var > 0.0) ? std::sqrt(var) : 0.0;
-
-      std::cout << " DEBUG STATS : " << name << std::endl;
-      std::cout << "   -> Global MIN : " << g_min << std::endl;
-      std::cout << "   -> Global MAX : " << g_max << std::endl;
-      std::cout << "   -> MEAN       : " << mean << std::endl;
-      std::cout << "   -> STD DEV    : " << std_dev << std::endl;
-      std::cout << "   -> (Nodes)    : " << g_count << std::endl;
-      std::cout << "------------------------------------------------"
-                << std::endl;
-    }
-  };
-
-  // Temperature
-  auto thermo_fed = heat_transfer.getFiniteElementDiscretizationPointer();
-#ifdef MFEM_USE_MPI
-  if (parallel) {
-    auto& thermo_fes = thermo_fed->getFiniteElementSpace<true>();
-    mfem::ParGridFunction T_pgf(&thermo_fes);
-    // Sync true DOFs with ghost nodes
-    T_pgf.SetFromTrueDofs(heat_transfer.getUnknowns(mfem_mgis::bts));
-    print_nodal_stats(T_pgf, "Temperature", false);
-  } else {
-    auto& thermo_fes = thermo_fed->getFiniteElementSpace<false>();
-    mfem::GridFunction T_gf(
-        &thermo_fes, heat_transfer.getUnknowns(mfem_mgis::bts).GetData());
-    print_nodal_stats(T_gf, "Temperature", false);
+/*!
+ * \brief print the statistics of the fields, one line per field, in the
+ * format of the reference files
+ * \param[in] os: output stream
+ * \param[in] stats: statistics
+ */
+inline void printPhysicsStatistics(
+    std::ostream& os, const std::map<std::string, FieldStatistics>& stats) {
+  const auto precision = os.precision(15);
+  os << "# field, minimum, maximum and mean values\n";
+  for (const auto& [name, s] : stats) {
+    os << name << ' ' << s.min << ' ' << s.max << ' ' << s.mean << '\n';
   }
-#else
-  auto& thermo_fes = thermo_fed->getFiniteElementSpace<false>();
-  mfem::GridFunction T_gf(&thermo_fes,
-                          heat_transfer.getUnknowns(mfem_mgis::bts).GetData());
-  print_nodal_stats(T_gf, "Temperature", false);
-#endif
+  os.precision(precision);
+}  // end of printPhysicsStatistics
 
-  // Displacement
-  auto mech_fed = mechanics.getFiniteElementDiscretizationPointer();
-#ifdef MFEM_USE_MPI
-  if (parallel) {
-    auto& mech_fes = mech_fed->getFiniteElementSpace<true>();
-    mfem::ParGridFunction U_pgf(&mech_fes);
-    U_pgf.SetFromTrueDofs(mechanics.getUnknowns(mfem_mgis::bts));
-    print_nodal_stats(U_pgf, "Displacement Magnitude (||U||)", true);
-  } else {
-    auto& mech_fes = mech_fed->getFiniteElementSpace<false>();
-    mfem::GridFunction U_gf(&mech_fes,
-                            mechanics.getUnknowns(mfem_mgis::bts).GetData());
-    print_nodal_stats(U_gf, "Displacement Magnitude (||U||)", true);
+/*!
+ * \return if the swelling matches its exact value
+ *
+ * The swelling rate is proportional to the power density. The latter is
+ * linear over each time step since the end of the power ramp is a time step
+ * boundary, so the swelling computed by the `U3SI2_SolidSwelling` model with
+ * the mean power density over each time step is exact.
+ *
+ * \param[in] s: statistics of the swelling
+ * \param[in] p: parameters of the simulation
+ */
+inline bool checkSwelling(const FieldStatistics& s, const TestParameters& p) {
+  // swelling per unit of energy released, see U3SI2_Swelling.mfront (6.2e-29
+  // per fission, 200 MeV per fission)
+  constexpr auto A = 6.2e-29 / (200 * 1.60218e-13);
+  // energy released per unit of volume at the end of the simulation
+  const auto t = p.end_time;
+  const auto E = (t <= p.t_ramp) ? p.source * t * t / (2 * p.t_ramp)
+                                 : p.source * (t - p.t_ramp / 2);
+  const auto S = A * E;
+  if ((std::abs(s.min - S) > 1e-10 * S) || (std::abs(s.max - S) > 1e-10 * S)) {
+    mfem_mgis::getErrorStream()
+        << "the swelling does not match its exact value " << S << " (from "
+        << s.min << " to " << s.max << ")\n";
+    return false;
   }
-#else
-  auto& mech_fes = mech_fed->getFiniteElementSpace<false>();
-  mfem::GridFunction U_gf(&mech_fes,
-                          mechanics.getUnknowns(mfem_mgis::bts).GetData());
-  print_nodal_stats(U_gf, "Displacement Magnitude (||U||)", true);
-#endif
+  return true;
+}  // end of checkSwelling
 
-  // Swelling
-  if (setup.swelling_model) {
-    auto& m_sw = setup.swelling_model->getMaterial();
-
-    const auto& vals = m_sw.s1.internal_state_variables;
-
-    double local_min = std::numeric_limits<double>::max();
-    double local_max = -std::numeric_limits<double>::max();
-    double local_sum = 0.0;
-    double local_sum_sq = 0.0;
-
-    const long long num_ips = vals.size();
-    const long long local_count = num_ips;
-
-    for (long long i = 0; i < num_ips; ++i) {
-      const double val = vals[i];
-
-      if (val < local_min) local_min = val;
-      if (val > local_max) local_max = val;
-      local_sum += val;
-      local_sum_sq += val * val;
-    }
-
-    double g_min = local_min, g_max = local_max, g_sum = local_sum,
-           g_sum_sq = local_sum_sq;
-    long long g_count = local_count;
-
-#ifdef MFEM_USE_MPI
-    if (parallel) {
-      MPI_Comm comm = MPI_COMM_WORLD;
-      auto mech_fed_local = mechanics.getFiniteElementDiscretizationPointer();
-      auto& m_fes_local = mech_fed_local->getFiniteElementSpace<true>();
-      if (auto pfes =
-              dynamic_cast<const mfem::ParFiniteElementSpace*>(&m_fes_local)) {
-        comm = pfes->GetComm();
-      }
-      MPI_Allreduce(&local_min, &g_min, 1, MPI_DOUBLE, MPI_MIN, comm);
-      MPI_Allreduce(&local_max, &g_max, 1, MPI_DOUBLE, MPI_MAX, comm);
-      MPI_Allreduce(&local_sum, &g_sum, 1, MPI_DOUBLE, MPI_SUM, comm);
-      MPI_Allreduce(&local_sum_sq, &g_sum_sq, 1, MPI_DOUBLE, MPI_SUM, comm);
-      MPI_Allreduce(&local_count, &g_count, 1, MPI_LONG_LONG, MPI_SUM, comm);
-    }
-#endif
-
-    if (mfem_mgis::getMPIrank() == 0 && g_count > 0) {
-      double mean = g_sum / g_count;
-      double var = (g_sum_sq / g_count) - (mean * mean);
-      double std_dev = (var > 0.0) ? std::sqrt(var) : 0.0;
-
-      std::cout << " DEBUG STATS : SolidSwelling (Fuel)" << std::endl;
-      std::cout << "   -> Global MIN : " << g_min << std::endl;
-      std::cout << "   -> Global MAX : " << g_max << std::endl;
-      std::cout << "   -> MEAN       : " << mean << std::endl;
-      std::cout << "   -> STD DEV    : " << std_dev << std::endl;
-      std::cout << "   -> (Int pts)  : " << g_count << std::endl;
-      std::cout << "------------------------------------------------"
-                << std::endl;
-    }
+/*!
+ * \return if the statistics of the fields match the reference values
+ * \param[in] stats: statistics
+ * \param[in] f: reference file, each line gives the name of a field followed
+ * by its minimum, maximum and mean values, as printed by
+ * `printPhysicsStatistics`
+ */
+inline bool checkPhysicsStatistics(
+    const std::map<std::string, FieldStatistics>& stats, const std::string& f) {
+  // relative tolerance, the values of a field are compared to its largest
+  // absolute value
+  constexpr auto eps = 1e-6;
+  auto in = std::ifstream(f);
+  if (!in) {
+    mfem_mgis::getErrorStream() << "can't open file '" << f << "'\n";
+    return false;
   }
-
-  // Power
-  if (!setup.fields.empty() && setup.fields[0].Pow_s1_sw) {
-    const auto& pow_vals = *setup.fields[0].Pow_s1_sw;
-
-    double local_min = std::numeric_limits<double>::max();
-    double local_max = -std::numeric_limits<double>::max();
-    double local_sum = 0.0;
-    double local_sum_sq = 0.0;
-
-    const long long num_ips = pow_vals.size();
-    const long long local_count = num_ips;
-
-    for (long long i = 0; i < num_ips; ++i) {
-      const double val = pow_vals[i];
-      if (val < local_min) local_min = val;
-      if (val > local_max) local_max = val;
-      local_sum += val;
-      local_sum_sq += val * val;
+  auto nfields = 0;
+  auto line = std::string{};
+  while (std::getline(in, line)) {
+    if ((line.empty()) || (line[0] == '#')) {
+      continue;
     }
-
-    double g_min = local_min, g_max = local_max, g_sum = local_sum,
-           g_sum_sq = local_sum_sq;
-    long long g_count = local_count;
-
-#ifdef MFEM_USE_MPI
-    if (parallel) {
-      MPI_Comm comm = MPI_COMM_WORLD;
-      auto mech_fed_local = mechanics.getFiniteElementDiscretizationPointer();
-      auto& m_fes_local = mech_fed_local->getFiniteElementSpace<true>();
-      if (auto pfes =
-              dynamic_cast<const mfem::ParFiniteElementSpace*>(&m_fes_local)) {
-        comm = pfes->GetComm();
-      }
-      MPI_Allreduce(&local_min, &g_min, 1, MPI_DOUBLE, MPI_MIN, comm);
-      MPI_Allreduce(&local_max, &g_max, 1, MPI_DOUBLE, MPI_MAX, comm);
-      MPI_Allreduce(&local_sum, &g_sum, 1, MPI_DOUBLE, MPI_SUM, comm);
-      MPI_Allreduce(&local_sum_sq, &g_sum_sq, 1, MPI_DOUBLE, MPI_SUM, comm);
-      MPI_Allreduce(&local_count, &g_count, 1, MPI_LONG_LONG, MPI_SUM, comm);
+    auto is = std::istringstream(line);
+    auto name = std::string{};
+    auto r = FieldStatistics{};
+    if (!(is >> name >> r.min >> r.max >> r.mean)) {
+      mfem_mgis::getErrorStream()
+          << "invalid line '" << line << "' in '" << f << "'\n";
+      return false;
     }
-#endif
-
-    if (mfem_mgis::getMPIrank() == 0 && g_count > 0) {
-      double mean = g_sum / g_count;
-      double var = (g_sum_sq / g_count) - (mean * mean);
-      double std_dev = (var > 0.0) ? std::sqrt(var) : 0.0;
-
-      std::cout << " DEBUG STATS : PowerDensity" << std::endl;
-      std::cout << "   -> Global MIN : " << g_min << std::endl;
-      std::cout << "   -> Global MAX : " << g_max << std::endl;
-      std::cout << "   -> MEAN       : " << mean << std::endl;
-      std::cout << "   -> STD DEV    : " << std_dev << std::endl;
-      std::cout << "   -> (Int pts)  : " << g_count << std::endl;
-      std::cout << "------------------------------------------------"
-                << std::endl;
+    const auto ps = stats.find(name);
+    if (ps == stats.end()) {
+      mfem_mgis::getErrorStream() << "unknown field '" << name << "'\n";
+      return false;
     }
-  } else {
-    if (mfem_mgis::getMPIrank() == 0)
-      std::cout << "[WARNING] PowerDensity not found." << std::endl;
+    const auto& s = ps->second;
+    const auto scale = std::max(std::abs(r.min), std::abs(r.max));
+    if ((std::abs(s.min - r.min) > eps * scale) ||
+        (std::abs(s.max - r.max) > eps * scale) ||
+        (std::abs(s.mean - r.mean) > eps * scale)) {
+      mfem_mgis::getErrorStream()
+          << "invalid statistics of field '" << name << "' (" << s.min << ' '
+          << s.max << ' ' << s.mean << " vs " << r.min << ' ' << r.max << ' '
+          << r.mean << ")\n";
+      return false;
+    }
+    ++nfields;
   }
-}
+  if (nfields == 0) {
+    mfem_mgis::getErrorStream() << "no reference values in '" << f << "'\n";
+    return false;
+  }
+  return true;
+}  // end of checkPhysicsStatistics

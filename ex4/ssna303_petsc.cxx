@@ -1,11 +1,12 @@
 /*!
- * \file   ssna303.cxx
+ * \file   ssna303_petsc.cxx
  * \brief
  * \author Thomas Helfer
  * \date   14/12/2020
  */
 
 #include <memory>
+#include <string_view>
 #include <cstdlib>
 #include <iostream>
 #include "mfem/general/optparser.hpp"
@@ -28,8 +29,7 @@
 #include "MFEMMGIS/NonLinearEvolutionProblem.hxx"
 #include "MFEMMGIS/NonLinearEvolutionProblemImplementation.hxx"
 #include "MFEMMGIS/LinearSolverFactory.hxx"
-
-#define PRINT_DEBUG (std::cout << __FILE__ << ":" << __LINE__ << std::endl)
+#include "CheckResultantForce.hxx"
 
 int main(int argc, char** argv) {
   auto ctx = mgis::Context{};
@@ -39,51 +39,55 @@ int main(int argc, char** argv) {
   const char* mesh_file = "ssna303_3d.msh";
   const char* behaviour = "Plasticity";
   const char* library = "src/libBehaviour.so";
+  // not null, since mfem::OptionsParser::PrintUsage stops at the first null
+  // string
+  const char* reference_file = "";
   const char* petscrc_file = "rc_ex10p";
-  auto parallel = int{1};
   auto order = 1;
+  auto nbsteps = 50;
+  auto end_time = mfem_mgis::real{1};
   auto refinement = 0;
-
-  // file creation
-  std::string const myFile("./data.txt");
-  std::ofstream out(myFile.c_str());
 
   // options treatment
   mfem::OptionsParser args(argc, argv);
   mfem_mgis::declareDefaultOptions(args);  // PETSc Initialize
   if (!mfem_mgis::usePETSc()) mfem_mgis::setPETSc(petscrc_file);
-  args.AddOption(&parallel, "-p", "--parallel",
-                 "Perform parallel computations.");
   args.AddOption(&order, "-o", "--order",
                  "Finite element order (polynomial degree).");
-  args.AddOption(&refinement, "-r", "--refinement", "Number of Refinement.");
+  args.AddOption(&nbsteps, "-ns", "--nbsteps", "Number of time steps.");
+  args.AddOption(
+      &end_time, "-et", "--end-time",
+      "End time. The displacement of the upper boundary is 6e-3 * t.");
+  args.AddOption(&reference_file, "-rf", "--reference-file",
+                 "Reference values of the resultant force on the upper "
+                 "boundary, no comparison if empty.");
+  args.AddOption(&refinement, "-r", "--refinement",
+                 "Number of uniform refinements of the mesh.");
   args.Parse();
-  if (!args.Good()) {
-    args.PrintUsage(std::cout);
-    return EXIT_FAILURE;
+  if (args.Help()) {
+    args.PrintUsage(mfem_mgis::getOutputStream());
+    mfem_mgis::finalize();
+    return EXIT_SUCCESS;
   }
-  args.PrintOptions(std::cout);
+  if (!args.Good()) {
+    args.PrintUsage(mfem_mgis::getOutputStream());
+    mfem_mgis::abort(EXIT_FAILURE);
+  }
+  args.PrintOptions(mfem_mgis::getOutputStream());
 
   {
     // loading the mesh and timer
     auto problem =
         mfem_mgis::construct<mfem_mgis::NonLinearEvolutionProblem>(
-            ctx, mfem_mgis::Parameters{{"MeshFileName", mesh_file},
-                                       {"FiniteElementFamily", "H1"},
-                                       {"FiniteElementOrder", order},
-                                       {"UnknownsSize", dim},
-                                       {"Hypothesis", "Tridimensional"},
-                                       {"Parallel", true}}) |
+            ctx,
+            mfem_mgis::Parameters{{"MeshFileName", mesh_file},
+                                  {"FiniteElementFamily", "H1"},
+                                  {"FiniteElementOrder", order},
+                                  {"UnknownsSize", dim},
+                                  {"NumberOfUniformRefinements", refinement},
+                                  {"Hypothesis", "Tridimensional"},
+                                  {"Parallel", true}}) |
         or_die;
-
-    auto mesh =
-        problem.getImplementation<true>().getFiniteElementSpace().GetMesh();
-    // get the number of vertices
-    int numbers_of_vertices = mesh->GetNV();
-    // get the number of elements
-    int numbers_of_elements = mesh->GetNE();
-    // get the element size
-    double h = mesh->GetElementSize(0);
 
     // 2 1 "Volume"
     problem.addBehaviourIntegrator(ctx, "Mechanics", 1, library, behaviour) |
@@ -131,43 +135,19 @@ int main(int argc, char** argv) {
             or_die) |
         or_die;
 
-    // solving the problem without petsc
-    if (!mfem_mgis::usePETSc()) {
-      problem.setSolverParameters(ctx, {{"VerbosityLevel", 0},
-                                        {"RelativeTolerance", 1e-8},
-                                        {"AbsoluteTolerance", 0.},
-                                        {"MaximumNumberOfIterations", 20}}) |
-          or_die;
-      if (parallel) {
-        problem.setLinearSolver(ctx, "MUMPSSolver", {}) | or_die;
-      } else {
-        problem.setLinearSolver(ctx, "UMFPackSolver", {}) | or_die;
-      }
-    }
-
-    // print on file
-    out << " USE_PETSc = " << mfem_mgis::usePETSc() << std::endl;
-    out << " taille_maille = " << h << std::endl;
-    out << " 1/h = " << 1 / h << std::endl;
-    out << " nbr_refinement = " << refinement << std::endl;
-    out << " numbers_of_vertices = " << numbers_of_vertices << std::endl;
-    out << " numbers_of_elements = " << numbers_of_elements << std::endl;
-
     // vtk export
     problem.addPostProcessing(
         ctx, "ParaviewExportResults",
-        {{"OutputFileName", std::string("ssna303-displacements")}}) |
+        {{"OutputFileName", std::string("ssna303-displacements-petsc")}}) |
         or_die;
     problem.addPostProcessing(
         ctx, "ComputeResultantForceOnBoundary",
-        {{"Boundary", 2}, {"OutputFileName", "force.txt"}}) |
+        {{"Boundary", 2}, {"OutputFileName", "force-petsc.txt"}}) |
         or_die;
 
     // loop over time step
-    //  const auto nsteps = mfem_mgis::size_type{100};
-    //  const auto dt = mfem_mgis::real{1} / nsteps;
-    const auto nsteps = mfem_mgis::size_type{2};
-    const auto dt = mfem_mgis::real{0.001};
+    const auto nsteps = mfem_mgis::size_type(nbsteps);
+    const auto dt = end_time / nsteps;
     auto t = mfem_mgis::real{0};
     auto iteration = mfem_mgis::size_type{};
     for (mfem_mgis::size_type i = 0; i != nsteps; ++i) {
@@ -201,6 +181,14 @@ int main(int argc, char** argv) {
       t += dt;
       ++iteration;
       std::cout << '\n';
+    }
+    // comparison to the reference values, only on the process writing the
+    // resultant force
+    if ((!std::string_view{reference_file}.empty()) &&
+        (mfem_mgis::isMainProcess(problem.getFiniteElementDiscretization()))) {
+      if (!checkVerticalForce("force-petsc.txt", reference_file)) {
+        return EXIT_FAILURE;
+      }
     }
   }
   mfem_mgis::finalize();
