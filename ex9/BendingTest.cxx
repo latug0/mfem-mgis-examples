@@ -12,10 +12,10 @@
 #include "mfem/general/optparser.hpp"
 // #include "mfem/fem/datacollection.hpp"
 // #include "MFEMMGIS/Simulation.hxx"
-// #include "MFEMMGIS/L2Projection.hxx"
+#include "MFEMMGIS/L2Projection.hxx"
 #include "MFEMMGIS/LinearSolverFactory.hxx"
 #include "MFEMMGIS/Material.hxx"
-// #include "MFEMMGIS/MechanicalPostProcessings.hxx"
+#include "MFEMMGIS/MechanicalPostProcessings.hxx"
 #include "MFEMMGIS/NonLinearEvolutionProblem.hxx"
 #include "MFEMMGIS/PostProcessing/PointsSetCurvesWriter.hxx"
 // #include "MFEMMGIS/ParaviewExportIntegrationPointResultsAtNodes.hxx"
@@ -210,6 +210,10 @@ int main(int argc, char **argv) {
         ctx, "ParaviewExportResults",
         {{"OutputFileName", p.output_dir + std::string("displacements")}}) |
         or_die;
+    mechanics.addPostProcessing(
+        ctx, "ComputeResultantForceOnBoundary",
+        {{"Boundary", "LPOUV"}, {"OutputFileName", "force.txt"}}) |
+        or_die;
     auto fed = mechanics.getFiniteElementDiscretization();
     auto& fes = fed.getFiniteElementSpace<parallel>();
     auto f =
@@ -233,6 +237,55 @@ int main(int argc, char **argv) {
                               mfem_mgis::ets) |
           or_die;
     }) | or_die;
+    // stress and von Mises stress
+    auto stress = mfem_mgis::make_shared<mfem_mgis::PartialQuadratureFunction>(
+                      ctx, m.getPartialQuadratureSpacePointer(), 4) |
+                  or_die;
+    auto vmises = mfem_mgis::make_shared<mfem_mgis::PartialQuadratureFunction>(
+                      ctx, m.getPartialQuadratureSpacePointer(), 1) |
+                  or_die;
+    auto nodal_stress =
+        mfem_mgis::make_shared<mfem_mgis::L2ProjectionResult<parallel>>(
+            ctx, mfem_mgis::createL2ProjectionResult<parallel>(ctx, {*stress}) |
+                     or_die) |
+        or_die;
+    auto nodal_vmises =
+        mfem_mgis::make_shared<mfem_mgis::L2ProjectionResult<parallel>>(
+            ctx, mfem_mgis::createL2ProjectionResult<parallel>(ctx, {*vmises}) |
+                     or_die) |
+        or_die;
+    auto exporter = mfem_mgis::make_shared<mfem::ParaViewDataCollection>(
+                        ctx, "CauchyStress") |
+                    or_die;
+    exporter->SetDataFormat(mfem::VTKFormat::BINARY);
+    if ((nodal_vmises->submesh.get() == nullptr) ||
+        (nodal_vmises->submesh.get() != nodal_stress->submesh.get())) {
+      mfem_mgis::abort("internal error");
+    }
+    exporter->SetMesh(nodal_vmises->submesh.get());
+    exporter->RegisterField("CauchyStress", nodal_stress->result.get());
+    exporter->RegisterField("vonMisesStress", nodal_vmises->result.get());
+    mechanics.addPostProcessing(
+        ctx, [&ctx, &or_die, &mechanics, exporter, vmises, stress, nodal_vmises,
+              nodal_stress, count = 0](const mfem_mgis::real t,
+                                       const mfem_mgis::real dt) mutable {
+          exporter->SetCycle(count++);
+          exporter->SetTime(t + dt);
+          const auto &m = mechanics.getMaterial(ctx, "POUTRE", 0) | or_die;
+          mfem_mgis::computeCauchyStress(ctx, *stress, m, mfem_mgis::ets) |
+              or_die;
+          mfem_mgis::computeVonMisesEquivalentStress(ctx, *vmises, m,
+                                                     mfem_mgis::ets) |
+              or_die;
+          //
+          auto &lsf = mfem_mgis::LinearSolverFactory<parallel>::getFactory();
+          auto &fespace = mechanics.getFiniteElementDiscretization()
+                              .getFiniteElementSpace<parallel>();
+          auto linear_solver = lsf.generate(ctx, "MUMPSSolver", fespace, {}) | or_die;
+          mfem_mgis::updateL2Projection(ctx, *nodal_stress, linear_solver, {*stress});
+          mfem_mgis::updateL2Projection(ctx, *nodal_vmises, linear_solver, {*vmises});
+          exporter->Save();
+        });
   }
 
   std::vector<std::string> materials = {"VOID1", "VOID2"};
