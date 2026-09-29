@@ -10,12 +10,12 @@ include(CTest)
 enable_testing()
 if(CMAKE_CONFIGURATION_TYPES)
    if (NOT TARGET check)
-      add_custom_target(check COMMAND 
+      add_custom_target(check COMMAND
          ${CMAKE_CTEST_COMMAND} -T test -C $<CONFIGURATION>)
    endif(NOT TARGET check)
 else(CMAKE_CONFIGURATION_TYPES)
    if (NOT TARGET check)
-      add_custom_target(check COMMAND 
+      add_custom_target(check COMMAND
       ${CMAKE_CTEST_COMMAND} -T test )
    endif(NOT TARGET check)
 endif(CMAKE_CONFIGURATION_TYPES)
@@ -61,9 +61,9 @@ add_executable(mox2 MixedOxideFuels.cxx)
 target_link_libraries(mox2 mfem-mgis::MFEMMGIS)
 target_include_directories(mox2
   SYSTEM
-  PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"   
+  PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
   PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
-    
+
 add_dependencies(check mox2 generate-libBehaviour-ex7)
 
 # The full test mode computes the complete loading in 40 time steps. The

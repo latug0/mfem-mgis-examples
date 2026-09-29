@@ -10,12 +10,12 @@ include(CTest)
 enable_testing()
 if(CMAKE_CONFIGURATION_TYPES)
    if (NOT TARGET check)
-      add_custom_target(check COMMAND 
+      add_custom_target(check COMMAND
          ${CMAKE_CTEST_COMMAND} -T test -C $<CONFIGURATION>)
    endif(NOT TARGET check)
 else(CMAKE_CONFIGURATION_TYPES)
    if (NOT TARGET check)
-      add_custom_target(check COMMAND 
+      add_custom_target(check COMMAND
       ${CMAKE_CTEST_COMMAND} -T test )
    endif(NOT TARGET check)
 endif(CMAKE_CONFIGURATION_TYPES)
@@ -33,26 +33,26 @@ if(MFEM_USE_MPI)
       SYSTEM
       PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
       PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
-  
+
   # Copy the files needed at run time. Unlike file(COPY), configure_file updates
   # the copies when these files are modified.
   foreach(input IsotropicLinearElasticity.mfront cube_2mat_per.mesh Box.med Box.per)
     configure_file(${PROJECT_SOURCE_DIR}/${input} ${PROJECT_BINARY_DIR}/${input}
                    COPYONLY)
   endforeach()
-  
+
   # Use mfront to generate libBehaviour.so
   add_custom_command(
     OUTPUT "src/libBehaviour.so"
     COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/IsotropicLinearElasticity.mfront
     DEPENDS ${PROJECT_BINARY_DIR}/IsotropicLinearElasticity.mfront
     COMMENT "Performing mfront code generation")
-  
+
   add_custom_target(generate-libBehaviour-ex3 ALL
     DEPENDS "src/libBehaviour.so")
-  
+
   add_dependencies(check two_layer_cube generate-libBehaviour-ex3)
-  
+
   # Define the tests that will be called during the "make check", one per
   # loading case, each one being compared to its analytical solution. They are
   # the same in the full and restricted test modes, since each loading case is

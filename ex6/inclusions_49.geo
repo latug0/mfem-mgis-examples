@@ -44,7 +44,7 @@ For count In {0:1000*nb-1}
           intersect=1;
         EndIf
       EndFor
-    EndIf      
+    EndIf
     If (intersect == 1)
       nbfails=nbfails+1;
     Else
@@ -83,28 +83,28 @@ sxmin() = Surface In BoundingBox{0.-eps, 0.-eps, 0.-eps,
 sxmax() = Surface In BoundingBox{1.-eps, 0.-eps, 0.-eps,
                                  1+eps, 1.+eps, 1.+eps};
 
-Periodic Surface {sxmax()} = {sxmin()} Translate {1,0,0}; 								 
+Periodic Surface {sxmax()} = {sxmin()} Translate {1,0,0};
 
 symin() = Surface In BoundingBox{0.-eps, 0.-eps, 0.-eps,
                                  1+eps, 0.+eps, 1.+eps};
 symax() = Surface In BoundingBox{0.-eps, 1.-eps, 0.-eps,
                                  1+eps, 1.+eps, 1.+eps};
-								 
-Periodic Surface {symax()} = {symin()} Translate {0,1,0}; 		
+
+Periodic Surface {symax()} = {symin()} Translate {0,1,0};
 
 szmin() = Surface In BoundingBox{0.-eps, 0.-eps, 0.-eps,
                                  1+eps, 1.+eps, 0.+eps};
 szmax() = Surface In BoundingBox{0.-eps, 0.-eps, 1.-eps,
                                  1+eps, 1.+eps, 1.+eps};
-								 
-Periodic Surface {szmax()} = {szmin()} Translate {0,0,1}; 							 
 
-Physical Surface (1) = sxmin();								 
-Physical Surface (2) = sxmax();								 
-Physical Surface (3) = symin();								 
-Physical Surface (4) = symax();								 
-Physical Surface (5) = szmin();								 
-Physical Surface (6) = szmax();								 
-								 
+Periodic Surface {szmax()} = {szmin()} Translate {0,0,1};
+
+Physical Surface (1) = sxmin();
+Physical Surface (2) = sxmax();
+Physical Surface (3) = symin();
+Physical Surface (4) = symax();
+Physical Surface (5) = szmin();
+Physical Surface (6) = szmax();
+
 
 Mesh.MshFileVersion = 2.2;

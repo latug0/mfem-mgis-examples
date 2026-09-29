@@ -9,38 +9,38 @@ ep = 1.;
 mp = 0.5*ep;
 cl=mp/1.1;
 
-Point(1) = { 0,   0,  0, cl} ; 
+Point(1) = { 0,   0,  0, cl} ;
 Point(2) = { 0,   0, ep, cl} ;
 Point(3) = { 0,  ep, ep, cl} ;
 Point(4) = { 0,  ep,  0, cl} ;
 
-Point(5) = { mp,  0,  0, cl} ; 
+Point(5) = { mp,  0,  0, cl} ;
 Point(6) = { mp,  0, ep, cl} ;
 Point(7) = { mp, ep, ep, cl} ;
 Point(8) = { mp, ep,  0, cl} ;
 
-Point(9)  = { ep,  0,  0, cl} ; 
+Point(9)  = { ep,  0,  0, cl} ;
 Point(10) = { ep,  0, ep, cl} ;
 Point(11) = { ep, ep, ep, cl} ;
 Point(12) = { ep, ep,  0, cl} ;
 
-Line(1) = {1,2}; 
+Line(1) = {1,2};
 Line(2) = {2,3};
-Line(3) = {3,4}; 
+Line(3) = {3,4};
 Line(4) = {4,1};
 Line Loop(1) = {  1, 2, 3, 4 } ;
 Plane Surface(1) = {1};
 
-Line(5) = {5,6}; 
+Line(5) = {5,6};
 Line(6) = {6,7};
-Line(7) = {7,8}; 
+Line(7) = {7,8};
 Line(8) = {8,5};
 Line Loop(2) = {  5, 6, 7, 8 } ;
 Plane Surface(2) = {2};
 
-Line(9)  = {9 ,10}; 
+Line(9)  = {9 ,10};
 Line(10) = {10,11};
-Line(11) = {11,12}; 
+Line(11) = {11,12};
 Line(12) = {12, 9};
 Line Loop(3) = {  9, 10, 11, 12 } ;
 Plane Surface(3) = {3};
@@ -95,16 +95,16 @@ Surface Loop (2) = {2, 3, 6, 7, 8, 9};
 Volume (2) = {2};
 
 For vo In {1:2}
-    Physical Volume(vo)  = {vo}; 
+    Physical Volume(vo)  = {vo};
 EndFor
 For su In {1:11}
-    Physical Surface(su)  = {su}; 
+    Physical Surface(su)  = {su};
 EndFor
 For li In {1:100}
-    Physical Line(li)  = {li}; 
+    Physical Line(li)  = {li};
 EndFor
 For pt In {1:100}
-    Physical Point(pt)  = {pt}; 
+    Physical Point(pt)  = {pt};
 EndFor
 
 Mesh 2;

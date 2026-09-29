@@ -164,7 +164,6 @@ void setup_properties(mfem_mgis::attributes::MayAbort,
                       mfem_mgis::Context& ctx,
                       const TestParameters& p,
                       mfem_mgis::PeriodicNonLinearEvolutionProblem& problem) {
-  using namespace mgis::behaviour;
   using real = mfem_mgis::real;
   auto or_die = ctx.getFatalFailureHandler();
 
@@ -179,15 +178,23 @@ void setup_properties(mfem_mgis::attributes::MayAbort,
   auto set_properties = [&ctx, &or_die](auto& m, const double yo,
                                         const double po, const double st,
                                         const double no) {
-    setMaterialProperty(ctx, m.s0, "YoungModulus", yo) | or_die;
-    setMaterialProperty(ctx, m.s0, "PoissonRatio", po) | or_die;
-    setMaterialProperty(ctx, m.s0, "StressThreshold", st) | or_die;
-    setMaterialProperty(ctx, m.s0, "NortonExponent", no) | or_die;
+    mgis::behaviour::setMaterialProperty(ctx, m.s0, "YoungModulus", yo) |
+        or_die;
+    mgis::behaviour::setMaterialProperty(ctx, m.s0, "PoissonRatio", po) |
+        or_die;
+    mgis::behaviour::setMaterialProperty(ctx, m.s0, "StressThreshold", st) |
+        or_die;
+    mgis::behaviour::setMaterialProperty(ctx, m.s0, "NortonExponent", no) |
+        or_die;
 
-    setMaterialProperty(ctx, m.s1, "YoungModulus", yo) | or_die;
-    setMaterialProperty(ctx, m.s1, "PoissonRatio", po) | or_die;
-    setMaterialProperty(ctx, m.s1, "StressThreshold", st) | or_die;
-    setMaterialProperty(ctx, m.s1, "NortonExponent", no) | or_die;
+    mgis::behaviour::setMaterialProperty(ctx, m.s1, "YoungModulus", yo) |
+        or_die;
+    mgis::behaviour::setMaterialProperty(ctx, m.s1, "PoissonRatio", po) |
+        or_die;
+    mgis::behaviour::setMaterialProperty(ctx, m.s1, "StressThreshold", st) |
+        or_die;
+    mgis::behaviour::setMaterialProperty(ctx, m.s1, "NortonExponent", no) |
+        or_die;
   };
 
   set_properties(m1, 8.182e9, 0.364, 100.0e6, 3.333333);
@@ -195,8 +202,12 @@ void setup_properties(mfem_mgis::attributes::MayAbort,
 
   //
   auto set_temperature = [&ctx, &or_die](auto& m) {
-    setExternalStateVariable(ctx, m.s0, "Temperature", 293.15) | or_die;
-    setExternalStateVariable(ctx, m.s1, "Temperature", 293.15) | or_die;
+    mgis::behaviour::setExternalStateVariable(ctx, m.s0, "Temperature",
+                                              293.15) |
+        or_die;
+    mgis::behaviour::setExternalStateVariable(ctx, m.s1, "Temperature",
+                                              293.15) |
+        or_die;
   };
   set_temperature(m1);
   set_temperature(m2);
@@ -319,7 +330,7 @@ static bool checkMeanStresses(const std::string& f, const std::string& r) {
 }  // end of checkMeanStresses
 
 int main(int argc, char* argv[]) {
-  auto ctx = mgis::Context{};
+  auto ctx = mfem_mgis::Context{};
   auto or_die = ctx.getFatalFailureHandler();
   ctx.enableProfiling(true);
 

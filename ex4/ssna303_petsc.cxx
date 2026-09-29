@@ -32,7 +32,7 @@
 #include "CheckResultantForce.hxx"
 
 int main(int argc, char** argv) {
-  auto ctx = mgis::Context{};
+  auto ctx = mfem_mgis::Context{};
   auto or_die = ctx.getFatalFailureHandler();
   mfem_mgis::initialize(argc, argv);
   constexpr const auto dim = mfem_mgis::size_type{3};
@@ -174,7 +174,7 @@ int main(int argc, char** argv) {
           ++niter;
           problem.revert(ctx) | or_die;
           if (niter == 10) {
-            mgis::abort("maximum number of substeps");
+            mfem_mgis::abort("maximum number of substeps");
           }
         }
       }

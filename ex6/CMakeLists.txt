@@ -10,12 +10,12 @@ include(CTest)
 enable_testing()
 if(CMAKE_CONFIGURATION_TYPES)
    if (NOT TARGET check)
-      add_custom_target(check COMMAND 
+      add_custom_target(check COMMAND
          ${CMAKE_CTEST_COMMAND} -T test -C $<CONFIGURATION>)
    endif(NOT TARGET check)
 else(CMAKE_CONFIGURATION_TYPES)
    if (NOT TARGET check)
-      add_custom_target(check COMMAND 
+      add_custom_target(check COMMAND
       ${CMAKE_CTEST_COMMAND} -T test )
    endif(NOT TARGET check)
 endif(CMAKE_CONFIGURATION_TYPES)
@@ -49,9 +49,9 @@ add_executable(rve RveNonLinearElastic.cxx)
 target_link_libraries(rve mfem-mgis::MFEMMGIS)
 target_include_directories(rve
   SYSTEM
-  PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"   
+  PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
   PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
-    
+
 add_dependencies(check rve generate-libBehaviour-ex6)
 
 # The test is the same in the full and restricted test modes, since it is a

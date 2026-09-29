@@ -9,13 +9,13 @@ who used an FFT method.
 ```text
     Problem : RVE MOx 2 phases with elasto-viscoplastic behavior laws
 
-    Parameters : 
+    Parameters :
 
     start time = 0
     end time = 5s
     number of time step = 40
 
-    Imposed strain tensor : 
+    Imposed strain tensor :
             [ -a/2 ,   0  ,  0 ]
     eps  =  [   0  , -a/2 ,  0 ] * t
             [   0  ,   0  ,  a ]
@@ -65,7 +65,7 @@ python3 script_17percent_minimal.py
 
 ```bash
 # generate the .msh file with GMSH
-gmsh -3 OneSphere.geo 
+gmsh -3 OneSphere.geo
 ```
 
 ## Run the simulation

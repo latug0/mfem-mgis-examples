@@ -212,7 +212,7 @@ TestParameters parseCommandLineOptions(int& argc, char* argv[]) {
   return p;
 }
 
-int executeMFEMMGISTest(mgis::Context& ctx, const TestParameters& p) {
+int executeMFEMMGISTest(mfem_mgis::Context& ctx, const TestParameters& p) {
   auto or_die = ctx.getFatalFailureHandler();
   constexpr const auto dim = mfem_mgis::size_type{3};
   // creating the finite element workspace
@@ -311,7 +311,7 @@ int executeMFEMMGISTest(mgis::Context& ctx, const TestParameters& p) {
 }
 
 int main(int argc, char* argv[]) {
-  auto ctx = mgis::Context{};
+  auto ctx = mfem_mgis::Context{};
   mfem_mgis::initialize(argc, argv);
   const auto p = parseCommandLineOptions(argc, argv);
   return executeMFEMMGISTest(ctx, p);

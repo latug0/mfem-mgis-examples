@@ -11,7 +11,7 @@ gT.setGlossaryName("TemperatureGradient");
 j.setGlossaryName("HeatFlux");
 
 @ExternalStateVariable DeformationGradientTensor F;
-F.setGlossaryName("DeformationGradient"); 
+F.setGlossaryName("DeformationGradient");
 
 @AdditionalTangentOperatorBlock dj_ddT;
 

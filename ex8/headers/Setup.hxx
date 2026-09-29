@@ -84,13 +84,11 @@ struct SetupPropertiesResult {
  */
 inline SetupPropertiesResult setup_properties(
     mfem_mgis::attributes::MayAbort,
-    mgis::Context& ctx,
+    mfem_mgis::Context& ctx,
     const TestParameters& p,
     mfem_mgis::NonLinearEvolutionProblem& heat_transfer,
     mfem_mgis::NonLinearEvolutionProblem& mechanics,
     const std::function<double(double)>& power_history) {
-  using namespace mfem_mgis;
-  using namespace mgis::behaviour;
   using real = mfem_mgis::real;
 
   CatchTimeSection(ctx, "set_mgis_stuff");
@@ -98,7 +96,7 @@ inline SetupPropertiesResult setup_properties(
 
   SetupPropertiesResult result;
 
-  for (auto ts : {bts, ets}) {
+  for (auto ts : {mfem_mgis::bts, mfem_mgis::ets}) {
     mechanics.getUnknowns(ts) = real{0};
     heat_transfer.getUnknowns(ts) = p.Ti;
   }
@@ -133,101 +131,109 @@ inline SetupPropertiesResult setup_properties(
     auto& m_mc = mechanics.getMaterial(ctx, mat_id, 0) | or_die;
 
     GaussFieldStorage storage;
-    storage.T_s0 = std::make_shared<std::vector<mgis::real>>(m_mc.n, p.Ti);
-    storage.T_s1 = std::make_shared<std::vector<mgis::real>>(m_mc.n, p.Ti);
+    storage.T_s0 = std::make_shared<std::vector<mfem_mgis::real>>(m_mc.n, p.Ti);
+    storage.T_s1 = std::make_shared<std::vector<mfem_mgis::real>>(m_mc.n, p.Ti);
 
-    setExternalStateVariable(
+    mgis::behaviour::setExternalStateVariable(
         ctx, m_th.s0, "Temperature", std::span<mfem_mgis::real>(*storage.T_s0),
-        MaterialStateManager::EXTERNAL_STORAGE, MaterialStateManager::UPDATE) |
+        mgis::behaviour::MaterialStateManager::EXTERNAL_STORAGE,
+        mgis::behaviour::MaterialStateManager::UPDATE) |
         or_die;
-    setExternalStateVariable(ctx, m_th.s1, "Temperature",
-                             std::span<mfem_mgis::real>(*storage.T_s1),
-                             MaterialStateManager::EXTERNAL_STORAGE,
-                             MaterialStateManager::NOUPDATE) |
+    mgis::behaviour::setExternalStateVariable(
+        ctx, m_th.s1, "Temperature", std::span<mfem_mgis::real>(*storage.T_s1),
+        mgis::behaviour::MaterialStateManager::EXTERNAL_STORAGE,
+        mgis::behaviour::MaterialStateManager::NOUPDATE) |
         or_die;
-    setExternalStateVariable(ctx, m_mc.s0, "Temperature",
-                             std::span<mfem_mgis::real>(*storage.T_s0),
-                             MaterialStateManager::EXTERNAL_STORAGE,
-                             MaterialStateManager::NOUPDATE) |
+    mgis::behaviour::setExternalStateVariable(
+        ctx, m_mc.s0, "Temperature", std::span<mfem_mgis::real>(*storage.T_s0),
+        mgis::behaviour::MaterialStateManager::EXTERNAL_STORAGE,
+        mgis::behaviour::MaterialStateManager::NOUPDATE) |
         or_die;
-    setExternalStateVariable(ctx, m_mc.s1, "Temperature",
-                             std::span<mfem_mgis::real>(*storage.T_s1),
-                             MaterialStateManager::EXTERNAL_STORAGE,
-                             MaterialStateManager::NOUPDATE) |
+    mgis::behaviour::setExternalStateVariable(
+        ctx, m_mc.s1, "Temperature", std::span<mfem_mgis::real>(*storage.T_s1),
+        mgis::behaviour::MaterialStateManager::EXTERNAL_STORAGE,
+        mgis::behaviour::MaterialStateManager::NOUPDATE) |
         or_die;
 
     mgis::behaviour::setExternalStateVariable(
         ctx, m_th.s0, "DeformationGradient", m_mc.s0.gradients,
-        MaterialStateManager::EXTERNAL_STORAGE,
-        MaterialStateManager::NOUPDATE) |
+        mgis::behaviour::MaterialStateManager::EXTERNAL_STORAGE,
+        mgis::behaviour::MaterialStateManager::NOUPDATE) |
         or_die;
     mgis::behaviour::setExternalStateVariable(
         ctx, m_th.s1, "DeformationGradient", m_mc.s1.gradients,
-        MaterialStateManager::EXTERNAL_STORAGE,
-        MaterialStateManager::NOUPDATE) |
+        mgis::behaviour::MaterialStateManager::EXTERNAL_STORAGE,
+        mgis::behaviour::MaterialStateManager::NOUPDATE) |
         or_die;
 
     if (mat_id == 1) {
-      auto sw_model = make_shared<PointWiseModel>(
-                          ctx, m_mc.getPartialQuadratureSpacePointer(),
-                          Parameters{{"Library", p.libraryU3SI2},
-                                     {"Model", "U3SI2_SolidSwelling"},
-                                     {"Hypothesis", "Tridimensional"}}) |
-                      or_die;
+      auto sw_model =
+          mfem_mgis::make_shared<mfem_mgis::PointWiseModel>(
+              ctx, m_mc.getPartialQuadratureSpacePointer(),
+              mfem_mgis::Parameters{{"Library", p.libraryU3SI2},
+                                    {"Model", "U3SI2_SolidSwelling"},
+                                    {"Hypothesis", "Tridimensional"}}) |
+          or_die;
 
       auto& m_sw = sw_model->getMaterial();
       const double initial_power = power_history(0.0);
       storage.Pow_s0_sw =
-          std::make_shared<std::vector<mgis::real>>(m_sw.n, initial_power);
+          std::make_shared<std::vector<mfem_mgis::real>>(m_sw.n, initial_power);
       storage.Pow_s1_sw =
-          std::make_shared<std::vector<mgis::real>>(m_sw.n, initial_power);
+          std::make_shared<std::vector<mfem_mgis::real>>(m_sw.n, initial_power);
 
       // Point all variables to the same array
       storage.Pow_s0_mmc = storage.Pow_s0_sw;
       storage.Pow_s1_mmc = storage.Pow_s1_sw;
 
-      setExternalStateVariable(ctx, m_sw.s0, "Temperature",
-                               std::span<mfem_mgis::real>(*storage.T_s0),
-                               MaterialStateManager::EXTERNAL_STORAGE,
-                               MaterialStateManager::NOUPDATE) |
+      mgis::behaviour::setExternalStateVariable(
+          ctx, m_sw.s0, "Temperature",
+          std::span<mfem_mgis::real>(*storage.T_s0),
+          mgis::behaviour::MaterialStateManager::EXTERNAL_STORAGE,
+          mgis::behaviour::MaterialStateManager::NOUPDATE) |
           or_die;
-      setExternalStateVariable(ctx, m_sw.s1, "Temperature",
-                               std::span<mfem_mgis::real>(*storage.T_s1),
-                               MaterialStateManager::EXTERNAL_STORAGE,
-                               MaterialStateManager::NOUPDATE) |
-          or_die;
-
-      setExternalStateVariable(ctx, m_sw.s0, "PowerDensity",
-                               std::span<mfem_mgis::real>(*storage.Pow_s0_sw),
-                               MaterialStateManager::EXTERNAL_STORAGE,
-                               MaterialStateManager::UPDATE) |
-          or_die;
-      setExternalStateVariable(ctx, m_sw.s1, "PowerDensity",
-                               std::span<mfem_mgis::real>(*storage.Pow_s1_sw),
-                               MaterialStateManager::EXTERNAL_STORAGE,
-                               MaterialStateManager::NOUPDATE) |
+      mgis::behaviour::setExternalStateVariable(
+          ctx, m_sw.s1, "Temperature",
+          std::span<mfem_mgis::real>(*storage.T_s1),
+          mgis::behaviour::MaterialStateManager::EXTERNAL_STORAGE,
+          mgis::behaviour::MaterialStateManager::NOUPDATE) |
           or_die;
 
-      setExternalStateVariable(ctx, m_mc.s0, "Swelling",
-                               m_sw.s0.internal_state_variables,
-                               MaterialStateManager::EXTERNAL_STORAGE,
-                               MaterialStateManager::NOUPDATE) |
+      mgis::behaviour::setExternalStateVariable(
+          ctx, m_sw.s0, "PowerDensity",
+          std::span<mfem_mgis::real>(*storage.Pow_s0_sw),
+          mgis::behaviour::MaterialStateManager::EXTERNAL_STORAGE,
+          mgis::behaviour::MaterialStateManager::UPDATE) |
           or_die;
-      setExternalStateVariable(ctx, m_mc.s1, "Swelling",
-                               m_sw.s1.internal_state_variables,
-                               MaterialStateManager::EXTERNAL_STORAGE,
-                               MaterialStateManager::NOUPDATE) |
+      mgis::behaviour::setExternalStateVariable(
+          ctx, m_sw.s1, "PowerDensity",
+          std::span<mfem_mgis::real>(*storage.Pow_s1_sw),
+          mgis::behaviour::MaterialStateManager::EXTERNAL_STORAGE,
+          mgis::behaviour::MaterialStateManager::NOUPDATE) |
           or_die;
 
-      setExternalStateVariable(ctx, m_mc.s0, "PowerDensity",
-                               std::span<mfem_mgis::real>(*storage.Pow_s0_mmc),
-                               MaterialStateManager::EXTERNAL_STORAGE,
-                               MaterialStateManager::NOUPDATE) |
+      mgis::behaviour::setExternalStateVariable(
+          ctx, m_mc.s0, "Swelling", m_sw.s0.internal_state_variables,
+          mgis::behaviour::MaterialStateManager::EXTERNAL_STORAGE,
+          mgis::behaviour::MaterialStateManager::NOUPDATE) |
           or_die;
-      setExternalStateVariable(ctx, m_mc.s1, "PowerDensity",
-                               std::span<mfem_mgis::real>(*storage.Pow_s1_mmc),
-                               MaterialStateManager::EXTERNAL_STORAGE,
-                               MaterialStateManager::NOUPDATE) |
+      mgis::behaviour::setExternalStateVariable(
+          ctx, m_mc.s1, "Swelling", m_sw.s1.internal_state_variables,
+          mgis::behaviour::MaterialStateManager::EXTERNAL_STORAGE,
+          mgis::behaviour::MaterialStateManager::NOUPDATE) |
+          or_die;
+
+      mgis::behaviour::setExternalStateVariable(
+          ctx, m_mc.s0, "PowerDensity",
+          std::span<mfem_mgis::real>(*storage.Pow_s0_mmc),
+          mgis::behaviour::MaterialStateManager::EXTERNAL_STORAGE,
+          mgis::behaviour::MaterialStateManager::NOUPDATE) |
+          or_die;
+      mgis::behaviour::setExternalStateVariable(
+          ctx, m_mc.s1, "PowerDensity",
+          std::span<mfem_mgis::real>(*storage.Pow_s1_mmc),
+          mgis::behaviour::MaterialStateManager::EXTERNAL_STORAGE,
+          mgis::behaviour::MaterialStateManager::NOUPDATE) |
           or_die;
 
       result.swelling_model = sw_model;

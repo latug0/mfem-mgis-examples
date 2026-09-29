@@ -97,12 +97,11 @@ static bool checkVerticalForce(const std::string& f,
 }  // end of checkVerticalForce
 
 int main(int argc, char** argv) {
-  using namespace mfem_mgis;
-  constexpr const auto dim = size_type{2};
-  auto ctx = Context{};
+  constexpr const auto dim = mfem_mgis::size_type{2};
+  auto ctx = mfem_mgis::Context{};
   auto or_die = ctx.getFatalFailureHandler();
   // Initialize mfem_mgis (it includes a call to MPI_Init)
-  initialize(argc, argv);
+  mfem_mgis::initialize(argc, argv);
 
   const char* mesh_file = "ssna303.msh";
   const char* behaviour = "IsotropicLinearHardeningPlasticity";
@@ -122,7 +121,7 @@ int main(int argc, char** argv) {
   auto end_time = mfem_mgis::real{1};
   // options treatment
   mfem::OptionsParser args(argc, argv);
-  declareDefaultOptions(args);
+  mfem_mgis::declareDefaultOptions(args);
   args.AddOption(&order, "-o", "--order",
                  "Finite element order (polynomial degree).");
   args.AddOption(&nbsteps, "-ns", "--nbsteps", "Number of time steps.");
@@ -155,23 +154,27 @@ int main(int argc, char** argv) {
   args.PrintOptions(mfem_mgis::getOutputStream());
   const auto* const output_file = use_fbar ? "force-fbar.txt" : "force.txt";
   // the non linear problem
-  auto problem = construct<NonLinearEvolutionProblem>(
-                     ctx, dict{{"MeshFileName", mesh_file},
-                               {"FiniteElementFamily", "H1"},
-                               {"FiniteElementOrder", order},
-                               {"UnknownsSize", dim},
-                               {"Materials", dict{{"NotchedBeam", 1}}},
-                               {"Boundaries", dict{{"LowerBoundary", 3},
+  auto problem =
+      mfem_mgis::construct<mfem_mgis::NonLinearEvolutionProblem>(
+          ctx,
+          mfem_mgis::Parameters{
+              {"MeshFileName", mesh_file},
+              {"FiniteElementFamily", "H1"},
+              {"FiniteElementOrder", order},
+              {"UnknownsSize", dim},
+              {"Materials", mfem_mgis::Parameters{{"NotchedBeam", 1}}},
+              {"Boundaries", mfem_mgis::Parameters{{"LowerBoundary", 3},
                                                    {"SymmetryAxis", 4},
                                                    {"UpperBoundary", 2}}},
-                               {"Hypothesis", "PlaneStrain"},
-                               {"Parallel", parallel}}) |
-                 or_die;
+              {"Hypothesis", "PlaneStrain"},
+              {"Parallel", parallel}}) |
+      or_die;
 #ifdef MGIS_HAVE_TFEL
   if (use_fbar) {
     problem.addBehaviourIntegrator(
         ctx, "Mechanics", "NotchedBeam", library, behaviour,
-        {{"Regularization", dict{{"FBar", dict{}}}}}) |
+        {{"Regularization",
+          mfem_mgis::Parameters{{"FBar", mfem_mgis::Parameters{}}}}}) |
         or_die;
   } else {
     problem.addBehaviourIntegrator(ctx, "Mechanics", "NotchedBeam", library,
@@ -206,7 +209,7 @@ int main(int argc, char** argv) {
                                                  }}}) |
       or_die;
   // solving the problem
-  if (!usePETSc()) {
+  if (!mfem_mgis::usePETSc()) {
     // the default prediction concentrates the increment of the imposed
     // displacement in the elements next to the upper boundary
     problem.setPredictionPolicy(
@@ -252,8 +255,8 @@ int main(int argc, char** argv) {
     // resolution
     auto ct = t;
     auto dt2 = dt;
-    auto nsteps = size_type{1};
-    auto nsubsteps = size_type{0};
+    auto nsteps = mfem_mgis::size_type{1};
+    auto nsubsteps = mfem_mgis::size_type{0};
     while (nsteps != 0) {
       auto converged = problem.solve(ctx, ct, dt2);
       if (converged) {

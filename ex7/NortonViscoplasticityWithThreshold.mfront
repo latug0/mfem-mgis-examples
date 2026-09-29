@@ -33,7 +33,7 @@ A.setEntryName("NortonCoefficient");
 E.setEntryName("NortonExponent");
 @LocalVariable stress mu;    /* elastic shear modulus */
 
-@InitLocalVariables{ 
+@InitLocalVariables{
 /* Elastic shear modulus */
   mu = young/(2.*(1.+nu));
 }
@@ -42,7 +42,7 @@ E.setEntryName("NortonExponent");
   const real eps = 1.e-12;
   const auto seq = sigmaeq(sig);
   real seq_th=0.0;
-  if (seq>sig0) seq_th = (seq-sig0)/sig0; 
+  if (seq>sig0) seq_th = (seq-sig0)/sig0;
   const auto tmp = A*pow(seq_th,E-1.);
   const auto df_dseq = E*tmp/sig0;
   const auto iseq = 1/max(seq,eps*young);

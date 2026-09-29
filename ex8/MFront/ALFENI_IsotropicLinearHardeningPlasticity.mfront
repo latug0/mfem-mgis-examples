@@ -8,7 +8,7 @@
 }
 
 @Includes {
-    #include "ALFENI_HardeningModulus.hxx" 
+    #include "ALFENI_HardeningModulus.hxx"
 }
 
 @StrainMeasure Hencky;
@@ -31,7 +31,7 @@ p.setGlossaryName("EquivalentPlasticStrain");
 @LocalVariable stress lambda, mu, young, Sig0, H;
 
 // Mtest profiling
-@AuxiliaryStateVariable real T_echo; 
+@AuxiliaryStateVariable real T_echo;
 T_echo.setEntryName("Temperature_Output");
 
 @AuxiliaryStateVariable stress Sig0_echo;
@@ -60,25 +60,25 @@ SwellingExport.setEntryName("SwellingExport");
 @ProvidesSymmetricTangentOperator;
 
 @Integrator {
-  eel += deto; 
+  eel += deto;
   const auto se = 2 * mu * deviator(eel);
   const auto seq_e = sigmaeq(se);
-  
+
   // Load criterion evaluation
   const auto b = seq_e - Sig0 - H * p > stress{0};
-  
+
   if (b) {
     // Plasticity
     const auto iseq_e = 1 / seq_e;
     const auto n = eval(3 * se / (2 * seq_e));
     const auto cste = 1 / (H + 3 * mu);
-    
-    const auto dp_val = (seq_e - Sig0 - H * p) * cste; 
-    
+
+    const auto dp_val = (seq_e - Sig0 - H * p) * cste;
+
     // Update
     p += dp_val;
     eel -= dp_val * n;
-    
+
     // Exact tangent matrix (CTO)
     if (computeTangentOperator_) {
       if (smt == CONSISTENTTANGENTOPERATOR) {
@@ -95,9 +95,9 @@ SwellingExport.setEntryName("SwellingExport");
       Dt = lambda * Stensor4::IxI() + 2 * mu * Stensor4::Id();
     }
   }
-  
+
   sig = lambda * trace(eel) * Stensor::Id() + 2 * mu * eel;
-  
+
   T_echo = T + dT;
   Sig0_echo = Sig0;
   H_echo = H;

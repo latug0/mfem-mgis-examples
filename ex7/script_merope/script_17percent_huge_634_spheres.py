@@ -15,7 +15,7 @@ import merope
 L = [1, 1, 1]
 distMin = 0.001
 randomSeed = 0
-typeAlgo = sac_de_billes.AlgoRSA_3D() 
+typeAlgo = sac_de_billes.AlgoRSA_3D()
 theSpheres = sac_de_billes.throwSpheres_3D( sac_de_billes.RSA, sac_de_billes.Tore, L, randomSeed, [[0.04,0.17]], [2], distMin)
 
 #thePhases =  algo_3D.getPhases()

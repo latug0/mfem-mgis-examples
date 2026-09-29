@@ -69,7 +69,7 @@ Available options (all optional, with defaults):
 
 ## Usage and Command-Line Arguments
 
-The main program accepts several command-line arguments to configure the mesh, MFront behaviors, and linear solvers. 
+The main program accepts several command-line arguments to configure the mesh, MFront behaviors, and linear solvers.
 
 Here is a summary table of the available options:
 

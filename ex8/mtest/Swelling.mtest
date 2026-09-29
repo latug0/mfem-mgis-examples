@@ -51,8 +51,8 @@
 //   E = (0.5 * 1e5 * 1e10) [ramp] + (1.9e6 * 1e10) [plateau] = 1.95e16 J/m3
 //
 // Expected value at t = 2e6 s:
-//   S ~ 0.0377 
-// 
+//   S ~ 0.0377
+//
 // Therefore, the swelling should progress from ~0% initially to ~3.77% at the end of the simulation.
 
 // Check of the swelling against its exact value, the swelling per unit of

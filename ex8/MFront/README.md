@@ -52,7 +52,7 @@ Unlike ALFENI, U3Si2 does not undergo classical plasticity but instead creeps un
 
 * **Thermal Expansion:** The thermal expansion coefficient is set to $16.1 \times 10^{-6}\text{ K}^{-1}$ (IAEA-TECDOC-1921, section 2.2.4) with a reference temperature of $293.15\text{ K}$.
 * **Coupling with Swelling:** The swelling $sw$ computed by the `_SolidSwelling` model is passed to this mechanical law as an external state variable. It is converted into an isotropic inelastic strain tensor.
-* **Flow Rule (Creep):** 
+* **Flow Rule (Creep):**
   * Driven by the fission rate ($fr = Pow / E_f$), where $E_f = 3.20436 \times 10^{-11}\text{ J/fission}$.
   * Creep is proportional to the Von Mises equivalent stress ($seq$) multiplied by the fission rate and a constant $A = 500 \times 10^{-37}$.
 * **Post-processing:** The scalar swelling is assigned to an auxiliary variable (`SwellingExport` of type `strain`) to force its export to visualization tools.

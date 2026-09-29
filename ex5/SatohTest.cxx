@@ -137,7 +137,7 @@ static bool checkReactions(mfem_mgis::Context& ctx,
  * - the horizontal reaction of the left boundary matches its reference value.
  */
 int main(int argc, char** argv) {
-  auto ctx = mgis::Context{};
+  auto ctx = mfem_mgis::Context{};
   auto or_die = ctx.getFatalFailureHandler();
   //
   static constexpr const auto parallel = false;

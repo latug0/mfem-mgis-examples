@@ -32,12 +32,11 @@
 #include "CheckResultantForce.hxx"
 
 int main(int argc, char** argv) {
-  using namespace mfem_mgis;
-  auto ctx = Context{};
+  auto ctx = mfem_mgis::Context{};
   auto or_die = ctx.getFatalFailureHandler();
   // ctx.enableProfiling(true);
-  initialize(argc, argv);
-  constexpr const auto dim = size_type{3};
+  mfem_mgis::initialize(argc, argv);
+  constexpr const auto dim = mfem_mgis::size_type{3};
   const char* mesh_file = "ssna303_3d.msh";
   const char* behaviour = "IsotropicLinearHardeningPlasticity";
   const char* library = "src/libBehaviour.so";
@@ -53,7 +52,7 @@ int main(int argc, char** argv) {
 
   // options treatment
   mfem::OptionsParser args(argc, argv);
-  declareDefaultOptions(args);
+  mfem_mgis::declareDefaultOptions(args);
   args.AddOption(&parallel, "-p", "--parallel", "-no-p", "--no-parallel",
                  "Perform parallel computations.");
   args.AddOption(&order, "-o", "--order",
@@ -86,22 +85,26 @@ int main(int argc, char** argv) {
   args.PrintOptions(mfem_mgis::getOutputStream());
   const auto* const output_file = use_fbar ? "force-fbar.txt" : "force.txt";
   // the non linear problem
-  auto problem = construct<NonLinearEvolutionProblem>(
-                     ctx, dict{{"MeshFileName", mesh_file},
-                               {"Materials", dict{{"NotchedBeam", 1}}},
-                               {"FiniteElementFamily", "H1"},
-                               {"FiniteElementOrder", order},
-                               {"UnknownsSize", dim},
-                               {"Hypothesis", "Tridimensional"},
-                               {"Parallel", parallel}}) |
-                 or_die;
+  auto problem =
+      mfem_mgis::construct<mfem_mgis::NonLinearEvolutionProblem>(
+          ctx,
+          mfem_mgis::Parameters{
+              {"MeshFileName", mesh_file},
+              {"Materials", mfem_mgis::Parameters{{"NotchedBeam", 1}}},
+              {"FiniteElementFamily", "H1"},
+              {"FiniteElementOrder", order},
+              {"UnknownsSize", dim},
+              {"Hypothesis", "Tridimensional"},
+              {"Parallel", parallel}}) |
+      or_die;
 
   // 2 1 "Volume"
 #ifdef MGIS_HAVE_TFEL
   if (use_fbar) {
     problem.addBehaviourIntegrator(
         ctx, "Mechanics", "NotchedBeam", library, behaviour,
-        {{"Regularization", dict{{"FBar", dict{}}}}}) |
+        {{"Regularization",
+          mfem_mgis::Parameters{{"FBar", mfem_mgis::Parameters{}}}}}) |
         or_die;
   } else {
     problem.addBehaviourIntegrator(ctx, "Mechanics", "NotchedBeam", library,
@@ -124,25 +127,25 @@ int main(int argc, char** argv) {
 
   // 3 LowerBoundary
   problem.addBoundaryCondition(
-      ctx, make_unique<UniformDirichletBoundaryCondition>(
+      ctx, mfem_mgis::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
                ctx, problem.getFiniteElementDiscretizationPointer(), 3, 1) |
                or_die) |
       or_die;
   // 4 SymmetryPlane1
   problem.addBoundaryCondition(
-      ctx, make_unique<UniformDirichletBoundaryCondition>(
+      ctx, mfem_mgis::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
                ctx, problem.getFiniteElementDiscretizationPointer(), 4, 0) |
                or_die) |
       or_die;
   // 5 SymmetryPlane2
   problem.addBoundaryCondition(
-      ctx, make_unique<UniformDirichletBoundaryCondition>(
+      ctx, mfem_mgis::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
                ctx, problem.getFiniteElementDiscretizationPointer(), 5, 2) |
                or_die) |
       or_die;
   // 2 UpperBoundary
   problem.addBoundaryCondition(
-      ctx, make_unique<UniformDirichletBoundaryCondition>(
+      ctx, mfem_mgis::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
                ctx, problem.getFiniteElementDiscretizationPointer(), 2, 1,
                [](const auto t) {
                  const auto u = 6e-3 * t;
@@ -152,7 +155,7 @@ int main(int argc, char** argv) {
       or_die;
 
   // solving the problem without petsc
-  if (!usePETSc()) {
+  if (!mfem_mgis::usePETSc()) {
     // the default prediction concentrates the increment of the imposed
     // displacement in the elements next to the upper boundary
     problem.setPredictionPolicy(
@@ -191,8 +194,8 @@ int main(int argc, char** argv) {
     // resolution
     auto ct = t;
     auto dt2 = dt;
-    auto nsteps = size_type{1};
-    auto niter = size_type{0};
+    auto nsteps = mfem_mgis::size_type{1};
+    auto niter = mfem_mgis::size_type{0};
     while (nsteps != 0) {
       bool converged = problem.solve(ctx, ct, dt2);
       if (converged) {
@@ -209,7 +212,7 @@ int main(int argc, char** argv) {
         ++niter;
         problem.revert(ctx) | or_die;
         if (niter == 10) {
-          mgis::abort("maximum number of substeps");
+          mfem_mgis::abort("maximum number of substeps");
         }
       }
     }
