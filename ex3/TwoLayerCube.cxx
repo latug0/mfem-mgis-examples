@@ -10,7 +10,7 @@
  * finely, by Box.med (8x8x8 hexahedra), whose periodicity is described by
  * Box.per. Reading Box.med requires MFEM built with MED support:
  *
- *   ./TwoLayerCubeEx --mesh Box.med
+ *   ./two_layer_cube --mesh Box.med
  *
  * Mechanical strain:
  *                 eps = E + grad_s v

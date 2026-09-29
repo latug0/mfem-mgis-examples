@@ -41,7 +41,7 @@ add_custom_command(
     VERBATIM
 )
 
-add_executable(Thermomechanical
+add_executable(rjh_plate
     Thermomechanical.cxx
     src/BoundaryConditions.cxx
     src/RobinBC.cxx
@@ -56,37 +56,37 @@ foreach(input mesh/assemblage_hexa.msh mesh/assemblage_hexa_coarse.msh
                  ${CMAKE_CURRENT_BINARY_DIR}/${name} COPYONLY)
 endforeach()
 
-target_include_directories(Thermomechanical PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/headers")
+target_include_directories(rjh_plate PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/headers")
 
 add_custom_target(
     generate-libBehaviour ALL
     DEPENDS ${MFRONT_OUTPUTS}
 )
 
-target_link_libraries(Thermomechanical PRIVATE
+target_link_libraries(rjh_plate PRIVATE
     MPI::MPI_CXX
     mfem-mgis::MFEMMGIS
 )
 
-add_dependencies(check Thermomechanical generate-libBehaviour)
+add_dependencies(check rjh_plate generate-libBehaviour)
 
 # The test uses a coarser mesh than the default one to be faster, and compares
 # the statistics of the temperature and of the displacement to reference
 # values. The swelling is always compared to its exact value.
-add_test(NAME Thermomechanical_MUMPS
+add_test(NAME rjh_plate
     COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
-        $<TARGET_FILE:Thermomechanical>
+        $<TARGET_FILE:rjh_plate>
         -m assemblage_hexa_coarse.msh
         -lsMc MUMPSSolver
         -rf assemblage_hexa_coarse-statistics.ref
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 # one OpenMP thread per process, otherwise MUMPS oversubscribes the cores
-set_tests_properties(Thermomechanical_MUMPS PROPERTIES
+set_tests_properties(rjh_plate PROPERTIES
     PROCESSORS 2
     ENVIRONMENT OMP_NUM_THREADS=1)
 
 # comparison of the swelling model to its exact value
-add_test(NAME U3Si2SwellingMTest
+add_test(NAME u3si2_swelling
     COMMAND mtest Swelling.mtest
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 

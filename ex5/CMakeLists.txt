@@ -45,19 +45,19 @@ if(MFEM_USE_SUITESPARSE)
   add_custom_target(generate-libBehaviour-ex5 ALL
     DEPENDS "src/libBehaviour.so")
 
-  add_executable("SatohTest" SatohTest.cxx)
-  target_link_libraries(SatohTest mfem-mgis::MFEMMGIS)
-  target_include_directories(SatohTest
+  add_executable(satoh SatohTest.cxx)
+  target_link_libraries(satoh mfem-mgis::MFEMMGIS)
+  target_include_directories(satoh
     SYSTEM
     PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
     PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
     
-  add_dependencies(check SatohTest generate-libBehaviour-ex5)
+  add_dependencies(check satoh generate-libBehaviour-ex5)
 
-  set(test "SatohTest")
+  set(test "satoh")
   add_test(NAME ${test} COMMAND ${test})
 else()
-  message(STATUS "Disabling SatohTest. Compile MFEM with SuiteSparse support to enable it")
+  message(STATUS "Disabling satoh. Compile MFEM with SuiteSparse support to enable it")
 endif()
 
 

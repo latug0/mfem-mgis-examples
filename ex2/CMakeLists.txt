@@ -60,7 +60,7 @@ function(add_ssna303_test_ex)
   add_test(NAME ${test} COMMAND ssna303 --nbsteps 40 --end-time 1
                                    --reference-file ssna303-force.ref)
   if(MGIS_HAVE_TFEL)
-    add_test(NAME ${test}Fbar COMMAND ssna303 --use-fbar --nbsteps 40 --end-time 1
+    add_test(NAME ${test}-fbar COMMAND ssna303 --use-fbar --nbsteps 40 --end-time 1
                                      --reference-file ssna303-force.ref)
   endif(MGIS_HAVE_TFEL)
 endfunction(add_ssna303_test_ex)

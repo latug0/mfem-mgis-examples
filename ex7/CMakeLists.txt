@@ -59,16 +59,16 @@ target_include_directories(mox2
     
 add_dependencies(check mox2 generate-libBehaviour-ex7)
 
-set(test "MixedOxideFuelsTest")
+set(test "mox2")
 add_test(NAME ${test}
          COMMAND mox2 --no-post-processing --order 2 --mesh mesh/OneSphere.msh
                  --nbsteps 5 --reference-file OneSphere-avgStress.ref)
 
 if(MFEM_USE_PETSC)
-  add_test(NAME ${test}_PETSC
+  add_test(NAME ${test}-petsc
            COMMAND mox2 --no-post-processing --order 2 --mesh mesh/OneSphere.msh
                    --nbsteps 5 --reference-file OneSphere-avgStress.ref
                    --use-petsc --petsc-configuration-file petscrc)
   # both tests write the mean stresses in the same file
-  set_tests_properties(${test} ${test}_PETSC PROPERTIES RESOURCE_LOCK avgStress)
+  set_tests_properties(${test} ${test}-petsc PROPERTIES RESOURCE_LOCK avgStress)
 endif()

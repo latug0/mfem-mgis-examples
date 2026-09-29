@@ -27,9 +27,9 @@ endif(NOT TARGET mfem-mgis::MFEMMGIS)
 
 if(MFEM_USE_MPI)
   # Define the executable to build for this example
-  add_executable(TwoLayerCubeEx TwoLayerCube.cxx)
-  target_link_libraries(TwoLayerCubeEx mfem-mgis::MFEMMGIS)
-  target_include_directories(TwoLayerCubeEx
+  add_executable(two_layer_cube TwoLayerCube.cxx)
+  target_link_libraries(two_layer_cube mfem-mgis::MFEMMGIS)
+  target_include_directories(two_layer_cube
       SYSTEM
       PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
       PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
@@ -51,13 +51,13 @@ if(MFEM_USE_MPI)
   add_custom_target(generate-libBehaviour-ex3 ALL
     DEPENDS "src/libBehaviour.so")
   
-  add_dependencies(check TwoLayerCubeEx generate-libBehaviour-ex3)
+  add_dependencies(check two_layer_cube generate-libBehaviour-ex3)
   
   # Define the tests that will be called during the "make check", one per
   # loading case, each one being compared to its analytical solution
   function(add_two_layer_cube_ex tcase)
-    set(test "TwoLayerCubeEx-${tcase}")
-    add_test(NAME ${test} COMMAND TwoLayerCubeEx --test-case ${tcase})
+    set(test "two_layer_cube-${tcase}")
+    add_test(NAME ${test} COMMAND two_layer_cube --test-case ${tcase})
   endfunction(add_two_layer_cube_ex)
 
   foreach(tcase RANGE 0 5)

@@ -99,7 +99,7 @@ At the end of the simulation, the swelling is compared to its exact value: since
 ### Parallel Execution Example
 
 ```bash
-mpirun -np 4 ./Thermomechanical \
+mpirun -np 4 ./rjh_plate \
   -m assemblage_hexa.msh \
   -lsTh HypreGMRES -pcTh HypreBoomerAMG \
   -lsMc MUMPSSolver \
@@ -121,6 +121,6 @@ paraview Results/Mechanics/Mechanics.pvd
 
 Three tests are run by `ctest`:
 
-- `Thermomechanical_MUMPS` runs the simulation on 2 processes with the coarser mesh `assemblage_hexa_coarse.msh`, which is faster than the default one, and compares the statistics of the temperature and of the displacement to the reference values of `assemblage_hexa_coarse-statistics.ref`;
-- `U3Si2SwellingMTest` compares the swelling model to its exact value under a power ramp (`mtest/Swelling.mtest`);
-- `RobinTest` compares the Robin boundary condition to the exact solution of a bar (see `Robin/README.md`).
+- `rjh_plate` runs the simulation on 2 processes with the coarser mesh `assemblage_hexa_coarse.msh`, which is faster than the default one, and compares the statistics of the temperature and of the displacement to the reference values of `assemblage_hexa_coarse-statistics.ref`;
+- `u3si2_swelling` compares the swelling model to its exact value under a power ramp (`mtest/Swelling.mtest`);
+- `robin_test` compares the Robin boundary condition to the exact solution of a bar (see `Robin/README.md`).

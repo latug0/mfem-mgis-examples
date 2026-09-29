@@ -54,5 +54,5 @@ target_include_directories(rve
     
 add_dependencies(check rve generate-libBehaviour-ex6)
 
-set(test "RveNonLinearElasticTest")
+set(test "rve")
 add_test(NAME ${test} COMMAND rve --no-post-processing)
