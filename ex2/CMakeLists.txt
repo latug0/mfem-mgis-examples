@@ -57,7 +57,9 @@ function(add_ssna303_test_ex)
   set(test "Ssna303")
   # the first two time steps of the default loading, during which the plastic
   # flow starts
-  add_test(NAME ${test} COMMAND Ssna303 --nbsteps 2 --end-time 0.04
+  add_test(NAME ${test} COMMAND Ssna303 --nbsteps 40 --end-time 1
+                                   --reference-file ssna303-force.ref)
+  add_test(NAME ${test}Fbar COMMAND Ssna303 --use-fbar --nbsteps 40 --end-time 1
                                    --reference-file ssna303-force.ref)
 endfunction(add_ssna303_test_ex)
 

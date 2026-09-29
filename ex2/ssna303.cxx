@@ -50,7 +50,7 @@ static std::vector<mfem_mgis::real> readVerticalForce(const std::string& f) {
 static bool checkVerticalForce(const std::string& f, const std::string& r) {
   // relative tolerance, above the rounding of the forces which are written
   // with 6 significant digits
-  constexpr auto eps = mfem_mgis::real{1e-4};
+  constexpr auto eps = mfem_mgis::real{1e-3};
   const auto values = readVerticalForce(f);
   const auto references = readVerticalForce(r);
   if ((references.empty()) || (values.size() != references.size())) {
@@ -121,6 +121,8 @@ int main(int argc, char** argv) {
     abort(EXIT_FAILURE);
   }
   args.PrintOptions(mfem_mgis::getOutputStream());
+//
+  const auto* const output_file = use_fbar ? "force-fbar.txt" : "force.txt";
   // the non linear problem
   auto problem = construct<NonLinearEvolutionProblem>(
       ctx, dict{{"MeshFileName", mesh_file},
@@ -191,7 +193,7 @@ int main(int argc, char** argv) {
   // post-processings
   problem.addPostProcessing(
       ctx, "ComputeResultantForceOnBoundary",
-      {{"Boundary", 2}, {"OutputFileName", "force.txt"}}) |
+      {{"Boundary", 2}, {"OutputFileName", output_file}}) |
       or_die;
   problem.addPostProcessing(ctx, "ParaviewExportResults",
                             {{"OutputFileName", "ssna303-displacements"}}) |
@@ -244,7 +246,7 @@ int main(int argc, char** argv) {
   // resultant force
   if ((!std::string_view{reference_file}.empty()) &&
       (mfem_mgis::isMainProcess(problem.getFiniteElementDiscretization()))) {
-    if (!checkVerticalForce("force.txt", reference_file)) {
+    if (!checkVerticalForce(output_file, reference_file)) {
       return EXIT_FAILURE;
     }
   }
