@@ -286,7 +286,11 @@ static bool checkMeanStresses(const std::string& f, const std::string& r) {
   constexpr auto eps = mfem_mgis::real{1e-4};
   const auto values = readMeanStresses(f);
   const auto references = readMeanStresses(r);
-  if ((references.empty()) || (values.size() != references.size())) {
+  if (references.empty()) {
+    mfem_mgis::getErrorStream() << "no value read in '" << r << "'\n";
+    return false;
+  }
+  if (values.size() != references.size()) {
     mfem_mgis::getErrorStream() << "'" << f << "' and '" << r
                                 << "' do not have the same number of rows\n";
     return false;
