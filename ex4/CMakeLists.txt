@@ -29,7 +29,7 @@ endif(NOT TARGET mfem-mgis::MFEMMGIS)
 
 # Copy the files needed at run time. Unlike file(COPY), configure_file updates
 # the copies when these files are modified.
-foreach(input Plasticity.mfront ssna303_3d.msh rc_ex10p ssna303_3d-force-1step.ref ssna303_3d-force-10steps.ref)
+foreach(input Plasticity.mfront FiniteStrainPlasticity.mfront ssna303_3d.msh rc_ex10p ssna303_3d-force-1step.ref ssna303_3d-force-10steps.ref)
   configure_file(${PROJECT_SOURCE_DIR}/${input} ${PROJECT_BINARY_DIR}/${input}
                  COPYONLY)
 endforeach()
