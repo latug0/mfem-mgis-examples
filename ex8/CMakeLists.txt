@@ -50,6 +50,7 @@ add_executable(rjh_plate
 # Copy the files needed at run time next to the executable. Unlike
 # file(COPY), configure_file updates the copies when these files are modified.
 foreach(input mesh/assemblage_hexa.msh mesh/assemblage_hexa_coarse.msh
+              assemblage_hexa-statistics.ref
               assemblage_hexa_coarse-statistics.ref mtest/Swelling.mtest)
   get_filename_component(name ${input} NAME)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${input}
@@ -70,15 +71,22 @@ target_link_libraries(rjh_plate PRIVATE
 
 add_dependencies(check rjh_plate generate-libBehaviour)
 
-# The test uses a coarser mesh than the default one to be faster, and compares
-# the statistics of the temperature and of the displacement to reference
-# values. The swelling is always compared to its exact value.
+# The optimised builds run the simulation with the default mesh. The debug and
+# coverage builds, which are much slower, use the coarser mesh. The statistics
+# of the temperature and of the displacement are compared to the reference
+# values computed with the same mesh. The swelling is always compared to its
+# exact value.
+if(CMAKE_BUILD_TYPE MATCHES "^(Debug|Coverage)$")
+  set(rjh_plate_mesh assemblage_hexa_coarse)
+else()
+  set(rjh_plate_mesh assemblage_hexa)
+endif()
 add_test(NAME rjh_plate
     COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
         $<TARGET_FILE:rjh_plate>
-        -m assemblage_hexa_coarse.msh
+        -m ${rjh_plate_mesh}.msh
         -lsMc MUMPSSolver
-        -rf assemblage_hexa_coarse-statistics.ref
+        -rf ${rjh_plate_mesh}-statistics.ref
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 # one OpenMP thread per process, otherwise MUMPS oversubscribes the cores
 set_tests_properties(rjh_plate PROPERTIES
