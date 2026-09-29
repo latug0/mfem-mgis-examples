@@ -25,6 +25,11 @@ if (NOT TARGET mfem-mgis::MFEMMGIS)
   find_package(MFEMMGIS REQUIRED)
 endif(NOT TARGET mfem-mgis::MFEMMGIS)
 
+# Test mode of the examples, see ../config/TestMode.cmake
+if(NOT DEFINED MFEM_MGIS_EXAMPLES_FULL_TESTS)
+  include(${CMAKE_CURRENT_SOURCE_DIR}/../config/TestMode.cmake)
+endif()
+
 # Define the executable to build for this example
 add_executable(ssna303 ssna303.cxx)
 target_link_libraries(ssna303 mfem-mgis::MFEMMGIS)
@@ -53,15 +58,14 @@ add_custom_target(generate-libBehaviour-ex2 ALL
 
 add_dependencies(check ssna303 generate-libBehaviour-ex2)
 
-# Define the tests that will be called during the "make check". The optimised
-# builds compute the complete loading. The debug and coverage builds, which are
-# much slower, only compute its first two time steps, during which the plastic
-# flow starts. In both cases, the results are compared to the first values of
-# the reference files.
-if(CMAKE_BUILD_TYPE MATCHES "^(Debug|Coverage)$")
-  set(ssna303_loading --nbsteps 2 --end-time 0.05)
-else()
+# Define the tests that will be called during the "make check". The full test
+# mode computes the complete loading. The restricted test mode only computes
+# its first two time steps, during which the plastic flow starts. In both
+# modes, the results are compared to the first values of the reference files.
+if(MFEM_MGIS_EXAMPLES_FULL_TESTS)
   set(ssna303_loading --nbsteps 40 --end-time 1)
+else()
+  set(ssna303_loading --nbsteps 2 --end-time 0.05)
 endif()
 
 function(add_ssna303_test_ex)

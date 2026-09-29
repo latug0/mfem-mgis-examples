@@ -25,6 +25,11 @@ if (NOT TARGET mfem-mgis::MFEMMGIS)
   find_package(MFEMMGIS REQUIRED)
 endif(NOT TARGET mfem-mgis::MFEMMGIS)
 
+# Test mode of the examples, see ../config/TestMode.cmake
+if(NOT DEFINED MFEM_MGIS_EXAMPLES_FULL_TESTS)
+  include(${CMAKE_CURRENT_SOURCE_DIR}/../config/TestMode.cmake)
+endif()
+
 # Define a test that will be called during the "make check"
 
 # Copy the files needed at run time. Unlike file(COPY), configure_file updates
@@ -61,14 +66,14 @@ target_include_directories(mox2
     
 add_dependencies(check mox2 generate-libBehaviour-ex7)
 
-# The optimised builds compute the complete loading in 40 time steps. The debug
-# and coverage builds, which are much slower, compute it in 5 time steps only.
-# The mean stresses are compared to the reference values computed with the
-# same number of time steps.
-if(CMAKE_BUILD_TYPE MATCHES "^(Debug|Coverage)$")
-  set(mox2_nbsteps 5)
-else()
+# The full test mode computes the complete loading in 40 time steps. The
+# restricted test mode computes it in 5 time steps only. The mean stresses are
+# compared to the reference values computed with the same number of time
+# steps.
+if(MFEM_MGIS_EXAMPLES_FULL_TESTS)
   set(mox2_nbsteps 40)
+else()
+  set(mox2_nbsteps 5)
 endif()
 set(mox2_test_options --no-post-processing --order 2 --mesh mesh/OneSphere.msh
     --nbsteps ${mox2_nbsteps}

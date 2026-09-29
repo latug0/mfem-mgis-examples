@@ -54,6 +54,9 @@ if(MFEM_USE_SUITESPARSE)
     
   add_dependencies(check satoh generate-libBehaviour-ex5)
 
+  # The test is the same in the full and restricted test modes, since it is a
+  # single computation on a coarse mesh, whose reference reaction depends on
+  # the mesh.
   set(test "satoh")
   add_test(NAME ${test} COMMAND ${test})
 else()

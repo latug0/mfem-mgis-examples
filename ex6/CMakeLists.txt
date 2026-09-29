@@ -54,5 +54,8 @@ target_include_directories(rve
     
 add_dependencies(check rve generate-libBehaviour-ex6)
 
+# The test is the same in the full and restricted test modes, since it is a
+# single computation on the two-layer cube, compared to its analytical
+# solution.
 set(test "rve")
 add_test(NAME ${test} COMMAND rve --no-post-processing)

@@ -26,6 +26,11 @@ if (NOT TARGET mfem-mgis::MFEMMGIS)
   find_package(MFEMMGIS REQUIRED)
 endif(NOT TARGET mfem-mgis::MFEMMGIS)
 
+# Test mode of the examples, see ../config/TestMode.cmake
+if(NOT DEFINED MFEM_MGIS_EXAMPLES_FULL_TESTS)
+  include(${CMAKE_CURRENT_SOURCE_DIR}/../config/TestMode.cmake)
+endif()
+
 
 # Copy the files needed at run time. Unlike file(COPY), configure_file updates
 # the copies when these files are modified.
@@ -62,17 +67,17 @@ function(add_ssna303_3d_test_ex solver nsteps end_time reference_file use_fbar)
  endif()
 endfunction(add_ssna303_3d_test_ex)
 
-# The optimised builds compute the complete loading in 10 time steps. The debug
-# and coverage builds, which are much slower, only compute its first time step,
-# during which the plastic flow starts. In both cases, the results are compared
-# to the first values of the reference files. The PETSc case always computes a
-# single small time step.
-if(CMAKE_BUILD_TYPE MATCHES "^(Debug|Coverage)$")
-  set(ssna303_3d_nsteps 1)
-  set(ssna303_3d_end_time 0.1)
-else()
+# The full test mode computes the complete loading in 10 time steps. The
+# restricted test mode only computes its first time step, during which the
+# plastic flow starts. In both modes, the results are compared to the first
+# values of the reference files. The PETSc case always computes a single small
+# time step.
+if(MFEM_MGIS_EXAMPLES_FULL_TESTS)
   set(ssna303_3d_nsteps 10)
   set(ssna303_3d_end_time 1)
+else()
+  set(ssna303_3d_nsteps 1)
+  set(ssna303_3d_end_time 0.1)
 endif()
 
 foreach(tg IN ITEMS mumps hypre petsc)

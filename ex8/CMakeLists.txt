@@ -6,6 +6,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(MFEMMGIS REQUIRED)
 
+# Test mode of the examples, see ../config/TestMode.cmake
+if(NOT DEFINED MFEM_MGIS_EXAMPLES_FULL_TESTS)
+  include(${CMAKE_CURRENT_SOURCE_DIR}/../config/TestMode.cmake)
+endif()
+
 include(CTest)
 enable_testing()
 if(CMAKE_CONFIGURATION_TYPES)
@@ -71,15 +76,14 @@ target_link_libraries(rjh_plate PRIVATE
 
 add_dependencies(check rjh_plate generate-libBehaviour)
 
-# The optimised builds run the simulation with the default mesh. The debug and
-# coverage builds, which are much slower, use the coarser mesh. The statistics
-# of the temperature and of the displacement are compared to the reference
-# values computed with the same mesh. The swelling is always compared to its
-# exact value.
-if(CMAKE_BUILD_TYPE MATCHES "^(Debug|Coverage)$")
-  set(rjh_plate_mesh assemblage_hexa_coarse)
-else()
+# The full test mode runs the simulation with the default mesh. The restricted
+# test mode uses the coarser mesh. The statistics of the temperature and of the
+# displacement are compared to the reference values computed with the same
+# mesh. The swelling is always compared to its exact value.
+if(MFEM_MGIS_EXAMPLES_FULL_TESTS)
   set(rjh_plate_mesh assemblage_hexa)
+else()
+  set(rjh_plate_mesh assemblage_hexa_coarse)
 endif()
 add_test(NAME rjh_plate
     COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2

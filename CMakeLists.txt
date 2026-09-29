@@ -24,6 +24,9 @@ endif(CMAKE_CONFIGURATION_TYPES)
 
 find_package(OpenMP)
 
+# Test mode of the examples, see config/TestMode.cmake
+include(config/TestMode.cmake)
+
 add_subdirectory(config)
 add_subdirectory(ex1)
 add_subdirectory(ex2)

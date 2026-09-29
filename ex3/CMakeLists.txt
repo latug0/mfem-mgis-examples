@@ -54,7 +54,9 @@ if(MFEM_USE_MPI)
   add_dependencies(check two_layer_cube generate-libBehaviour-ex3)
   
   # Define the tests that will be called during the "make check", one per
-  # loading case, each one being compared to its analytical solution
+  # loading case, each one being compared to its analytical solution. They are
+  # the same in the full and restricted test modes, since each loading case is
+  # a single computation on a coarse mesh.
   function(add_two_layer_cube_ex tcase)
     set(test "two_layer_cube-${tcase}")
     add_test(NAME ${test} COMMAND two_layer_cube --test-case ${tcase})

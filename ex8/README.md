@@ -47,7 +47,7 @@ cd mesh
 python3 assemblage_hexa.py --output_file assemblage_hexa.msh
 ```
 
-The coarser mesh `mesh/assemblage_hexa_coarse.msh`, used by the tests in the debug and coverage builds, is generated with:
+The coarser mesh `mesh/assemblage_hexa_coarse.msh`, used by the tests in the restricted test mode, is generated with:
 
 ```bash
 python3 assemblage_hexa.py --densHaut 5 --densFuelLength 8 --densFuelThick 3 --densCladConn 3 --densStifThick 3 --densStifConn 3 --output_file assemblage_hexa_coarse.msh
@@ -125,6 +125,6 @@ The figures show the results at t = 2e6 s. They are computed with `mpirun -n 4 .
 
 Three tests are run by `ctest`:
 
-- `rjh_plate` runs the simulation on 2 processes with the default mesh and compares the statistics of the temperature and of the displacement to the reference values of `assemblage_hexa-statistics.ref`. In the debug and coverage builds, which are much slower, it uses the coarser mesh `assemblage_hexa_coarse.msh` and the reference values of `assemblage_hexa_coarse-statistics.ref`;
+- `rjh_plate` runs the simulation on 2 processes with the default mesh and compares the statistics of the temperature and of the displacement to the reference values of `assemblage_hexa-statistics.ref`. In the restricted test mode, used by default in the debug and coverage builds, it uses the coarser mesh `assemblage_hexa_coarse.msh` and the reference values of `assemblage_hexa_coarse-statistics.ref`;
 - `u3si2_swelling` compares the swelling model to its exact value under a power ramp (`mtest/Swelling.mtest`);
 - `robin_test` compares the Robin boundary condition to the exact solution of a bar (see `Robin/README.md`).
