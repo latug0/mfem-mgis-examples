@@ -115,7 +115,7 @@ The results are exported for ParaView:
 paraview Results/Mechanics/Mechanics.pvd
 ```
 
-The figures show the results at t = 2e6 s. They are computed with `mpirun -n 4 ./Thermomechanical -et 2e6 -ns 20`. The radial displacement is amplified 100 times. The cladding bulges between the stiffeners.
+The figures show the results at t = 2e6 s. They are computed with `mpirun -n 4 ./rjh_plate -et 2e6 -ns 20`. The radial displacement is amplified 100 times. The cladding bulges between the stiffeners.
 
 ![Radial displacement](Picture/ex8-3d.png)
 
