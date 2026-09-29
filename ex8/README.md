@@ -109,13 +109,17 @@ mpirun -np 4 ./Thermomechanical \
 
 Iterative solvers are much slower than MUMPS for the mechanics of this problem. With the default mesh, the simulation takes 8 s on 2 processes with MUMPS, about 2 minutes on 2 processes with `CGSolver` or `MINRESSolver` preconditioned by `HypreBoomerAMG`, and 165 s on 4 processes with `HyprePCG`. `GMRESSolver`, `SLISolver` and `BiCGSTABSolver` did not converge within 5 minutes.
 
-Resulting mechanical displacement field (`Displacement Magnitude`) obtained with this test case, visualized with ParaView:
+The results are exported for ParaView:
 
 ```bash
 paraview Results/Mechanics/Mechanics.pvd
 ```
 
-![Mechanical displacement magnitude](Picture/mini-rjh.png)
+The figures show the results at t = 2e6 s. They are computed with `mpirun -n 4 ./Thermomechanical -et 2e6 -ns 20`. The radial displacement is amplified 100 times. The cladding bulges between the stiffeners.
+
+![Radial displacement](Picture/ex8-3d.png)
+
+![Radial displacement at mid-height](Picture/ex8-section.png)
 
 ## Tests
 
