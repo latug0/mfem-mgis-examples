@@ -104,39 +104,46 @@ int main(int argc, char** argv) {
         or_die;
   }
 #else /* MGIS_HAVE_TFEL */
-  problem.addBehaviourIntegrator("Mechanics", "NotchedBeam", library,
-                                 behaviour);
+  problem.addBehaviourIntegrator(ctx, "Mechanics", "NotchedBeam", library,
+                                 behaviour) |
+      or_die;
 #endif /* MGIS_HAVE_TFEL */
   // materials
   auto& m1 = problem.getMaterial(ctx, "NotchedBeam", 0) | or_die;
-  mgis::behaviour::setExternalStateVariable(m1.s0, "Temperature", 293.15);
-  mgis::behaviour::setExternalStateVariable(m1.s1, "Temperature", 293.15);
+  mgis::behaviour::setExternalStateVariable(ctx, m1.s0, "Temperature", 293.15) |
+      or_die;
+  mgis::behaviour::setExternalStateVariable(ctx, m1.s1, "Temperature", 293.15) |
+      or_die;
 
   // boundary conditions
 
   // 3 LowerBoundary
   problem.addBoundaryCondition(
-      ctx, std::make_unique<UniformDirichletBoundaryCondition>(
-               problem.getFiniteElementDiscretizationPointer(), 3, 1)) |
+      ctx, make_unique<UniformDirichletBoundaryCondition>(
+               ctx, problem.getFiniteElementDiscretizationPointer(), 3, 1) |
+               or_die) |
       or_die;
   // 4 SymmetryPlane1
   problem.addBoundaryCondition(
-      ctx, std::make_unique<UniformDirichletBoundaryCondition>(
-          problem.getFiniteElementDiscretizationPointer(), 4, 0)) |
+      ctx, make_unique<UniformDirichletBoundaryCondition>(
+               ctx, problem.getFiniteElementDiscretizationPointer(), 4, 0) |
+               or_die) |
       or_die;
   // 5 SymmetryPlane2
   problem.addBoundaryCondition(
-      ctx, std::make_unique<UniformDirichletBoundaryCondition>(
-               problem.getFiniteElementDiscretizationPointer(), 5, 2)) |
+      ctx, make_unique<UniformDirichletBoundaryCondition>(
+               ctx, problem.getFiniteElementDiscretizationPointer(), 5, 2) |
+               or_die) |
       or_die;
   // 2 UpperBoundary
   problem.addBoundaryCondition(
-      ctx, std::make_unique<UniformDirichletBoundaryCondition>(
-               problem.getFiniteElementDiscretizationPointer(), 2, 1,
+      ctx, make_unique<UniformDirichletBoundaryCondition>(
+               ctx, problem.getFiniteElementDiscretizationPointer(), 2, 1,
                [](const auto t) {
                  const auto u = 6e-3 * t;
                  return u;
-               })) |
+               }) |
+               or_die) |
       or_die;
 
   // solving the problem without petsc
