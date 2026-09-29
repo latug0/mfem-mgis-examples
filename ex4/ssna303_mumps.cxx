@@ -79,8 +79,9 @@ int main(int argc, char** argv) {
     mfem_mgis::abort(EXIT_FAILURE);
   }
   args.PrintOptions(mfem_mgis::getOutputStream());
-  
-  // loading the mesh
+  //
+  const auto* const output_file = use_fbar ? "force-fbar.txt" : "force.txt";
+  // the non linear problem
   auto problem = construct<NonLinearEvolutionProblem>(
       ctx, dict{{"MeshFileName", mesh_file},
 		{"Materials", dict{{"NotchedBeam", 1}}},
@@ -162,7 +163,7 @@ int main(int argc, char** argv) {
       or_die;
   problem.addPostProcessing(
       ctx, "ComputeResultantForceOnBoundary",
-      {{"Boundary", 2}, {"OutputFileName", "force.txt"}}) |
+      {{"Boundary", 2}, {"OutputFileName", output_file}}) |
       or_die;
 
   // loop over time step
@@ -206,7 +207,11 @@ int main(int argc, char** argv) {
   // resultant force
   if ((!std::string_view{reference_file}.empty()) &&
       (mfem_mgis::isMainProcess(problem.getFiniteElementDiscretization()))) {
-    if (!checkVerticalForce("force.txt", reference_file)) {
+    // reference results were obtained using standard lagrange elements
+    // thus, we relaxe the tolerance when using FBar (though Fbar results
+    // are more reliable)
+    const auto eps = (use_fbar) ? 1e-2 : 1e-4;
+    if (!checkVerticalForce(output_file, reference_file, eps)) {
       return EXIT_FAILURE;
     }
   }

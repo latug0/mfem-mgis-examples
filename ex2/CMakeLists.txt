@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
-project(Ssna303Example)
+project(ssna303Example)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -26,9 +26,9 @@ if (NOT TARGET mfem-mgis::MFEMMGIS)
 endif(NOT TARGET mfem-mgis::MFEMMGIS)
 
 # Define the executable to build for this example
-add_executable(Ssna303 ssna303.cxx)
-target_link_libraries(Ssna303 mfem-mgis::MFEMMGIS)
-target_include_directories(Ssna303
+add_executable(ssna303 ssna303.cxx)
+target_link_libraries(ssna303 mfem-mgis::MFEMMGIS)
+target_include_directories(ssna303
     SYSTEM
     PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
     PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
@@ -50,16 +50,16 @@ add_custom_command(
 add_custom_target(generate-libBehaviour-ex2 ALL
   DEPENDS "src/libBehaviour.so")
 
-add_dependencies(check Ssna303 generate-libBehaviour-ex2)
+add_dependencies(check ssna303 generate-libBehaviour-ex2)
 
 # Define a test that will be called during the "make check"
 function(add_ssna303_test_ex)
-  set(test "Ssna303")
+  set(test "ssna303")
   # the first two time steps of the default loading, during which the plastic
   # flow starts
-  add_test(NAME ${test} COMMAND Ssna303 --nbsteps 40 --end-time 1
+  add_test(NAME ${test} COMMAND ssna303 --nbsteps 40 --end-time 1
                                    --reference-file ssna303-force.ref)
-  add_test(NAME ${test}Fbar COMMAND Ssna303 --use-fbar --nbsteps 40 --end-time 1
+  add_test(NAME ${test}Fbar COMMAND ssna303 --use-fbar --nbsteps 40 --end-time 1
                                    --reference-file ssna303-force.ref)
 endfunction(add_ssna303_test_ex)
 
