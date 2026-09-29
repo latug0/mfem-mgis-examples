@@ -46,11 +46,11 @@ static std::vector<mfem_mgis::real> readVerticalForce(const std::string& f) {
  * \param[in] f: file written by the `ComputeResultantForceOnBoundary`
  * post-processing
  * \param[in] r: reference file
+ * \param[in] eps: relative tolerance
  */
-static bool checkVerticalForce(const std::string& f, const std::string& r) {
-  // relative tolerance, above the rounding of the forces which are written
-  // with 6 significant digits
-  constexpr auto eps = mfem_mgis::real{1e-3};
+static bool checkVerticalForce(const std::string& f,
+                               const std::string& r,
+                               const mfem_mgis::real eps) {
   const auto values = readVerticalForce(f);
   const auto references = readVerticalForce(r);
   if ((references.empty()) || (values.size() != references.size())) {
@@ -245,7 +245,11 @@ int main(int argc, char** argv) {
   // resultant force
   if ((!std::string_view{reference_file}.empty()) &&
       (mfem_mgis::isMainProcess(problem.getFiniteElementDiscretization()))) {
-    if (!checkVerticalForce(output_file, reference_file)) {
+    // relative tolerance, above the rounding of the forces which are written
+    // with 6 significant digits. The reference values are computed without
+    // FBar, so the tolerance is relaxed with FBar.
+    const auto eps = use_fbar ? mfem_mgis::real{1e-3} : mfem_mgis::real{1e-4};
+    if (!checkVerticalForce(output_file, reference_file, eps)) {
       return EXIT_FAILURE;
     }
   }
