@@ -131,6 +131,7 @@ namespace thirdmedium_utils {
             double te,
             int nsteps) {
     CatchTimeSection(ctx, "Solve");
+    auto or_die = ctx.getFatalFailureHandler();
 
     // Setup Parameters to keep simulation outputs
     mfem_mgis::Parameters params;
@@ -145,11 +146,13 @@ namespace thirdmedium_utils {
     params.insert(mfem_mgis::may_throw, "Times", times_vec);
 
     // Initialize simulation with parameters
-    auto s = mfem_mgis::Simulation{ctx, mechanics, params};
-
-    std::pair run_out = s.run(ctx);
-    mfem::out << ctx.getErrorMessage() << '\n';
-
+    auto s =
+        mfem_mgis::construct<mfem_mgis::Simulation>(ctx, mechanics, params) |
+        or_die;
+    const auto run_out = s.run(ctx);
+    if (run_out.first.shallStop()) {
+      mfem::out << ctx.getErrorMessage() << '\n';
+    }
     // Return the full pair to access both status and output data
     return run_out;
   }

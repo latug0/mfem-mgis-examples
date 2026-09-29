@@ -596,11 +596,11 @@ namespace thirdmedium_utils {
           // Extract metrics using the exact string keys defined in
           // NonLinearResolutionOutput.cxx
           auto iterations = mfem_mgis::get<mfem_mgis::size_type>(
-              mfem_mgis::may_throw, next_state, "iterations");
+              mfem_mgis::may_throw, next_state, "Iterations");
           auto initial_res = mfem_mgis::get<mfem_mgis::real>(
-              mfem_mgis::may_throw, next_state, "initial_residual_norm");
+              mfem_mgis::may_throw, next_state, "InitialResidualNorm");
           auto final_res = mfem_mgis::get<mfem_mgis::real>(
-              mfem_mgis::may_throw, next_state, "final_residual_norm");
+              mfem_mgis::may_throw, next_state, "FinalResidualNorm");
 
           // Print or store the convergence data
           std::cout << "Iterations: " << iterations

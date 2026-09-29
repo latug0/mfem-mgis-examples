@@ -30,24 +30,29 @@
 #include "ThirdMediumUtils.hxx"
 
 int main(int argc, char **argv) {
-  /// feenableexcept(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW); // DEBUG
-  // options treatment (contains default values for the parameters. Default
-  // values are in the header ThirdMediumUtils.hxx)
-  thirdmedium_utils::TestParameters p;
-  p.mesh_file = "bending.msh";
-  mfem::OptionsParser args = parse_options(p, argc, argv);
-
+  //
   constexpr const auto dim = mfem_mgis::size_type{2};
   constexpr auto nsteps = mfem_mgis::size_type{50};
   constexpr auto H = mfem_mgis::real{0.6};
   constexpr auto te = mfem_mgis::real{1};
-  auto factor = mfem_mgis::real{p.gamma};
   constexpr auto Ks = mfem_mgis::real{200e9};
   constexpr auto Gs = mfem_mgis::real{200e9};
   constexpr auto E = mfem_mgis::real{210e9};
   constexpr auto nu = mfem_mgis::real{0.3};
   // Initialize mfem_mgis (it includes a call to MPI_Init)
   mfem_mgis::initialize(argc, argv);
+  /// feenableexcept(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW); // DEBUG
+  // options treatment (contains default values for the parameters. Default
+  // values are in the header ThirdMediumUtils.hxx)
+  thirdmedium_utils::TestParameters p;
+  p.mesh_file = "bending.msh";
+  mfem::OptionsParser args = parse_options(p, argc, argv);
+  if (mfem_mgis::getMPIrank() == 0) {
+    args.PrintOptions(std::cout);
+    std::cout << "Parallel : " << p.parallel << '\n';
+  }
+  //
+  auto factor = mfem_mgis::real{p.gamma};
   //
   // init timers (deprecated)
   // mfem_mgis::Profiler::timers::init_timers();
@@ -66,11 +71,6 @@ int main(int argc, char **argv) {
 #else
   constexpr bool parallel = false;
 #endif
-
-  if (mfem_mgis::getMPIrank() == 0) {
-    args.PrintOptions(std::cout);
-    std::cout << "Parallel : " << p.parallel << '\n';
-  }
 
   // the non linear problem
   auto lOA = mfem_mgis::dict{

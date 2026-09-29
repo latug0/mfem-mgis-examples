@@ -72,12 +72,14 @@ file(COPY
   DESTINATION ${PROJECT_BINARY_DIR})
 
 # Use mfront to generate libBehaviour.so
-# add_custom_command(
-#   OUTPUT "src/libBehaviour.so"
-#   COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/ThirdMediumContactHyperElasticBehaviour.mfront ${PROJECT_BINARY_DIR}/Elasticity.mfront DEPENDS ${PROJECT_BINARY_DIR}/Elasticity.mfront  ${PROJECT_BINARY_DIR}/ThirdMediumContactHyperElasticBehaviour.mfront
-#   COMMENT "Performing mfront code generation")
+add_custom_command(
+  OUTPUT "src/libBehaviour.so"
+  COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/ThirdMediumContactHyperElasticBehaviour.mfront ${PROJECT_BINARY_DIR}/Elasticity.mfront DEPENDS ${PROJECT_BINARY_DIR}/Elasticity.mfront  ${PROJECT_BINARY_DIR}/ThirdMediumContactHyperElasticBehaviour.mfront
+  COMMENT "Performing mfront code generation")
+add_custom_target(generate-libBehaviour-ex9 ALL
+   DEPENDS "src/libBehaviour.so")
 
-# add_custom_target(generate-libBehaviour ALL
-#   DEPENDS "src/libBehaviour.so")
-
+add_test(NAME BendingTest   COMMAND ./BendingTest   -pp 1 -m bending.msh)
+add_test(NAME BendingTest3D COMMAND ./BendingTest3D -pp 1 -m bending3D_thin.msh)
+add_test(NAME CShapeContact COMMAND ./CShapeContact -pp 1 -m cshape.msh)
 
