@@ -13,6 +13,8 @@
 #include "RobinBC.hxx"
 
 void apply_boundary_conditions(
+    mfem_mgis::attributes::MayAbort,
+    mfem_mgis::Context&,
     mfem_mgis::NonLinearEvolutionProblem& heat_transfer,
     mfem_mgis::NonLinearEvolutionProblem& mechanics,
     const TestParameters& p,
@@ -20,12 +22,15 @@ void apply_boundary_conditions(
     mfem::GridFunction* u_mech);
 
 // Model used to manually update the source term before passing it to the
-// constitutive model responsible for swelling.
+// constitutive model responsible for swelling, and the displacement field
+// used by the Robin boundary condition.
 class FieldUpdaterModel : public mfem_mgis::ModelBase {
  private:
   std::shared_ptr<std::vector<mgis::real>> Pow_s0;
   std::shared_ptr<std::vector<mgis::real>> Pow_s1;
   std::function<double(double)> power_history;
+  mfem::GridFunction* u_mech;
+  const mfem::Vector* u_mech_true;
   std::string name;
 
  public:
@@ -33,11 +38,15 @@ class FieldUpdaterModel : public mfem_mgis::ModelBase {
                     const mfem_mgis::MeshDiscretization& mesh,
                     std::shared_ptr<std::vector<mgis::real>> pow0,
                     std::shared_ptr<std::vector<mgis::real>> pow1,
-                    std::function<double(double)> history_func)
+                    std::function<double(double)> history_func,
+                    mfem::GridFunction* u,
+                    const mfem::Vector* u_true)
       : mfem_mgis::ModelBase(ctx, mesh),
         Pow_s0(pow0),
         Pow_s1(pow1),
         power_history(history_func),
+        u_mech(u),
+        u_mech_true(u_true),
         name("FieldUpdater") {}
 
   [[nodiscard]] std::string getName() const noexcept override { return name; }
@@ -51,6 +60,7 @@ class FieldUpdaterModel : public mfem_mgis::ModelBase {
 
     for (auto& val : *Pow_s0) val = p0;
     for (auto& val : *Pow_s1) val = p1;
+    u_mech->SetFromTrueDofs(*u_mech_true);
 
     return {mfem_mgis::ExitStatus::success,
             mfem_mgis::ComputeNextStateOutput{}};

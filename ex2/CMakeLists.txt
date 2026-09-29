@@ -6,7 +6,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(CTest)
 # testing
-set(CTEST_CONFIGURATION_TYPE "${JOB_BUILD_CONFIGURATION}")
 # (must be placed *before* any add_subdirectory, cmake bug ?)
 enable_testing()
 if(CMAKE_CONFIGURATION_TYPES)
@@ -34,11 +33,12 @@ target_include_directories(Ssna303
     PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
     PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
 
-# Copy needed file for execution
-file(COPY
-  ${PROJECT_SOURCE_DIR}/Plasticity.mfront
-  ${PROJECT_SOURCE_DIR}/ssna303.msh
-  DESTINATION ${PROJECT_BINARY_DIR})
+# Copy the files needed at run time. Unlike file(COPY), configure_file updates
+# the copies when these files are modified.
+foreach(input Plasticity.mfront ssna303.msh ssna303-force.ref)
+  configure_file(${PROJECT_SOURCE_DIR}/${input} ${PROJECT_BINARY_DIR}/${input}
+                 COPYONLY)
+endforeach()
 
 # Use mfront to generate libBehaviour.so
 add_custom_command(
@@ -55,7 +55,10 @@ add_dependencies(check Ssna303 generate-libBehaviour-ex2)
 # Define a test that will be called during the "make check"
 function(add_ssna303_test_ex)
   set(test "Ssna303")
-  add_test(NAME ${test} COMMAND Ssna303)
+  # the first two time steps of the default loading, during which the plastic
+  # flow starts
+  add_test(NAME ${test} COMMAND Ssna303 --nbsteps 2 --end-time 0.04
+                                   --reference-file ssna303-force.ref)
 endfunction(add_ssna303_test_ex)
 
 add_ssna303_test_ex()

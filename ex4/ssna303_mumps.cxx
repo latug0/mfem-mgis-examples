@@ -1,11 +1,12 @@
 /*!
- * \file   ssna303.cxx
+ * \file   ssna303_mumps.cxx
  * \brief
  * \author Thomas Helfer
  * \date   14/12/2020
  */
 
 #include <memory>
+#include <string_view>
 #include <cstdlib>
 #include <iostream>
 #include "mfem/general/optparser.hpp"
@@ -28,12 +29,10 @@
 #include "MFEMMGIS/NonLinearEvolutionProblem.hxx"
 #include "MFEMMGIS/NonLinearEvolutionProblemImplementation.hxx"
 #include "MFEMMGIS/LinearSolverFactory.hxx"
-
-#define PRINT_DEBUG (std::cout << __FILE__ << ":" << __LINE__ << std::endl)
+#include "CheckResultantForce.hxx"
 
 int main(int argc, char** argv) {
   using namespace mfem_mgis;
-  //
   auto ctx = Context{};
   auto or_die = ctx.getFatalFailureHandler();
   // ctx.enableProfiling(true);
@@ -42,41 +41,54 @@ int main(int argc, char** argv) {
   const char* mesh_file = "ssna303_3d.msh";
   const char* behaviour = "FiniteStrainPlasticity";
   const char* library = "src/libBehaviour.so";
-  const char* petscrc_file = "";
   bool use_fbar = false;
-  auto parallel = int{1};
-  auto ref_para = 0;
-  auto ref_seq = 0;
+  // not null, since mfem::OptionsParser::PrintUsage stops at the first null
+  // string
+  const char* reference_file = "";
+  auto parallel = true;
   auto order = 1;
+  auto nbsteps = 50;
+  auto end_time = mfem_mgis::real{1};
 
   // options treatment
   mfem::OptionsParser args(argc, argv);
   declareDefaultOptions(args);
-  args.AddOption(&parallel, "-p", "--parallel",
+  args.AddOption(&parallel, "-p", "--parallel", "-no-p", "--no-parallel",
                  "Perform parallel computations.");
   args.AddOption(&order, "-o", "--order",
                  "Finite element order (polynomial degree).");
+  args.AddOption(&nbsteps, "-ns", "--nbsteps", "Number of time steps.");
+  args.AddOption(
+      &end_time, "-et", "--end-time",
+      "End time. The displacement of the upper boundary is 6e-3 * t.");
+  args.AddOption(&reference_file, "-rf", "--reference-file",
+                 "Reference values of the resultant force on the upper "
+                 "boundary, no comparison if empty.");
 #ifdef MGIS_HAVE_TFEL
   args.AddOption(&use_fbar, "", "--use-fbar", "", "--no-use-fbar",
                  "Use Fbar formulation.");
 #endif /* MGIS_HAVE_TFEL */
   args.Parse();
-  if (!args.Good()) {
-    args.PrintUsage(std::cout);
-    return EXIT_FAILURE;
+  if (args.Help()) {
+    args.PrintUsage(mfem_mgis::getOutputStream());
+    mfem_mgis::finalize();
+    return EXIT_SUCCESS;
   }
-  args.PrintOptions(std::cout);
-
+  if (!args.Good()) {
+    args.PrintUsage(mfem_mgis::getOutputStream());
+    mfem_mgis::abort(EXIT_FAILURE);
+  }
+  args.PrintOptions(mfem_mgis::getOutputStream());
+  
   // loading the mesh
-  NonLinearEvolutionProblem problem(
-      ctx, {{"MeshFileName", mesh_file},
-            {"Materials", dict{{"NotchedBeam", 1}}},
-            {"FiniteElementFamily", "H1"},
-            {"FiniteElementOrder", order},
-            {"UnknownsSize", dim},
-            {"Hypothesis", "Tridimensional"},
-            {"Parallel", true},
-            {"NumberOfUniformRefinements", parallel ? ref_para : ref_seq}});
+  auto problem = construct<NonLinearEvolutionProblem>(
+      ctx, dict{{"MeshFileName", mesh_file},
+		{"Materials", dict{{"NotchedBeam", 1}}},
+		{"FiniteElementFamily", "H1"},
+		{"FiniteElementOrder", order},
+		{"UnknownsSize", dim},
+		{"Hypothesis", "Tridimensional"},
+		{"Parallel", parallel}}) |or_die;
 
   // 2 1 "Volume"
 #ifdef MGIS_HAVE_TFEL
@@ -98,6 +110,7 @@ int main(int argc, char** argv) {
   auto& m1 = problem.getMaterial(ctx, "NotchedBeam", 0) | or_die;
   mgis::behaviour::setExternalStateVariable(m1.s0, "Temperature", 293.15);
   mgis::behaviour::setExternalStateVariable(m1.s1, "Temperature", 293.15);
+
   // boundary conditions
 
   // 3 LowerBoundary
@@ -153,11 +166,11 @@ int main(int argc, char** argv) {
       or_die;
 
   // loop over time step
-  const auto nsteps = size_type{50};
-  const auto dt = real{1} / nsteps;
-  auto t = real{0};
-  auto iteration = size_type{};
-  for (size_type i = 0; i != nsteps; ++i) {
+  const auto nsteps = mfem_mgis::size_type(nbsteps);
+  const auto dt = end_time / nsteps;
+  auto t = mfem_mgis::real{0};
+  auto iteration = mfem_mgis::size_type{};
+  for (mfem_mgis::size_type i = 0; i != nsteps; ++i) {
     std::cout << "iteration " << iteration << " from " << t << " to " << t + dt
               << '\n';
     // resolution
@@ -170,23 +183,33 @@ int main(int argc, char** argv) {
       if (converged) {
         --nsteps;
         ct += dt2;
-        problem.update();
+        if (nsteps == 0) {
+          problem.executePostProcessings(ctx, t, dt) | or_die;
+        }
+        problem.update(ctx) | or_die;
       } else {
         std::cout << "\nsubstep: " << niter << '\n';
         nsteps *= 2;
         dt2 /= 2;
         ++niter;
-        problem.revert();
+        problem.revert(ctx) | or_die;
         if (niter == 10) {
-          mgis::raise("maximum number of substeps");
+          mgis::abort("maximum number of substeps");
         }
       }
     }
-    problem.executePostProcessings(ctx, t, dt);
     t += dt;
     ++iteration;
     std::cout << '\n';
   }
-  // Profiler::OutputManager::printTimeTable(ctx);
+  // comparison to the reference values, only on the process writing the
+  // resultant force
+  if ((!std::string_view{reference_file}.empty()) &&
+      (mfem_mgis::isMainProcess(problem.getFiniteElementDiscretization()))) {
+    if (!checkVerticalForce("force.txt", reference_file)) {
+      return EXIT_FAILURE;
+    }
+  }
+  // mfem_mgis::Profiler::OutputManager::printTimeTable(ctx);
   return EXIT_SUCCESS;
 }

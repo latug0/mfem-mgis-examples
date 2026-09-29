@@ -1,12 +1,11 @@
 cmake_minimum_required(VERSION 3.13)
-project(InclusionsExample)
+project(TwoLayerCubeExample)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(CTest)
 # testing
-set(CTEST_CONFIGURATION_TYPE "${JOB_BUILD_CONFIGURATION}")
 # (must be placed *before* any add_subdirectory, cmake bug ?)
 enable_testing()
 if(CMAKE_CONFIGURATION_TYPES)
@@ -28,20 +27,19 @@ endif(NOT TARGET mfem-mgis::MFEMMGIS)
 
 if(MFEM_USE_MPI)
   # Define the executable to build for this example
-  add_executable(InclusionsEx InclusionsEx.cxx)
-  target_link_libraries(InclusionsEx mfem-mgis::MFEMMGIS)
-  target_include_directories(InclusionsEx
+  add_executable(TwoLayerCubeEx TwoLayerCube.cxx)
+  target_link_libraries(TwoLayerCubeEx mfem-mgis::MFEMMGIS)
+  target_include_directories(TwoLayerCubeEx
       SYSTEM
       PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
       PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
   
-  # Copy needed file for execution
-  file(COPY
-    ${PROJECT_SOURCE_DIR}/Elasticity.mfront
-    ${PROJECT_SOURCE_DIR}/cube_2mat_per.mesh
-    ${PROJECT_SOURCE_DIR}/Box.med
-    ${PROJECT_SOURCE_DIR}/Box.per
-    DESTINATION ${PROJECT_BINARY_DIR})
+  # Copy the files needed at run time. Unlike file(COPY), configure_file updates
+  # the copies when these files are modified.
+  foreach(input Elasticity.mfront cube_2mat_per.mesh Box.med Box.per)
+    configure_file(${PROJECT_SOURCE_DIR}/${input} ${PROJECT_BINARY_DIR}/${input}
+                   COPYONLY)
+  endforeach()
   
   # Use mfront to generate libBehaviour.so
   add_custom_command(
@@ -53,15 +51,18 @@ if(MFEM_USE_MPI)
   add_custom_target(generate-libBehaviour-ex3 ALL
     DEPENDS "src/libBehaviour.so")
   
-  add_dependencies(check InclusionsEx generate-libBehaviour-ex3)
+  add_dependencies(check TwoLayerCubeEx generate-libBehaviour-ex3)
   
-  # Define a test that will be called during the "make check"
-  function(add_inclusions_ex)
-    set(test "InclusionsEx")
-    add_test(NAME ${test} COMMAND InclusionsEx)
-  endfunction(add_inclusions_ex)
+  # Define the tests that will be called during the "make check", one per
+  # loading case, each one being compared to its analytical solution
+  function(add_two_layer_cube_ex tcase)
+    set(test "TwoLayerCubeEx-${tcase}")
+    add_test(NAME ${test} COMMAND TwoLayerCubeEx --test-case ${tcase})
+  endfunction(add_two_layer_cube_ex)
 
-  add_inclusions_ex()
+  foreach(tcase RANGE 0 5)
+    add_two_layer_cube_ex(${tcase})
+  endforeach()
 
 endif()
 

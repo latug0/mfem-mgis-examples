@@ -1,0 +1,18 @@
+# first column: time
+# 2 column: 0 component of the mean thermodynamic force for material 1
+# 3 column: 1 component of the mean thermodynamic force for material 1
+# 4 column: 2 component of the mean thermodynamic force for material 1
+# 5 column: 3 component of the mean thermodynamic force for material 1
+# 6 column: 4 component of the mean thermodynamic force for material 1
+# 7 column: 5 component of the mean thermodynamic force for material 1
+# 8 column: 0 component of the mean thermodynamic force for material 2
+# 9 column: 1 component of the mean thermodynamic force for material 2
+# 10 column: 2 component of the mean thermodynamic force for material 2
+# 11 column: 3 component of the mean thermodynamic force for material 2
+# 12 column: 4 component of the mean thermodynamic force for material 2
+# 13 column: 5 component of the mean thermodynamic force for material 2
+1 -3.75447e+07 -3.75505e+07 7.51012e+07 -201.96 1606.93 -267.776 -5.67851e+07 -5.67279e+07 1.13455e+08 1975.72 -15720.1 2619.58
+2 -4.3893e+07 -4.38458e+07 9.0608e+07 -13564.6 11291 -7911.65 -8.65587e+07 -8.58396e+07 1.44329e+08 9853.1 -174326 -17322.1
+3 -3.75647e+07 -3.74019e+07 7.66822e+07 -26698.5 8370.41 -19413.6 -9.34868e+07 -9.19092e+07 1.68613e+08 20587.7 -297666 -35062.5
+4 -4.06745e+07 -4.03665e+07 8.39909e+07 -49563.2 16719.3 -31153.7 -1.09349e+08 -1.06946e+08 1.87437e+08 9702.63 -392634 -39219.7
+5 -3.74167e+07 -3.70235e+07 7.64503e+07 -64797.2 17744.4 -38378.2 -1.11952e+08 -1.08663e+08 2.0095e+08 -12079.4 -433843 -71853.8

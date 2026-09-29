@@ -16,9 +16,10 @@ namespace mfem_mgis {
         T_inf(T_inf_),
         u_disp(u_disp_) {}  // end of RobinNonlinearFormIntegrator
 
-  void RobinNonlinearFormIntegrator::AssembleElementVector(
+  void RobinNonlinearFormIntegrator::AssembleFaceVector(
       const mfem::FiniteElement &e,
-      mfem::ElementTransformation &tr,
+      const mfem::FiniteElement &,
+      mfem::FaceElementTransformations &tr,
       const mfem::Vector &T_el,
       mfem::Vector &R) {
     const int nnodes = e.GetDof();
@@ -26,26 +27,20 @@ namespace mfem_mgis {
     R.SetSize(nnodes);
     R = 0.0;
     const auto *ir = this->IntRule;
-    if (!ir) ir = &mfem::IntRules.Get(e.GetGeomType(), e.GetOrder());
+    if (!ir) ir = &mfem::IntRules.Get(tr.GetGeometryType(), 2 * e.GetOrder());
 
     mfem::DenseMatrix grad_u;
-    mfem::FaceElementTransformations *face_tr =
-        dynamic_cast<mfem::FaceElementTransformations *>(&tr);
 
     for (int i = 0; i < ir->GetNPoints(); ++i) {
       const auto &ip = ir->IntPoint(i);
-      tr.SetIntPoint(&ip);
-      e.CalcShape(ip, shape);
+      tr.SetAllIntPoints(&ip);
+      e.CalcShape(tr.GetElement1IntPoint(), shape);
       const double T_pt = shape * T_el;
       const double w = ip.weight * tr.Weight();
 
       double h_eff = h_base;
-      if (u_disp != nullptr && face_tr != nullptr) {
-        mfem::IntegrationPoint eip;
-        face_tr->Loc1.Transform(ip, eip);
-        face_tr->Elem1->SetIntPoint(&eip);
-
-        u_disp->GetVectorGradient(*(face_tr->Elem1), grad_u);
+      if (u_disp != nullptr) {
+        u_disp->GetVectorGradient(*(tr.Elem1), grad_u);
         double dilatation_volumique =
             grad_u(0, 0) + grad_u(1, 1) + grad_u(2, 2);
         h_eff = h_base * (1.0 + dilatation_volumique * (2.0 / 3.0));
@@ -54,11 +49,12 @@ namespace mfem_mgis {
       for (int ni = 0; ni < nnodes; ++ni)
         R[ni] -= w * h_eff * (T_pt - T_inf) * shape[ni];
     }
-  }  // end of AssembleElementVector
+  }  // end of AssembleFaceVector
 
-  void RobinNonlinearFormIntegrator::AssembleElementGrad(
+  void RobinNonlinearFormIntegrator::AssembleFaceGrad(
       const mfem::FiniteElement &e,
-      mfem::ElementTransformation &tr,
+      const mfem::FiniteElement &,
+      mfem::FaceElementTransformations &tr,
       const mfem::Vector &,
       mfem::DenseMatrix &K) {
     const int nnodes = e.GetDof();
@@ -66,25 +62,19 @@ namespace mfem_mgis {
     K.SetSize(nnodes, nnodes);
     K = 0.0;
     const auto *ir = this->IntRule;
-    if (!ir) ir = &mfem::IntRules.Get(e.GetGeomType(), e.GetOrder());
+    if (!ir) ir = &mfem::IntRules.Get(tr.GetGeometryType(), 2 * e.GetOrder());
 
     mfem::DenseMatrix grad_u;
-    mfem::FaceElementTransformations *face_tr =
-        dynamic_cast<mfem::FaceElementTransformations *>(&tr);
 
     for (int i = 0; i < ir->GetNPoints(); ++i) {
       const auto &ip = ir->IntPoint(i);
-      tr.SetIntPoint(&ip);
-      e.CalcShape(ip, shape);
+      tr.SetAllIntPoints(&ip);
+      e.CalcShape(tr.GetElement1IntPoint(), shape);
       const double w = ip.weight * tr.Weight();
 
       double h_eff = h_base;
-      if (u_disp != nullptr && face_tr != nullptr) {
-        mfem::IntegrationPoint eip;
-        face_tr->Loc1.Transform(ip, eip);
-        face_tr->Elem1->SetIntPoint(&eip);
-
-        u_disp->GetVectorGradient(*(face_tr->Elem1), grad_u);
+      if (u_disp != nullptr) {
+        u_disp->GetVectorGradient(*(tr.Elem1), grad_u);
         double dilatation_volumique =
             grad_u(0, 0) + grad_u(1, 1) + grad_u(2, 2);
         h_eff = h_base * (1.0 + dilatation_volumique * (2.0 / 3.0));
@@ -94,7 +84,7 @@ namespace mfem_mgis {
         for (int nj = 0; nj < nnodes; ++nj)
           K(ni, nj) -= w * h_eff * shape[ni] * shape[nj];
     }
-  }  // end of AssembleElementGrad
+  }  // end of AssembleFaceGrad
 
   RobinBC::RobinBC(std::shared_ptr<mfem_mgis::FiniteElementDiscretization> fed,
                    int tag,
@@ -130,14 +120,14 @@ namespace mfem_mgis {
   bool RobinBC::addNonlinearFormIntegrator(Context &,
                                            NonlinearForm<false> &f,
                                            const mfem::Vector &) noexcept {
-    f.AddBoundaryIntegrator(nfi, bdr_marker);
+    f.AddBdrFaceIntegrator(nfi, bdr_marker);
     return true;
   }  // end of addNonlinearFormIntegrator
 
   bool RobinBC::addNonlinearFormIntegrator(Context &,
                                            NonlinearForm<true> &f,
                                            const mfem::Vector &) noexcept {
-    f.AddBoundaryIntegrator(nfi, bdr_marker);
+    f.AddBdrFaceIntegrator(nfi, bdr_marker);
     return true;
   }  // end of addNonlinearFormIntegrator
 

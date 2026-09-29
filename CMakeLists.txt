@@ -8,7 +8,6 @@ find_package(MFEMMGIS REQUIRED)
 
 include(CTest)
 # testing
-set(CTEST_CONFIGURATION_TYPE "${JOB_BUILD_CONFIGURATION}")
 # (must be placed *before* any add_subdirectory)
 enable_testing()
 if(CMAKE_CONFIGURATION_TYPES)
@@ -34,6 +33,7 @@ add_subdirectory(ex5)
 add_subdirectory(ex6)
 add_subdirectory(ex7)
 add_subdirectory(ex8)
+add_subdirectory(ex9)
 
 #include(FetchContent)
 #FetchContent_Declare(mfem-mgis

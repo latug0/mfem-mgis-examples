@@ -5,47 +5,62 @@ on:
     branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
+  workflow_dispatch:
+
+# a new commit pushed to a pull request cancels the previous run
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    env:
+      # filled by the continuous integration of mfem-mgis, only read here
+      BUILD_CACHE: oci://ghcr.io/thelfer/mfem-mgis-spack-buildcache
     steps:
-      - name: Check for dockerenv file
-        run: (ls /.dockerenv && echo Found dockerenv) || (echo No dockerenv)
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Set up Spack
-        uses: spack/setup-spack@v2
+        uses: spack/setup-spack@v3
         with:
-          ref: v1.1.0     # Spack version (examples: develop, releases/v0.21)
-          buildcache: true  # Configure oci://ghcr.io/spack/github-actions-buildcache
-          color: true       # Force color output (SPACK_COLOR=always)
-          path: spack       # Where to clone Spack
+          spack_ref: v1.2.2      # Spack version
+          packages_ref: develop  # the builtin repository provides mfem-mgis since its develop version
+          buildcache: false      # the public build cache would bring older dependencies
+          color: true            # Force color output (SPACK_COLOR=always)
+          spack_path: spack      # Where to clone Spack
+      # the configuration of mfem-mgis, as its binaries are only reused when their hash matches
+      - name: Set up the build cache
+        uses: thelfer/mfem-mgis/.github/actions/setup-build-cache@master
+      - name: Set up ccache
+        id: ccache
+        uses: thelfer/mfem-mgis/.github/actions/setup-ccache@master
+        with:
+          key: examples
       - name: Install MFEM MGIS
         run: |
-          git clone https://github.com/rprat-pro/spack-repo-mfem-mgis.git
-          spack repo add spack-repo-mfem-mgis
-          spack install mfem-mgis
-      - name: Configure Test Cases
+          # only MFEM MGIS is compiled with ccache, the dependencies come from the build cache
+          spack config add config:ccache:true
+          # stage directories named without the hash of mfem-mgis, which changes with each commit:
+          # spack passes the path of the sources to gcc with -frandom-seed, which ccache hashes
+          spack config add "config:stage_name:spack-stage-{name}-{version}"
+          # pin the master commits, as mfem-mgis does when it fills its build cache
+          tfel=$(git ls-remote https://github.com/thelfer/tfel.git refs/heads/master | cut -f1)
+          mgis=$(git ls-remote https://github.com/thelfer/MFrontGenericInterfaceSupport.git refs/heads/master | cut -f1)
+          spack install mfem-mgis@master ^tfel@master commit=$tfel ^mgis@master commit=$mgis
+      - name: Build the examples
         shell: spack-sh {0}
         run: |
-          spack load mfem
           spack load mfem-mgis
-          cmake -B ${{github.workspace}}/release -DCMAKE_PREFIX_PATH=`spack location -i tfel`/share/tfel/cmake
-      - name: Build Test Cases
+          cmake -B build -DCMAKE_BUILD_TYPE=Release \
+                -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+          cmake --build build -j $(nproc)
+      - name: Run the examples
         shell: spack-sh {0}
         run: |
-          spack load tfel
-          spack load mfem
           spack load mfem-mgis
-          cmake --build ${{github.workspace}}/release --config Release 
-      - name: Run examples
-        working-directory: ${{github.workspace}}/release
-        shell: spack-sh {0}
-        run: |
-          spack load tfel
-          spack load mfem        
-          spack load mfem-mgis
-          make -j
-          ctest --rerun-failed --output-on-failure
+          ctest --test-dir build -j $(nproc) --output-on-failure
+      # even when an example fails, so that the next run does not compile everything again
+      - name: Save ccache
+        if: ${{ !cancelled() && steps.ccache.outcome == 'success' }}
+        uses: thelfer/mfem-mgis/.github/actions/save-ccache@master

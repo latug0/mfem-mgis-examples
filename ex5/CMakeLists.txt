@@ -6,7 +6,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(CTest)
 # testing
-set(CTEST_CONFIGURATION_TYPE "${JOB_BUILD_CONFIGURATION}")
 # (must be placed *before* any add_subdirectory, cmake bug ?)
 enable_testing()
 if(CMAKE_CONFIGURATION_TYPES)
@@ -29,11 +28,12 @@ endif(NOT TARGET mfem-mgis::MFEMMGIS)
 # Define a test that will be called during the "make check"
 
 if(MFEM_USE_SUITESPARSE)
-  # Copy needed file for execution
-  file(COPY
-    ${PROJECT_SOURCE_DIR}/Elasticity.mfront
-    ${PROJECT_SOURCE_DIR}/cube.msh
-    DESTINATION ${PROJECT_BINARY_DIR})
+  # Copy the files needed at run time. Unlike file(COPY), configure_file updates
+  # the copies when these files are modified.
+  foreach(input Elasticity.mfront square.msh)
+    configure_file(${PROJECT_SOURCE_DIR}/${input} ${PROJECT_BINARY_DIR}/${input}
+                   COPYONLY)
+  endforeach()
   
   # Use mfront to generate libBehaviour.so
   add_custom_command(

@@ -7,7 +7,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(CTest)
 # testing
-set(CTEST_CONFIGURATION_TYPE "${JOB_BUILD_CONFIGURATION}")
 # (must be placed *before* any add_subdirectory, cmake bug ?)
 enable_testing()
 if(CMAKE_CONFIGURATION_TYPES)
@@ -28,13 +27,12 @@ if (NOT TARGET mfem-mgis::MFEMMGIS)
 endif(NOT TARGET mfem-mgis::MFEMMGIS)
 
 
-# Copy needed file for execution
-file(COPY
-  ${PROJECT_SOURCE_DIR}/Plasticity.mfront
-  ${PROJECT_SOURCE_DIR}/FiniteStrainPlasticity.mfront
-  ${PROJECT_SOURCE_DIR}/ssna303_3d.msh
-  ${PROJECT_SOURCE_DIR}/rc_ex10p
-  DESTINATION ${PROJECT_BINARY_DIR})
+# Copy the files needed at run time. Unlike file(COPY), configure_file updates
+# the copies when these files are modified.
+foreach(input Plasticity.mfront ssna303_3d.msh rc_ex10p ssna303_3d-force.ref)
+  configure_file(${PROJECT_SOURCE_DIR}/${input} ${PROJECT_BINARY_DIR}/${input}
+                 COPYONLY)
+endforeach()
 
 # Use mfront to generate libBehaviour.so
 add_custom_command(
@@ -50,7 +48,9 @@ add_custom_target(generate-libBehaviour-ex4 ALL
 # Define a test that will be called during the "make check"
 function(add_ssna303_3d_test_ex solver)
  set(test "Ssna303_3d_${solver}")
- add_test(NAME ${test} COMMAND ${test})
+ # the first time step of the default loading, which lasts several minutes
+ add_test(NAME ${test} COMMAND ${test} --nbsteps 1 --end-time 0.02
+                                  --reference-file ssna303_3d-force.ref)
 endfunction(add_ssna303_3d_test_ex)
 
 foreach(tg IN ITEMS mumps hypre petsc)

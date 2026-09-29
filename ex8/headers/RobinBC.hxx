@@ -1,5 +1,5 @@
 /*!
- * \file   include/MFEMMGIS/RobinBC.hxx
+ * \file   headers/RobinBC.hxx
  * \brief  Definition of the Robin boundary condition and its nonlinear form
  * integrator. \author Julien Rigal \date   22/07/2026
  */
@@ -37,27 +37,29 @@ namespace mfem_mgis {
 
     /*!
      * \brief Assemble the element vector (residual)
-     * \param[in] e: finite element
-     * \param[in] tr: element transformation
+     * \param[in] e: finite element adjacent to the boundary face
+     * \param[in] tr: face transformation
      * \param[in] T_el: element temperatures
      * \param[out] R: assembled residual vector
      */
-    void AssembleElementVector(const mfem::FiniteElement& e,
-                               mfem::ElementTransformation& tr,
-                               const mfem::Vector& T_el,
-                               mfem::Vector& R) override;
+    void AssembleFaceVector(const mfem::FiniteElement& e,
+                            const mfem::FiniteElement&,
+                            mfem::FaceElementTransformations& tr,
+                            const mfem::Vector& T_el,
+                            mfem::Vector& R) override;
 
     /*!
      * \brief Assemble the element gradient (Jacobian)
-     * \param[in] e: finite element
-     * \param[in] tr: element transformation
+     * \param[in] e: finite element adjacent to the boundary face
+     * \param[in] tr: face transformation
      * \param[in] elfun: element function values
      * \param[out] K: assembled local Jacobian matrix
      */
-    void AssembleElementGrad(const mfem::FiniteElement& e,
-                             mfem::ElementTransformation& tr,
-                             const mfem::Vector& elfun,
-                             mfem::DenseMatrix& K) override;
+    void AssembleFaceGrad(const mfem::FiniteElement& e,
+                          const mfem::FiniteElement&,
+                          mfem::FaceElementTransformations& tr,
+                          const mfem::Vector& elfun,
+                          mfem::DenseMatrix& K) override;
   };  // end of struct RobinNonlinearFormIntegrator
 
   /*!
@@ -82,7 +84,11 @@ namespace mfem_mgis {
     //! \brief destructor
     ~RobinBC() override;
 
-    void setup(const real, const real) override {}
+    [[nodiscard]] bool setup(Context&,
+                             const real,
+                             const real) noexcept override {
+      return true;
+    }  // end of setup
 
     bool addNonlinearFormIntegrator(Context&,
                                     NonlinearForm<false>&,

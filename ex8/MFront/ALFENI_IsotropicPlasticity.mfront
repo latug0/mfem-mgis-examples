@@ -18,7 +18,7 @@
 @MaterialLaw{"ALFENI_YieldStrength.mfront"};
 
 @ComputeThermalExpansion{
-  thermal_expansion : 15e-6,
+  thermal_expansion : 25e-6,
   reference_temperature : 293.15
 };
 
