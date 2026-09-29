@@ -120,20 +120,21 @@ int main(int argc, char** argv) {
     mfem_mgis::abort(EXIT_FAILURE);
   }
   args.PrintOptions(mfem_mgis::getOutputStream());
-//
+  //
   const auto* const output_file = use_fbar ? "force-fbar.txt" : "force.txt";
   // the non linear problem
   auto problem = construct<NonLinearEvolutionProblem>(
-      ctx, dict{{"MeshFileName", mesh_file},
-                {"FiniteElementFamily", "H1"},
-                {"FiniteElementOrder", order},
-                {"UnknownsSize", dim},
-                {"Materials", dict{{"NotchedBeam", 1}}},
-                {"Boundaries", dict{{"LowerBoundary", 3},
-				    {"SymmetryAxis", 4},
-				    {"UpperBoundary", 2}}},
-                {"Hypothesis", "PlaneStrain"},
-                {"Parallel", parallel}}) |or_die; 
+                     ctx, dict{{"MeshFileName", mesh_file},
+                               {"FiniteElementFamily", "H1"},
+                               {"FiniteElementOrder", order},
+                               {"UnknownsSize", dim},
+                               {"Materials", dict{{"NotchedBeam", 1}}},
+                               {"Boundaries", dict{{"LowerBoundary", 3},
+                                                   {"SymmetryAxis", 4},
+                                                   {"UpperBoundary", 2}}},
+                               {"Hypothesis", "PlaneStrain"},
+                               {"Parallel", parallel}}) |
+                 or_die;
 #ifdef MGIS_HAVE_TFEL
   if (use_fbar) {
     problem.addBehaviourIntegrator(
@@ -145,7 +146,7 @@ int main(int argc, char** argv) {
                                    behaviour) |
         or_die;
   }
-#else /* MGIS_HAVE_TFEL */
+#else  /* MGIS_HAVE_TFEL */
   problem.addBehaviourIntegrator(ctx, "Mechanics", "NotchedBeam", library,
                                  behaviour) |
       or_die;

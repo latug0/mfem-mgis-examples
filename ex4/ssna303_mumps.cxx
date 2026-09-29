@@ -83,13 +83,14 @@ int main(int argc, char** argv) {
   const auto* const output_file = use_fbar ? "force-fbar.txt" : "force.txt";
   // the non linear problem
   auto problem = construct<NonLinearEvolutionProblem>(
-      ctx, dict{{"MeshFileName", mesh_file},
-		{"Materials", dict{{"NotchedBeam", 1}}},
-		{"FiniteElementFamily", "H1"},
-		{"FiniteElementOrder", order},
-		{"UnknownsSize", dim},
-		{"Hypothesis", "Tridimensional"},
-		{"Parallel", parallel}}) |or_die;
+                     ctx, dict{{"MeshFileName", mesh_file},
+                               {"Materials", dict{{"NotchedBeam", 1}}},
+                               {"FiniteElementFamily", "H1"},
+                               {"FiniteElementOrder", order},
+                               {"UnknownsSize", dim},
+                               {"Hypothesis", "Tridimensional"},
+                               {"Parallel", parallel}}) |
+                 or_die;
 
   // 2 1 "Volume"
 #ifdef MGIS_HAVE_TFEL
@@ -103,7 +104,7 @@ int main(int argc, char** argv) {
                                    behaviour) |
         or_die;
   }
-#else /* MGIS_HAVE_TFEL */
+#else  /* MGIS_HAVE_TFEL */
   problem.addBehaviourIntegrator(ctx, "Mechanics", "NotchedBeam", library,
                                  behaviour) |
       or_die;
