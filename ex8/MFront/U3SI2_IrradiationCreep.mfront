@@ -1,6 +1,6 @@
 @Parser IsotropicMisesCreep;
 @Material U3SI2;
-@Behaviour _NortonPRQ;
+@Behaviour _IrradiationCreep;
 @Author Germain Allan;
 @Date 28/11/2025;
 

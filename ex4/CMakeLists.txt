@@ -29,7 +29,7 @@ endif(NOT TARGET mfem-mgis::MFEMMGIS)
 
 # Copy the files needed at run time. Unlike file(COPY), configure_file updates
 # the copies when these files are modified.
-foreach(input Plasticity.mfront FiniteStrainPlasticity.mfront ssna303_3d.msh rc_ex10p ssna303_3d-force-1step.ref ssna303_3d-force-10steps.ref)
+foreach(input IsotropicLinearHardeningPlasticity.mfront ssna303_3d.msh rc_ex10p ssna303_3d-force-1step.ref ssna303_3d-force-10steps.ref)
   configure_file(${PROJECT_SOURCE_DIR}/${input} ${PROJECT_BINARY_DIR}/${input}
                  COPYONLY)
 endforeach()
@@ -37,9 +37,8 @@ endforeach()
 # Use mfront to generate libBehaviour.so
 add_custom_command(
   OUTPUT "src/libBehaviour.so"
-  COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/Plasticity.mfront ${PROJECT_BINARY_DIR}/FiniteStrainPlasticity.mfront
-  DEPENDS ${PROJECT_BINARY_DIR}/Plasticity.mfront
-  DEPENDS ${PROJECT_BINARY_DIR}/FiniteStrainPlasticity.mfront
+  COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/IsotropicLinearHardeningPlasticity.mfront
+  DEPENDS ${PROJECT_BINARY_DIR}/IsotropicLinearHardeningPlasticity.mfront
   COMMENT "Performing mfront code generation")
 
 add_custom_target(generate-libBehaviour-ex4 ALL

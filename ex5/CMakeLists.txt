@@ -30,7 +30,7 @@ endif(NOT TARGET mfem-mgis::MFEMMGIS)
 if(MFEM_USE_SUITESPARSE)
   # Copy the files needed at run time. Unlike file(COPY), configure_file updates
   # the copies when these files are modified.
-  foreach(input Elasticity.mfront square.msh)
+  foreach(input IsotropicLinearThermoElasticity.mfront square.msh)
     configure_file(${PROJECT_SOURCE_DIR}/${input} ${PROJECT_BINARY_DIR}/${input}
                    COPYONLY)
   endforeach()
@@ -38,8 +38,8 @@ if(MFEM_USE_SUITESPARSE)
   # Use mfront to generate libBehaviour.so
   add_custom_command(
     OUTPUT "src/libBehaviour.so"
-    COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/Elasticity.mfront
-    DEPENDS ${PROJECT_BINARY_DIR}/Elasticity.mfront
+    COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/IsotropicLinearThermoElasticity.mfront
+    DEPENDS ${PROJECT_BINARY_DIR}/IsotropicLinearThermoElasticity.mfront
     COMMENT "Performing mfront code generation")
   
   add_custom_target(generate-libBehaviour-ex5 ALL

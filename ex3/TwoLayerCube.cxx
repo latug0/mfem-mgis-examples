@@ -242,10 +242,10 @@ int executeMFEMMGISTest(mgis::Context& ctx, const TestParameters& p) {
     //    const mfem::Mesh &m = fed->getMesh<true>();
 
     problem.addBehaviourIntegrator(ctx, "Mechanics", 1, p.library,
-                                   "Elasticity") |
+                                   "IsotropicLinearElasticity") |
         or_die;
     problem.addBehaviourIntegrator(ctx, "Mechanics", 2, p.library,
-                                   "Elasticity") |
+                                   "IsotropicLinearElasticity") |
         or_die;
     // materials
     auto& m1 = problem.getMaterial(ctx, 1, 0) | or_die;

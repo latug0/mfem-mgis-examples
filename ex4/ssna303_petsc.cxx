@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
   mfem_mgis::initialize(argc, argv);
   constexpr const auto dim = mfem_mgis::size_type{3};
   const char* mesh_file = "ssna303_3d.msh";
-  const char* behaviour = "FiniteStrainPlasticity";
+  const char* behaviour = "IsotropicLinearHardeningPlasticity";
   const char* library = "src/libBehaviour.so";
   // not null, since mfem::OptionsParser::PrintUsage stops at the first null
   // string

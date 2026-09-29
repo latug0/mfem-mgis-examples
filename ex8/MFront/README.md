@@ -28,7 +28,7 @@ The mechanical properties of ALFENI depend on temperature according to the follo
   * Linear thermal softening above this threshold (slope of $-1.5\text{ MPa/K}$).
   * Floor value set at $100\text{ MPa}$.
 
-### Coupled Thermal Behavior (`_ThermiqueCouplee`)
+### Coupled Thermal Behavior (`_CoupledHeatTransfer`)
 The heat equation is solved taking into account the geometry deformation.
 * The effective conductivity $K_{eff}$ depends on the deformation gradient $F$ (via the right Cauchy-Green tensor $C$ and the Jacobian $J$).
 * The intrinsic conductivity $k_0$ evolves linearly with temperature: $k_0 = A + B(T - 273.15)$, with $A = 121.0$ and $B = 0.15$.
@@ -47,7 +47,7 @@ This point-wise model computes the evolution of the solid volumetric swelling $S
 * **Integration:** The swelling rate is integrated implicitly using the average power density over the time step.
 * **Rate:** Proportional constant set to $6.2 \times 10^{-29}$ (adjusted via energy unit conversions).
 
-### Mechanical Behavior: Irradiation Creep (`_NortonPRQ`)
+### Mechanical Behavior: Irradiation Creep (`_IrradiationCreep`)
 Unlike ALFENI, U3Si2 does not undergo classical plasticity but instead creeps under irradiation (modified Norton-type law). This model also uses the **Hencky** strain measure for large deformations.
 
 * **Thermal Expansion:** The thermal expansion coefficient is set to $16.1 \times 10^{-6}\text{ K}^{-1}$ (IAEA-TECDOC-1921, section 2.2.4) with a reference temperature of $293.15\text{ K}$.

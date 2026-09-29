@@ -139,7 +139,7 @@ inline void printPhysicsStatistics(
  * \param[in] p: parameters of the simulation
  */
 inline bool checkSwelling(const FieldStatistics& s, const TestParameters& p) {
-  // swelling per unit of energy released, see U3SI2_Swelling.mfront (6.2e-29
+  // swelling per unit of energy released, see U3SI2_SolidSwelling.mfront (6.2e-29
   // per fission, 200 MeV per fission)
   constexpr auto A = 6.2e-29 / (200 * 1.60218e-13);
   // energy released per unit of volume at the end of the simulation

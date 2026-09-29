@@ -35,7 +35,7 @@ target_include_directories(ssna303
 
 # Copy the files needed at run time. Unlike file(COPY), configure_file updates
 # the copies when these files are modified.
-foreach(input Plasticity.mfront ssna303.msh ssna303-force.ref)
+foreach(input IsotropicLinearHardeningPlasticity.mfront ssna303.msh ssna303-force.ref)
   configure_file(${PROJECT_SOURCE_DIR}/${input} ${PROJECT_BINARY_DIR}/${input}
                  COPYONLY)
 endforeach()
@@ -43,8 +43,8 @@ endforeach()
 # Use mfront to generate libBehaviour.so
 add_custom_command(
   OUTPUT "src/libBehaviour.so"
-  COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/Plasticity.mfront
-  DEPENDS ${PROJECT_BINARY_DIR}/Plasticity.mfront
+  COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/IsotropicLinearHardeningPlasticity.mfront
+  DEPENDS ${PROJECT_BINARY_DIR}/IsotropicLinearHardeningPlasticity.mfront
   COMMENT "Performing mfront code generation")
 
 add_custom_target(generate-libBehaviour-ex2 ALL

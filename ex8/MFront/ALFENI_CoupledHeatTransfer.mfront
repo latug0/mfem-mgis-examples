@@ -1,6 +1,6 @@
 @DSL DefaultGenericBehaviour;
-@Material U3SI2;
-@Behaviour _ThermiqueCouplee;
+@Material ALFENI;
+@Behaviour _CoupledHeatTransfer;
 @Author RIGAL Julien;
 @Date 04/26;
 
@@ -11,12 +11,12 @@ gT.setGlossaryName("TemperatureGradient");
 j.setGlossaryName("HeatFlux");
 
 @ExternalStateVariable DeformationGradientTensor F;
-F.setGlossaryName("DeformationGradient");
+F.setGlossaryName("DeformationGradient"); 
 
 @AdditionalTangentOperatorBlock dj_ddT;
 
-@Parameter A = 4.996;
-@Parameter B = 0.0118;
+@Parameter A = 121.0;
+@Parameter B = 0.15;
 
 @LocalVariable tmatrix<N,N,real> Keff;
 

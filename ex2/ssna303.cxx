@@ -77,7 +77,7 @@ int main(int argc, char** argv) {
   initialize(argc, argv);
 
   const char* mesh_file = "ssna303.msh";
-  const char* behaviour = "Plasticity";
+  const char* behaviour = "IsotropicLinearHardeningPlasticity";
   const char* library = "src/libBehaviour.so";
   bool use_fbar = false;
   // not null, since mfem::OptionsParser::PrintUsage stops at the first null

@@ -1,4 +1,4 @@
-@Behaviour Elasticity;
+@Behaviour IsotropicLinearThermoElasticity;
 @Author Helfer Thomas;
 @Date 23/11/06;
 @Description{

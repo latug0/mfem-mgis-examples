@@ -35,7 +35,7 @@ file(GLOB_RECURSE directory_files CONFIGURE_DEPENDS
      ${PROJECT_SOURCE_DIR}/mesh/*
      ${PROJECT_SOURCE_DIR}/file_geo/*
      ${PROJECT_SOURCE_DIR}/script_merope/*)
-foreach(input matrixlaw.mfront petscrc OneSphere-avgStress.ref ${directory_files})
+foreach(input NortonViscoplasticityWithThreshold.mfront petscrc OneSphere-avgStress.ref ${directory_files})
   configure_file(${PROJECT_SOURCE_DIR}/${input} ${PROJECT_BINARY_DIR}/${input}
                  COPYONLY)
 endforeach()
@@ -43,8 +43,8 @@ endforeach()
 # Use mfront to generate libBehaviour.so
 add_custom_command(
   OUTPUT "src/libBehaviour.so"
-  COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/matrixlaw.mfront
-  DEPENDS ${PROJECT_BINARY_DIR}/matrixlaw.mfront
+  COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/NortonViscoplasticityWithThreshold.mfront
+  DEPENDS ${PROJECT_BINARY_DIR}/NortonViscoplasticityWithThreshold.mfront
   COMMENT "Performing mfront code generation")
 
 add_custom_target(generate-libBehaviour-ex7 ALL
