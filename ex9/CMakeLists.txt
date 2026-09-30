@@ -55,6 +55,9 @@ add_executable(CShapeContact CShapeContact.cxx)
 target_link_libraries(CShapeContact mfem-mgis::MFEMMGIS)
 target_link_libraries(CShapeContact utils_lib)
 
+add_executable(Hertz2D Hertz2D.cxx)
+target_link_libraries(Hertz2D mfem-mgis::MFEMMGIS)
+target_link_libraries(Hertz2D utils_lib)
 
 # Copy needed file for execution
 file(COPY
