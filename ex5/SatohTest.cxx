@@ -31,7 +31,7 @@ static void forEachIntegrationPoint(
   const auto& s = f.getPartialQuadratureSpace();
   const auto& fed = s.getFiniteElementDiscretization();
   const auto& fespace = fed.getFiniteElementSpace<parallel>();
-  const auto m = s.getId();
+  const auto m = s.getLocation().material_identifier->id;
   for (mfem_mgis::size_type i = 0; i != fespace.GetNE(); ++i) {
     if (fespace.GetAttribute(i) != m) {
       continue;
