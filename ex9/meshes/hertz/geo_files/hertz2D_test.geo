@@ -11,6 +11,7 @@ arc_ratio = 0.5; // Percentage of arc length covered by third Medium
 lc = 0.05;  // Mesh characteristic length
 n_contact = 40; // Number of nodes in contact area
 N = n_contact - 1; // Number of elements in contact area
+n_void_thickness = 10; // Should be >= 2. Number of nodes in the void (along the thickness)  
 
 // Foundation
 Point(1) = {0, -Hf, 0, lc};
@@ -86,12 +87,13 @@ Physical Curve("FOUND_BOT", 200) = {1};
 Physical Curve("SYM_FOUND", 201) = {5};
 Physical Curve("SYM_IND", 202) = {11};
 Physical Curve("IND_TOP", 203) = {10};
+Physical Curve("SYM_VOID", 204) = {8};
 
 // -----------------------------------------------------------------------------
 // Quadrilateral Meshing Algorithms
 // -----------------------------------------------------------------------------
 Transfinite Curve {6} = n_contact; // Top contact arc
-Transfinite Curve {8,9} = 2;       // 1 element width for void
+Transfinite Curve {8,9} = n_void_thickness;       // 1 element width for void
 
 // Because the bottom boundary is now composed of multiple segments, 
 // the corners must be explicitly defined for the Transfinite Surface mapping to work.

@@ -59,6 +59,10 @@ add_executable(Hertz2D Hertz2D.cxx)
 target_link_libraries(Hertz2D mfem-mgis::MFEMMGIS)
 target_link_libraries(Hertz2D utils_lib)
 
+add_executable(Hertz3D Hertz3D.cxx)
+target_link_libraries(Hertz3D mfem-mgis::MFEMMGIS)
+target_link_libraries(Hertz3D utils_lib)
+
 # Copy needed file for execution
 file(COPY
   ${PROJECT_SOURCE_DIR}/Elasticity.mfront
@@ -71,6 +75,12 @@ file(COPY
   ${PROJECT_SOURCE_DIR}/meshes/cshape/msh_files/cshape_full.msh
   ${PROJECT_SOURCE_DIR}/meshes/cshape/msh_files/point_load_approx.msh
   ${PROJECT_SOURCE_DIR}/meshes/cshape/msh_files/point_load_approx_full.msh
+  ${PROJECT_SOURCE_DIR}/meshes/hertz/msh_files/hertz2D_test.msh
+  ${PROJECT_SOURCE_DIR}/meshes/hertz/msh_files/hertz3D_test.msh
+  ${PROJECT_SOURCE_DIR}/meshes/hertz/msh_files/hertz3D_test_refined.msh
+  ${PROJECT_SOURCE_DIR}/Hertz3D.cxx
+  ${PROJECT_SOURCE_DIR}/meshes/hertz/geo_files/hertz3D_test.geo
+  ${PROJECT_SOURCE_DIR}/hertz_validation.py
   ${PROJECT_SOURCE_DIR}/visualize_displacements.py
   DESTINATION ${PROJECT_BINARY_DIR})
 

@@ -12,7 +12,7 @@
 
 int main(int argc, char **argv) {
   thirdmedium_utils::TestParameters p;
-  p.mesh_file = "hertz2D.msh";
+  p.mesh_file = "hertz2D_test.msh";
   mfem::OptionsParser args = parse_options(p, argc, argv);
 
   constexpr const auto dim = mfem_mgis::size_type{2};
