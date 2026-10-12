@@ -12,17 +12,20 @@ include(CTest)
 enable_testing()
 if(CMAKE_CONFIGURATION_TYPES)
    if (NOT TARGET check)
-      add_custom_target(check COMMAND 
+      add_custom_target(check COMMAND
          ${CMAKE_CTEST_COMMAND} -T test -C $<CONFIGURATION>)
    endif(NOT TARGET check)
 else(CMAKE_CONFIGURATION_TYPES)
    if (NOT TARGET check)
-      add_custom_target(check COMMAND 
+      add_custom_target(check COMMAND
       ${CMAKE_CTEST_COMMAND} -T test )
    endif(NOT TARGET check)
 endif(CMAKE_CONFIGURATION_TYPES)
 
 find_package(OpenMP)
+
+# Test mode of the examples, see config/TestMode.cmake
+include(config/TestMode.cmake)
 
 add_subdirectory(config)
 add_subdirectory(ex1)

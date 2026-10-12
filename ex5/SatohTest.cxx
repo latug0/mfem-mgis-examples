@@ -141,7 +141,7 @@ static bool checkReactions(mfem_mgis::Context& ctx,
  * - the horizontal reaction of the left boundary matches its reference value.
  */
 int main(int argc, char** argv) {
-  auto ctx = mgis::Context{};
+  auto ctx = mfem_mgis::Context{};
   auto or_die = ctx.getFatalFailureHandler();
   //
   static constexpr const auto parallel = false;
@@ -163,7 +163,8 @@ int main(int argc, char** argv) {
       or_die;
   // materials
   problem.addBehaviourIntegrator(ctx, "Mechanics", "plate",
-                                 "./src/libBehaviour.so", "Elasticity") |
+                                 "./src/libBehaviour.so",
+                                 "IsotropicLinearThermoElasticity") |
       or_die;
   auto& m1 = problem.getMaterial(ctx, "plate", 0) | or_die;
   // material properties at the beginning and the end of the time step

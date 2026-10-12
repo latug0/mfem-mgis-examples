@@ -9,13 +9,13 @@ who used an FFT method.
 ```text
     Problem : RVE MOx 2 phases with elasto-viscoplastic behavior laws
 
-    Parameters : 
+    Parameters :
 
     start time = 0
     end time = 5s
     number of time step = 40
 
-    Imposed strain tensor : 
+    Imposed strain tensor :
             [ -a/2 ,   0  ,  0 ]
     eps  =  [   0  , -a/2 ,  0 ] * t
             [   0  ,   0  ,  a ]
@@ -65,7 +65,7 @@ python3 script_17percent_minimal.py
 
 ```bash
 # generate the .msh file with GMSH
-gmsh -3 OneSphere.geo 
+gmsh -3 OneSphere.geo
 ```
 
 ## Run the simulation
@@ -122,10 +122,11 @@ ccc_mprun -n 2048 -c 1 -p milan ./mox2 -r 2 -o 1 --mesh file_geo/634Spheres.msh
 
 ### Test
 
-The test runs the default simulation (`mesh/OneSphere.msh`, order 2) with 5 time steps instead
-of 40 to be faster, and compares the mean stresses in each material to the reference values of
-`OneSphere-avgStress.ref`. With 5 time steps, the average stress SZZ differs by less than 6 % from
-the one computed with 40 time steps.
+The test runs the default simulation (`mesh/OneSphere.msh`, order 2) and compares the mean stresses
+in each material to the reference values of `OneSphere-avgStress-40steps.ref`. In the restricted
+test mode, used by default in the debug and coverage builds, it uses 5 time steps instead of 40 and
+compares the mean stresses to `OneSphere-avgStress-5steps.ref`. With 5 time steps, the average stress SZZ differs by
+less than 9 % from the one computed with 40 time steps.
 
 ## Post-processing of simulation data
 

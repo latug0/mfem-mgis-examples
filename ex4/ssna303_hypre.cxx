@@ -24,13 +24,13 @@
 #include "CheckResultantForce.hxx"
 
 int main(int argc, char** argv) {
-  auto ctx = mgis::Context{};
+  auto ctx = mfem_mgis::Context{};
   auto or_die = ctx.getFatalFailureHandler();
   // ctx.enableProfiling(true);
   mfem_mgis::initialize(argc, argv);
   constexpr const auto dim = mfem_mgis::size_type{3};
   const char* mesh_file = "ssna303_3d.msh";
-  const char* behaviour = "Plasticity";
+  const char* behaviour = "IsotropicLinearHardeningPlasticity";
   const char* library = "src/libBehaviour.so";
   // not null, since mfem::OptionsParser::PrintUsage stops at the first null
   // string
@@ -194,7 +194,6 @@ int main(int argc, char** argv) {
     auto t = mfem_mgis::real{0};
     auto iteration = mfem_mgis::size_type{};
     for (mfem_mgis::size_type i = 0; i != nsteps; ++i) {
-      using namespace mfem_mgis;
       CatchTimeSection(ctx, "time_loop");
       std::cout << "iteration " << iteration << " from " << t << " to "
                 << t + dt << '\n';
@@ -219,7 +218,7 @@ int main(int argc, char** argv) {
           ++niter;
           problem.revert(ctx) | or_die;
           if (niter == 10) {
-            mgis::abort("maximum number of substeps");
+            mfem_mgis::abort("maximum number of substeps");
           }
         }
       }

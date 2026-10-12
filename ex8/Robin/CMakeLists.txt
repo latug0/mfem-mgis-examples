@@ -15,13 +15,13 @@ add_custom_command(
 add_custom_target(generate-libBehaviour-robin ALL
     DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/src/libBehaviour.so")
 
-add_executable(RobinTest robin_test.cxx ../src/RobinBC.cxx)
-target_link_libraries(RobinTest PRIVATE MPI::MPI_CXX mfem-mgis::MFEMMGIS)
+add_executable(robin_test robin_test.cxx ../src/RobinBC.cxx)
+target_link_libraries(robin_test PRIVATE MPI::MPI_CXX mfem-mgis::MFEMMGIS)
 
-add_dependencies(check RobinTest generate-libBehaviour-robin)
+add_dependencies(check robin_test generate-libBehaviour-robin)
 
-add_test(NAME RobinTest
+add_test(NAME robin_test
     COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
-        $<TARGET_FILE:RobinTest>
+        $<TARGET_FILE:robin_test>
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-set_tests_properties(RobinTest PROPERTIES PROCESSORS 2)
+set_tests_properties(robin_test PROPERTIES PROCESSORS 2)

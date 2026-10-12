@@ -18,7 +18,7 @@ randomSeed = 0
 #rad = 0.343653069
 rad = 0.34365
 density = 0.17
-typeAlgo = sac_de_billes.AlgoRSA_3D() 
+typeAlgo = sac_de_billes.AlgoRSA_3D()
 theSpheres = sac_de_billes.throwSpheres_3D( sac_de_billes.RSA, sac_de_billes.Tore, L, randomSeed, [[rad,density]], [2], distMin)
 for sphere in theSpheres:
     sphere.phase = 2

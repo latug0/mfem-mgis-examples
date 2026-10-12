@@ -78,22 +78,20 @@ void common_parameters(mfem::OptionsParser& args, TestParameters& p) {
 }
 
 int main(int argc, char* argv[]) {
-  using namespace mfem_mgis;
-  using namespace mfem;
-  initialize(argc, argv);
+  mfem_mgis::initialize(argc, argv);
 
-  auto ctx = mgis::Context{};
+  auto ctx = mfem_mgis::Context{};
   ctx.enableProfiling(true);
   auto or_die = ctx.getFatalFailureHandler();
 
   TestParameters p;
 
-  OptionsParser args(argc, argv);
+  mfem::OptionsParser args(argc, argv);
   common_parameters(args, p);
 
   if (p.t_ramp < 0) {
     ctx.log() << "the duration of the power ramp must not be negative\n";
-    finalize();
+    mfem_mgis::finalize();
     return EXIT_FAILURE;
   }
   const auto ramp_steps = p.t_ramp * p.nbsteps / p.end_time;
@@ -101,7 +99,7 @@ int main(int argc, char* argv[]) {
       (std::abs(ramp_steps - std::round(ramp_steps)) > 1e-9)) {
     ctx.log() << "the end of the power ramp (t = " << p.t_ramp
               << " s) must be a time step boundary\n";
-    finalize();
+    mfem_mgis::finalize();
     return EXIT_FAILURE;
   }
 
@@ -109,32 +107,35 @@ int main(int argc, char* argv[]) {
     return (t < p.t_ramp) ? p.source * (t / p.t_ramp) : p.source;
   };
 
-  auto mesh =
-      construct<MeshDiscretization>(
-          ctx, ctx,
-          Parameters{{"MeshFileName", p.mesh_file},
-                     {"Materials",
-                      Parameters{{"comb", 1}, {"gaine", 2}, {"stiffeners", 3}}},
-                     {"NumberOfUniformRefinements", p.refinement},
-                     {"Parallel", true}}) |
-      or_die;
+  auto mesh = mfem_mgis::construct<mfem_mgis::MeshDiscretization>(
+                  ctx, ctx,
+                  mfem_mgis::Parameters{
+                      {"MeshFileName", p.mesh_file},
+                      {"Materials",
+                       mfem_mgis::Parameters{
+                           {"comb", 1}, {"gaine", 2}, {"stiffeners", 3}}},
+                      {"NumberOfUniformRefinements", p.refinement},
+                      {"Parallel", true}}) |
+              or_die;
 
   auto heat_transfer_model =
-      make_shared<NonLinearModel>(ctx, mesh,
-                                  Parameters{{"FiniteElementFamily", "H1"},
-                                             {"FiniteElementOrder", p.order},
-                                             {"Hypothesis", "Tridimensional"},
-                                             {"UnknownsSize", 1},
-                                             {"Name", "Thermal"}}) |
+      mfem_mgis::make_shared<mfem_mgis::NonLinearModel>(
+          ctx, mesh,
+          mfem_mgis::Parameters{{"FiniteElementFamily", "H1"},
+                                {"FiniteElementOrder", p.order},
+                                {"Hypothesis", "Tridimensional"},
+                                {"UnknownsSize", 1},
+                                {"Name", "Thermal"}}) |
       or_die;
 
   auto mechanics_model =
-      make_shared<NonLinearModel>(ctx, mesh,
-                                  Parameters{{"FiniteElementFamily", "H1"},
-                                             {"FiniteElementOrder", p.order},
-                                             {"Hypothesis", "Tridimensional"},
-                                             {"UnknownsSize", 3},
-                                             {"Name", "Mechanics"}}) |
+      mfem_mgis::make_shared<mfem_mgis::NonLinearModel>(
+          ctx, mesh,
+          mfem_mgis::Parameters{{"FiniteElementFamily", "H1"},
+                                {"FiniteElementOrder", p.order},
+                                {"Hypothesis", "Tridimensional"},
+                                {"UnknownsSize", 3},
+                                {"Name", "Mechanics"}}) |
       or_die;
 
   auto& heat_transfer = heat_transfer_model->getProblem();
@@ -185,11 +186,14 @@ int main(int argc, char* argv[]) {
         or_die;
   }
 
-  auto ps = mfem_mgis::construct<PhysicalSystem>(ctx, mesh) | or_die;
+  auto ps = mfem_mgis::construct<mfem_mgis::PhysicalSystem>(ctx, mesh) | or_die;
 
-  auto c = mfem_mgis::make_shared<IterativeCouplingScheme>(ctx, mesh) | or_die;
+  auto c =
+      mfem_mgis::make_shared<mfem_mgis::IterativeCouplingScheme>(ctx, mesh) |
+      or_die;
   auto criterion =
-      mfem_mgis::make_shared<FirstIterationConvergenceCriterion>(ctx);
+      mfem_mgis::make_shared<mfem_mgis::FirstIterationConvergenceCriterion>(
+          ctx);
 
   c->setMaximumNumberOfIterations(ctx, 10) | or_die;
   c->addConvergenceCriterion(ctx, criterion) | or_die;
@@ -206,13 +210,16 @@ int main(int argc, char* argv[]) {
 
   // declaring the simulation
   const auto times =
-      construct<Simulation::TimesDescription>(ctx, 0, p.end_time, p.nbsteps) |
+      mfem_mgis::construct<mfem_mgis::Simulation::TimesDescription>(
+          ctx, 0, p.end_time, p.nbsteps) |
       or_die;
-  auto s = construct<Simulation>(ctx, ctx, ps, times) | or_die;
+  auto s =
+      mfem_mgis::construct<mfem_mgis::Simulation>(ctx, ctx, ps, times) | or_die;
   // running the simulation
   const auto [status, output] = s.run(ctx);
-  if (status != ExitStatus::success) {
-    getErrorStream() << "simulation failed: " << ctx.getErrorMessage() << '\n';
+  if (status != mfem_mgis::ExitStatus::success) {
+    mfem_mgis::getErrorStream()
+        << "simulation failed: " << ctx.getErrorMessage() << '\n';
     print_memory_footprint("After Solving:");
     return EXIT_FAILURE;
   }
@@ -220,9 +227,9 @@ int main(int argc, char* argv[]) {
 
   const auto stats = computePhysicsStatistics(heat_transfer, mechanics, setup);
   if (p.debug) {
-    printPhysicsStatistics(getOutputStream(), stats);
+    printPhysicsStatistics(mfem_mgis::getOutputStream(), stats);
   }
-  Profiler::OutputManager::printTimeTable(ctx);
+  mfem_mgis::Profiler::OutputManager::printTimeTable(ctx);
   // the swelling is always compared to its exact value
   auto success = checkSwelling(stats.at("Swelling"), p);
   if (!std::string_view{p.reference_file}.empty()) {

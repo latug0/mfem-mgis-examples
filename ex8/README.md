@@ -47,7 +47,7 @@ cd mesh
 python3 assemblage_hexa.py --output_file assemblage_hexa.msh
 ```
 
-The coarser mesh `mesh/assemblage_hexa_coarse.msh`, used by the tests, is generated with:
+The coarser mesh `mesh/assemblage_hexa_coarse.msh`, used by the tests in the restricted test mode, is generated with:
 
 ```bash
 python3 assemblage_hexa.py --densHaut 5 --densFuelLength 8 --densFuelThick 3 --densCladConn 3 --densStifThick 3 --densStifConn 3 --output_file assemblage_hexa_coarse.msh
@@ -69,7 +69,7 @@ Available options (all optional, with defaults):
 
 ## Usage and Command-Line Arguments
 
-The main program accepts several command-line arguments to configure the mesh, MFront behaviors, and linear solvers. 
+The main program accepts several command-line arguments to configure the mesh, MFront behaviors, and linear solvers.
 
 Here is a summary table of the available options:
 
@@ -99,7 +99,7 @@ At the end of the simulation, the swelling is compared to its exact value: since
 ### Parallel Execution Example
 
 ```bash
-mpirun -np 4 ./Thermomechanical \
+mpirun -np 4 ./rjh_plate \
   -m assemblage_hexa.msh \
   -lsTh HypreGMRES -pcTh HypreBoomerAMG \
   -lsMc MUMPSSolver \
@@ -109,18 +109,22 @@ mpirun -np 4 ./Thermomechanical \
 
 Iterative solvers are much slower than MUMPS for the mechanics of this problem. With the default mesh, the simulation takes 8 s on 2 processes with MUMPS, about 2 minutes on 2 processes with `CGSolver` or `MINRESSolver` preconditioned by `HypreBoomerAMG`, and 165 s on 4 processes with `HyprePCG`. `GMRESSolver`, `SLISolver` and `BiCGSTABSolver` did not converge within 5 minutes.
 
-Resulting mechanical displacement field (`Displacement Magnitude`) obtained with this test case, visualized with ParaView:
+The results are exported for ParaView:
 
 ```bash
 paraview Results/Mechanics/Mechanics.pvd
 ```
 
-![Mechanical displacement magnitude](Picture/mini-rjh.png)
+The figures show the results at t = 2e6 s. They are computed with `mpirun -n 4 ./rjh_plate -et 2e6 -ns 20`. The radial displacement is amplified 100 times. The cladding bulges between the stiffeners.
+
+![Radial displacement](Picture/ex8-3d.png)
+
+![Radial displacement at mid-height](Picture/ex8-section.png)
 
 ## Tests
 
 Three tests are run by `ctest`:
 
-- `Thermomechanical_MUMPS` runs the simulation on 2 processes with the coarser mesh `assemblage_hexa_coarse.msh`, which is faster than the default one, and compares the statistics of the temperature and of the displacement to the reference values of `assemblage_hexa_coarse-statistics.ref`;
-- `U3Si2SwellingMTest` compares the swelling model to its exact value under a power ramp (`mtest/Swelling.mtest`);
-- `RobinTest` compares the Robin boundary condition to the exact solution of a bar (see `Robin/README.md`).
+- `rjh_plate` runs the simulation on 2 processes with the default mesh and compares the statistics of the temperature and of the displacement to the reference values of `assemblage_hexa-statistics.ref`. In the restricted test mode, used by default in the debug and coverage builds, it uses the coarser mesh `assemblage_hexa_coarse.msh` and the reference values of `assemblage_hexa_coarse-statistics.ref`;
+- `u3si2_swelling` compares the swelling model to its exact value under a power ramp (`mtest/Swelling.mtest`);
+- `robin_test` compares the Robin boundary condition to the exact solution of a bar (see `Robin/README.md`).

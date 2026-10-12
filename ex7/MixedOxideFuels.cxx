@@ -33,7 +33,7 @@ Imposed strain : eps = a * t, with a = 0.012 s^-1
 Solver : HypreGMRES
 Preconditioner : HypreBoomerAMG
 
-Behavior law parameters : ImplicitNortonThreshold
+Behavior law parameters : NortonViscoplasticityWithThreshold
 [ parameters       , matrix   , inclusions ]
 [ Young Modulus    , 8.182e9  , 2*8.182e9  ];
 [ Poisson Ratio    , 0.364    , 0.364      ];
@@ -50,7 +50,7 @@ Order 2
 // command line options
 struct TestParameters {
   const char* mesh_file = "mesh/OneSphere.msh";
-  const char* behaviour = "ImplicitNortonThreshold";
+  const char* behaviour = "NortonViscoplasticityWithThreshold";
   const char* library = "src/libBehaviour.so";
   const char* reference_file = "";
   int order = 2;
@@ -164,7 +164,6 @@ void setup_properties(mfem_mgis::attributes::MayAbort,
                       mfem_mgis::Context& ctx,
                       const TestParameters& p,
                       mfem_mgis::PeriodicNonLinearEvolutionProblem& problem) {
-  using namespace mgis::behaviour;
   using real = mfem_mgis::real;
   auto or_die = ctx.getFatalFailureHandler();
 
@@ -179,15 +178,23 @@ void setup_properties(mfem_mgis::attributes::MayAbort,
   auto set_properties = [&ctx, &or_die](auto& m, const double yo,
                                         const double po, const double st,
                                         const double no) {
-    setMaterialProperty(ctx, m.s0, "YoungModulus", yo) | or_die;
-    setMaterialProperty(ctx, m.s0, "PoissonRatio", po) | or_die;
-    setMaterialProperty(ctx, m.s0, "StressThreshold", st) | or_die;
-    setMaterialProperty(ctx, m.s0, "NortonExponent", no) | or_die;
+    mgis::behaviour::setMaterialProperty(ctx, m.s0, "YoungModulus", yo) |
+        or_die;
+    mgis::behaviour::setMaterialProperty(ctx, m.s0, "PoissonRatio", po) |
+        or_die;
+    mgis::behaviour::setMaterialProperty(ctx, m.s0, "StressThreshold", st) |
+        or_die;
+    mgis::behaviour::setMaterialProperty(ctx, m.s0, "NortonExponent", no) |
+        or_die;
 
-    setMaterialProperty(ctx, m.s1, "YoungModulus", yo) | or_die;
-    setMaterialProperty(ctx, m.s1, "PoissonRatio", po) | or_die;
-    setMaterialProperty(ctx, m.s1, "StressThreshold", st) | or_die;
-    setMaterialProperty(ctx, m.s1, "NortonExponent", no) | or_die;
+    mgis::behaviour::setMaterialProperty(ctx, m.s1, "YoungModulus", yo) |
+        or_die;
+    mgis::behaviour::setMaterialProperty(ctx, m.s1, "PoissonRatio", po) |
+        or_die;
+    mgis::behaviour::setMaterialProperty(ctx, m.s1, "StressThreshold", st) |
+        or_die;
+    mgis::behaviour::setMaterialProperty(ctx, m.s1, "NortonExponent", no) |
+        or_die;
   };
 
   set_properties(m1, 8.182e9, 0.364, 100.0e6, 3.333333);
@@ -195,8 +202,12 @@ void setup_properties(mfem_mgis::attributes::MayAbort,
 
   //
   auto set_temperature = [&ctx, &or_die](auto& m) {
-    setExternalStateVariable(ctx, m.s0, "Temperature", 293.15) | or_die;
-    setExternalStateVariable(ctx, m.s1, "Temperature", 293.15) | or_die;
+    mgis::behaviour::setExternalStateVariable(ctx, m.s0, "Temperature",
+                                              293.15) |
+        or_die;
+    mgis::behaviour::setExternalStateVariable(ctx, m.s1, "Temperature",
+                                              293.15) |
+        or_die;
   };
   set_temperature(m1);
   set_temperature(m2);
@@ -286,7 +297,11 @@ static bool checkMeanStresses(const std::string& f, const std::string& r) {
   constexpr auto eps = mfem_mgis::real{1e-4};
   const auto values = readMeanStresses(f);
   const auto references = readMeanStresses(r);
-  if ((references.empty()) || (values.size() != references.size())) {
+  if (references.empty()) {
+    mfem_mgis::getErrorStream() << "no value read in '" << r << "'\n";
+    return false;
+  }
+  if (values.size() != references.size()) {
     mfem_mgis::getErrorStream() << "'" << f << "' and '" << r
                                 << "' do not have the same number of rows\n";
     return false;
@@ -315,7 +330,7 @@ static bool checkMeanStresses(const std::string& f, const std::string& r) {
 }  // end of checkMeanStresses
 
 int main(int argc, char* argv[]) {
-  auto ctx = mgis::Context{};
+  auto ctx = mfem_mgis::Context{};
   auto or_die = ctx.getFatalFailureHandler();
   ctx.enableProfiling(true);
 
