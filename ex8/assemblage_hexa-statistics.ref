@@ -1,0 +1,4 @@
+# statistics of the fields computed with assemblage_hexa.msh
+# field, minimum, maximum and mean values
+DisplacementNorm 0 0.00128471546782245 0.000643676206895236
+Temperature 309.565124979185 480.497653938537 360.215154114298

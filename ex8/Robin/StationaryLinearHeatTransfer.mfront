@@ -24,7 +24,7 @@ j.setGlossaryName("HeatFlux");
 } // end of @Integrator
 
 @TangentOperator {
-  static_cast<void>(smt); // removing compiler warning 
+  static_cast<void>(smt); // removing compiler warning
   dj_ddgT = -10 * tmatrix<N, N, real>::Id();
   dj_ddT = TVector::zero();
-} // end of @TangentOperator 
+} // end of @TangentOperator

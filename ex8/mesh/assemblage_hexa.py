@@ -5,7 +5,7 @@ import argparse
 
 def plaque(offset, FuelThickness, CladThickness, RayonCintrage, angle):
     epaissGaineHaut = (PlateHeight - FuelHeight) / 2.
-    hautCombB = hautGaineB + epaissGaineHaut     
+    hautCombB = hautGaineB + epaissGaineHaut
     hautCombH = hautGaineH - epaissGaineHaut
 
     rintComb = RayonCintrage - FuelThickness / 2.
@@ -60,7 +60,7 @@ def plaque(offset, FuelThickness, CladThickness, RayonCintrage, angle):
     gmsh.model.geo.addLine(7+offset, 8+offset, 7+offset)
     gmsh.model.geo.addLine(8+offset, 5+offset, 8+offset)
 
-    gmsh.model.geo.addPoint(0, 0, hautCombB, tag=9+offset) 
+    gmsh.model.geo.addPoint(0, 0, hautCombB, tag=9+offset)
     gmsh.model.geo.addPoint(0, 0, hautCombH, tag=10+offset)
 
     gmsh.model.geo.addCircleArc(1+offset, 9+offset,  5+offset,  9+offset)
@@ -111,9 +111,9 @@ def plaque(offset, FuelThickness, CladThickness, RayonCintrage, angle):
     gmsh.model.geo.addLine(28+offset, 25+offset, 28+offset)
 
     gmsh.model.geo.addPoint(0, 0, hautGaineB, tag=29+offset)
-    gmsh.model.geo.addPoint(0, 0, hautGaineH, tag=30+offset) 
+    gmsh.model.geo.addPoint(0, 0, hautGaineH, tag=30+offset)
 
-    gmsh.model.geo.addCircleArc(21+offset, 29+offset, 25+offset,29+offset) 
+    gmsh.model.geo.addCircleArc(21+offset, 29+offset, 25+offset,29+offset)
     gmsh.model.geo.addCircleArc(22+offset, 29+offset, 26+offset,30+offset)
     gmsh.model.geo.addCircleArc(23+offset, 30+offset, 27+offset,31+offset)
     gmsh.model.geo.addCircleArc(24+offset, 30+offset, 28+offset,32+offset)
@@ -157,7 +157,7 @@ def plaque(offset, FuelThickness, CladThickness, RayonCintrage, angle):
     for su in range(20+offset, 38+offset):
         gmsh.model.geo.addSurfaceFilling([su],su)
 
-    gmsh.model.geo.addSurfaceLoop([1+offset,  2+offset,  3+offset,  4+offset,  5+offset,  6+offset] , 1+offset)  
+    gmsh.model.geo.addSurfaceLoop([1+offset,  2+offset,  3+offset,  4+offset,  5+offset,  6+offset] , 1+offset)
     gmsh.model.geo.addSurfaceLoop([3+offset, 21+offset, 25+offset, 29+offset, 33+offset, 34+offset] ,21+offset)
     gmsh.model.geo.addSurfaceLoop([4+offset, 22+offset, 26+offset, 30+offset, 34+offset, 35+offset] ,22+offset)
     gmsh.model.geo.addSurfaceLoop([5+offset, 23+offset, 27+offset, 31+offset, 35+offset, 36+offset] ,23+offset)
@@ -167,7 +167,7 @@ def plaque(offset, FuelThickness, CladThickness, RayonCintrage, angle):
 
     gmsh.model.geo.addVolume([1+offset],1+offset) #comb
 
-    for vo in range(21+offset, 27+offset): #gaine    
+    for vo in range(21+offset, 27+offset): #gaine
         gmsh.model.geo.addVolume([vo],vo)
 
     gmsh.model.geo.synchronize()
@@ -177,7 +177,7 @@ def stiffener(offset, rintStif, rextStif, hautStifB, hautStifH, angle, i, j):
     first = False
     if (i == 0):
         first = True
-    
+
     cosAngStif = math.cos(2*math.pi*angle/360)
     sinAngStif = math.sin(2*math.pi*angle/360)
 
@@ -201,7 +201,7 @@ def stiffener(offset, rintStif, rextStif, hautStifB, hautStifH, angle, i, j):
     else :
         offset2 = offset - PlatesNbr * offsetBase
 
-    # pour la surface qui fait la jonction stiffener-gaine 
+    # pour la surface qui fait la jonction stiffener-gaine
     offsetl = (i * PlatesNbr + (j + 1)%PlatesNbr) * offsetBase
 
     if first:
@@ -227,12 +227,12 @@ def stiffener(offset, rintStif, rextStif, hautStifB, hautStifH, angle, i, j):
         gmsh.model.geo.addLine(24+offsetl, 47+offset2, 56+offset)
         gmsh.model.geo.addLine(25+offset, 42+offset2, 61+offset)
         gmsh.model.geo.addLine(28+offset, 43+offset2, 64+offset)
-    
+
     gmsh.model.geo.addLine(42+offset, 43+offset, 42+offset)
     gmsh.model.geo.addLine(46+offset, 47+offset, 46+offset)
     gmsh.model.geo.addLine(42+offset, 46+offset, 50+offset)
     gmsh.model.geo.addLine(43+offset, 47+offset, 51+offset)
-    
+
     gmsh.model.geo.addLine(22+offsetl, 46+offset, 54+offset)
     gmsh.model.geo.addLine(23+offsetl, 47+offset, 55+offset)
     gmsh.model.geo.addLine(26+offset, 42+offset, 62+offset)
@@ -242,7 +242,7 @@ def stiffener(offset, rintStif, rextStif, hautStifB, hautStifH, angle, i, j):
     gmsh.model.geo.addLine(26+offset, 22+offsetl, 66+offset)
     gmsh.model.geo.addLine(27+offset, 23+offsetl, 67+offset)
     gmsh.model.geo.addLine(28+offset, 24+offsetl, 68+offset)
-    
+
 
     if first:
         gmsh.model.geo.addCurveLoop([41+offset, 50+offset, -45-offset, -49-offset2], 40+offset)
@@ -281,7 +281,7 @@ def stiffener(offset, rintStif, rextStif, hautStifB, hautStifH, angle, i, j):
     gmsh.model.geo.addCurveLoop([66+offset, 22+offsetl, -67-offset, -26-offset], 58+offset)
     gmsh.model.geo.addCurveLoop([67+offset, 23+offsetl, -68-offset, -27-offset], 59+offset)
     gmsh.model.geo.addCurveLoop([66+offset, -21-offsetl, -65-offset, 25+offset], 60+offset)
-    
+
     # Surfaces stiffner
     for su in range(40 + offset, 43 + offset):
         gmsh.model.geo.addPlaneSurface([su], su)
@@ -304,7 +304,7 @@ def stiffener(offset, rintStif, rextStif, hautStifB, hautStifH, angle, i, j):
     else:
         gmsh.model.geo.addSurfaceLoop([41 + offset2, 47 + offset, 52 + offset, 53 + offset, 56 + offset, 57 + offset], 45+offset)
 
-    for vo in range(41+offset, 46+offset): 
+    for vo in range(41+offset, 46+offset):
         gmsh.model.geo.addVolume([vo],vo)
 
     gmsh.model.geo.synchronize()
@@ -399,7 +399,7 @@ for i in range(CouronnesNbr):
         cladConn.extend([37+offset, 38+offset, 39+offset, 40+offset])
 
 
-# stiffeners 
+# stiffeners
 
 hautStifB = 0.
 hautStifH = hautGaineH + StiffenerTopHeight
@@ -421,7 +421,7 @@ for i in range(CouronnesNbr):
 
         # PhysicalGroup volumes
         stiffeners.extend([41+offset,42+offset,43+offset,44+offset,45+offset])
-        
+
         # groupe pour transfinite
         fuelThick.extend([41+offset, 43+offset, 45+offset, 47+offset])
         if (i == 0):
@@ -440,13 +440,13 @@ gmsh.model.geo.synchronize()
 
 # PhysicalGroup volumes
 
-gmsh.model.addPhysicalGroup(3, comb, 1) 
+gmsh.model.addPhysicalGroup(3, comb, 1)
 gmsh.model.setPhysicalName(3, 1, "comb")
 
-gmsh.model.addPhysicalGroup(3, gaine, 2) 
+gmsh.model.addPhysicalGroup(3, gaine, 2)
 gmsh.model.setPhysicalName(3, 2, "gaine")
 
-gmsh.model.addPhysicalGroup(3, stiffeners, 3)  
+gmsh.model.addPhysicalGroup(3, stiffeners, 3)
 gmsh.model.setPhysicalName(3, 3, "stiffeners")
 
 
@@ -464,7 +464,7 @@ gmsh.model.setPhysicalName(2, 6, "sgb")
 gmsh.model.addPhysicalGroup(2, sgi, 7)
 gmsh.model.setPhysicalName(2, 7, "sgi")
 
-gmsh.model.addPhysicalGroup(2, sse, 8) 
+gmsh.model.addPhysicalGroup(2, sse, 8)
 gmsh.model.setPhysicalName(2, 8, "sse")
 
 gmsh.model.addPhysicalGroup(2, ssb, 9)
@@ -526,11 +526,11 @@ for v in gmsh.model.getEntities(3):
 
 gmsh.option.setNumber("Mesh.ElementOrder", 1)
 gmsh.option.setNumber("Mesh.MshFileVersion", 2.2)
-gmsh.option.setNumber("Mesh.Format", 0)  
+gmsh.option.setNumber("Mesh.Format", 0)
 
 t0 = time.time()
 
-# Génération du maillage 
+# Génération du maillage
 gmsh.model.mesh.generate(1)  # mesh1 1D
 t1 = time.time()
 print("Timing 1D=", t1 - t0, "seconds")

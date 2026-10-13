@@ -4,7 +4,7 @@ This file contains the constitutive laws implemented via **TFEL/MFront** for the
 
 ---
 
-## Material 1: ALFENI (Cladding / Structure)
+## ALFENI (Cladding and stiffeners, materials 2 and 3 of the mesh)
 
 ALFENI is modeled with an elasto-plastic behavior coupled with temperature, accounting for large strains and solving the heat equation after considering the effects of
 the deformation.
@@ -28,7 +28,7 @@ The mechanical properties of ALFENI depend on temperature according to the follo
   * Linear thermal softening above this threshold (slope of $-1.5\text{ MPa/K}$).
   * Floor value set at $100\text{ MPa}$.
 
-### Coupled Thermal Behavior (`_ThermiqueCouplee`)
+### Coupled Thermal Behavior (`_CoupledHeatTransfer`)
 The heat equation is solved taking into account the geometry deformation.
 * The effective conductivity $K_{eff}$ depends on the deformation gradient $F$ (via the right Cauchy-Green tensor $C$ and the Jacobian $J$).
 * The intrinsic conductivity $k_0$ evolves linearly with temperature: $k_0 = A + B(T - 273.15)$, with $A = 121.0$ and $B = 0.15$.
@@ -36,7 +36,7 @@ The heat equation is solved taking into account the geometry deformation.
 
 ---
 
-## Material 2: U3Si2 (Fuel)
+## U3Si2 (Fuel, material 1 of the mesh)
 
 The U3Si2 fuel is subjected to in-pile irradiation phenomena. Its mechanical behavior is dominated by irradiation creep and solid swelling induced by fissions.
 
@@ -47,12 +47,12 @@ This point-wise model computes the evolution of the solid volumetric swelling $S
 * **Integration:** The swelling rate is integrated implicitly using the average power density over the time step.
 * **Rate:** Proportional constant set to $6.2 \times 10^{-29}$ (adjusted via energy unit conversions).
 
-### Mechanical Behavior: Irradiation Creep (`_NortonPRQ`)
+### Mechanical Behavior: Irradiation Creep (`_IrradiationCreep`)
 Unlike ALFENI, U3Si2 does not undergo classical plasticity but instead creeps under irradiation (modified Norton-type law). This model also uses the **Hencky** strain measure for large deformations.
 
 * **Thermal Expansion:** The thermal expansion coefficient is set to $16.1 \times 10^{-6}\text{ K}^{-1}$ (IAEA-TECDOC-1921, section 2.2.4) with a reference temperature of $293.15\text{ K}$.
 * **Coupling with Swelling:** The swelling $sw$ computed by the `_SolidSwelling` model is passed to this mechanical law as an external state variable. It is converted into an isotropic inelastic strain tensor.
-* **Flow Rule (Creep):** 
+* **Flow Rule (Creep):**
   * Driven by the fission rate ($fr = Pow / E_f$), where $E_f = 3.20436 \times 10^{-11}\text{ J/fission}$.
   * Creep is proportional to the Von Mises equivalent stress ($seq$) multiplied by the fission rate and a constant $A = 500 \times 10^{-37}$.
 * **Post-processing:** The scalar swelling is assigned to an auxiliary variable (`SwellingExport` of type `strain`) to force its export to visualization tools.

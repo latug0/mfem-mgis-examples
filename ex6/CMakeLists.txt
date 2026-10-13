@@ -6,17 +6,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(CTest)
 # testing
-set(CTEST_CONFIGURATION_TYPE "${JOB_BUILD_CONFIGURATION}")
 # (must be placed *before* any add_subdirectory, cmake bug ?)
 enable_testing()
 if(CMAKE_CONFIGURATION_TYPES)
    if (NOT TARGET check)
-      add_custom_target(check COMMAND 
+      add_custom_target(check COMMAND
          ${CMAKE_CTEST_COMMAND} -T test -C $<CONFIGURATION>)
    endif(NOT TARGET check)
 else(CMAKE_CONFIGURATION_TYPES)
    if (NOT TARGET check)
-      add_custom_target(check COMMAND 
+      add_custom_target(check COMMAND
       ${CMAKE_CTEST_COMMAND} -T test )
    endif(NOT TARGET check)
 endif(CMAKE_CONFIGURATION_TYPES)
@@ -28,20 +27,21 @@ endif(NOT TARGET mfem-mgis::MFEMMGIS)
 
 # Define a test that will be called during the "make check"
 
-# Copy needed file for execution
-file(COPY
-  ${PROJECT_SOURCE_DIR}/SaintVenantKirchhoffElasticity.mfront
-  ${PROJECT_SOURCE_DIR}/cube_2mat_per.mesh
-  ${PROJECT_SOURCE_DIR}/inclusions_49.geo
-  DESTINATION ${PROJECT_BINARY_DIR})
-  
-  # Use mfront to generate libBehaviour.so
+# Copy the files needed at run time. Unlike file(COPY), configure_file updates
+# the copies when these files are modified.
+foreach(input SaintVenantKirchhoffElasticity.mfront cube_2mat_per.mesh
+              inclusions_49.geo)
+  configure_file(${PROJECT_SOURCE_DIR}/${input} ${PROJECT_BINARY_DIR}/${input}
+                 COPYONLY)
+endforeach()
+
+# Use mfront to generate libBehaviour.so
 add_custom_command(
   OUTPUT "src/libBehaviour.so"
   COMMAND mfront --obuild --interface=generic ${PROJECT_BINARY_DIR}/SaintVenantKirchhoffElasticity.mfront
   DEPENDS ${PROJECT_BINARY_DIR}/SaintVenantKirchhoffElasticity.mfront
   COMMENT "Performing mfront code generation")
-  
+
 add_custom_target(generate-libBehaviour-ex6 ALL
   DEPENDS "src/libBehaviour.so")
 
@@ -49,12 +49,13 @@ add_executable(rve RveNonLinearElastic.cxx)
 target_link_libraries(rve mfem-mgis::MFEMMGIS)
 target_include_directories(rve
   SYSTEM
-  PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"   
+  PUBLIC "$<BUILD_INTERFACE:${MFEM_INCLUDE_DIRS}>"
   PUBLIC "$<INSTALL_INTERFACE:${MFEM_INCLUDE_DIRS}>")
-    
+
 add_dependencies(check rve generate-libBehaviour-ex6)
 
-set(test "RveNonLinearElasticTest")
-add_test(NAME ${test} COMMAND rve --postprocessings 0)
-
-
+# The test is the same in the full and restricted test modes, since it is a
+# single computation on the two-layer cube, compared to its analytical
+# solution.
+set(test "rve")
+add_test(NAME ${test} COMMAND rve --no-post-processing)

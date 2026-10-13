@@ -1,5 +1,5 @@
 /*!
- * \file   include/MFEMMGIS/RobinBC.hxx
+ * \file   headers/RobinBC.hxx
  * \brief  Definition of the Robin boundary condition and its nonlinear form
  * integrator. \author Julien Rigal \date   22/07/2026
  */

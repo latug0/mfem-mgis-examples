@@ -1,51 +1,21 @@
 #include <cmath>
-#include <cstdlib>
-#include <functional>
-#include <iostream>
-#include <memory>
-#include <sys/resource.h>
-#include <sys/time.h>
-
-#include <chrono>
 #include <string>
-#include <map>
-#include <algorithm>
 #include <vector>
+#include <cstdlib>
+#include <string_view>
 
-#include "mfem/fem/datacollection.hpp"
 #include "mfem/general/optparser.hpp"
-#include "mfem/linalg/solvers.hpp"
-
-#include "MGIS/Model/Model.hxx"
-#include "MGIS/Behaviour/Integrate.hxx"
 
 #include "MFEMMGIS/Config.hxx"
-#include "MFEMMGIS/MFEMForward.hxx"
-#include "MFEMMGIS/Material.hxx"
-#include "MFEMMGIS/NonLinearEvolutionProblem.hxx"
-#include "MFEMMGIS/NonLinearEvolutionProblemImplementation.hxx"
 #include "MFEMMGIS/Parameters.hxx"
 #include "MFEMMGIS/Profiler.hxx"
-#include "MFEMMGIS/UniformDirichletBoundaryCondition.hxx"
-#include "MFEMMGIS/UniformHeatSourceBoundaryCondition.hxx"
-#include "MFEMMGIS/ParaviewExportIntegrationPointResultsAtNodes.hxx"
-#include "MFEMMGIS/PhysicalSystem.hxx"
-#include "MFEMMGIS/PointWiseModel.hxx"
+#include "MFEMMGIS/MeshDiscretization.hxx"
+#include "MFEMMGIS/NonLinearEvolutionProblemImplementation.hxx"
 #include "MFEMMGIS/NonLinearModel.hxx"
+#include "MFEMMGIS/PhysicalSystem.hxx"
 #include "MFEMMGIS/IterativeCouplingScheme.hxx"
 #include "MFEMMGIS/FirstIterationConvergenceCriterion.hxx"
-#include "MFEMMGIS/LoopCouplingScheme.hxx"
 #include "MFEMMGIS/Simulation.hxx"
-#include "MFEMMGIS/TimeStep.hxx"
-#include "MFEMMGIS/BehaviourIntegratorBase.hxx"
-
-#ifdef MFEM_USE_PETSC
-#include "mfem/linalg/petsc.hpp"
-#endif /* MFEM_USE_PETSC */
-
-#ifdef MFEM_USE_PETSC
-#include "mfem/linalg/mumps.hpp"
-#endif /* MFEM_USE_MUMPS */
 
 /* Project specific includes */
 #include "headers/BoundaryConditions.hxx"
@@ -57,74 +27,79 @@
 void common_parameters(mfem::OptionsParser& args, TestParameters& p) {
   args.AddOption(&p.mesh_file, "-m", "--mesh", "Mesh file to use.");
   args.AddOption(&p.libraryU3SI2, "-lU", "--libraryU3SI2",
-                 "Material library for said material.");
+                 "Material library of the U3Si2 fuel.");
   args.AddOption(&p.libraryALFENI, "-lA", "--libraryALFENI",
-                 "Material library for said material.");
-  args.AddOption(&p.solver_thermo, "-svTh", "--solverTh",
-                 "Solver for heat_transfer.");
-  args.AddOption(&p.precond_thermo, "-pcTh", "--preconditionnerTh",
-                 "Preconditionner for heat transfer.");
-  args.AddOption(&p.solver_meca, "-svMc", "--solverMc",
-                 "Solver for mechanics.");
-  args.AddOption(&p.precond_meca, "-pcMc", "--preconditionnerMc",
-                 "Preconditionner for mechanics.");
+                 "Material library of the ALFENI cladding and stiffeners.");
+  args.AddOption(&p.solver_thermo, "-lsTh", "--linearsolver-thermal",
+                 "Linear solver of the heat transfer problem.");
+  args.AddOption(&p.precond_thermo, "-pcTh", "--preconditioner-thermal",
+                 "Preconditioner of the linear solver of the heat transfer "
+                 "problem.");
+  args.AddOption(&p.solver_meca, "-lsMc", "--linearsolver-mechanics",
+                 "Linear solver of the mechanical problem.");
+  args.AddOption(&p.precond_meca, "-pcMc", "--preconditioner-mechanics",
+                 "Preconditioner of the linear solver of the mechanical "
+                 "problem.");
   args.AddOption(&p.order, "-o", "--order",
                  "Finite element order (polynomial degree).");
   args.AddOption(&p.refinement, "-r", "--refinement",
-                 "refinement level of the mesh, default = 0");
-  args.AddOption(&p.post_processing, "-p", "--post-processing",
-                 "run post processing step");
+                 "Number of uniform refinements of the mesh.");
+  args.AddOption(&p.post_processing, "-pp", "--post-processing", "-no-pp",
+                 "--no-post-processing", "Export the results to Paraview.");
   args.AddOption(&p.verbosity_level, "-v", "--verbosity-level",
-                 "choose the verbosity level");
-  args.AddOption(&p.debug, "-d", "--debug", "-nd", "--nodebug",
-                 "Enable physics statistics debug output.");
-  args.AddOption(&p.duree, "-dur", "--duree",
-                 "Total simulation duration, default = 1e5");
-  args.AddOption(&p.nbsteps, "-ns", "--nbsteps",
-                 "Number of time steps, default = 1");
+                 "Verbosity level of the linear solvers.");
+  args.AddOption(&p.debug, "-d", "--debug", "-no-d", "--no-debug",
+                 "Print the statistics of the fields.");
+  args.AddOption(&p.reference_file, "-rf", "--reference-file",
+                 "Reference statistics of the fields, no comparison if "
+                 "empty.");
+  args.AddOption(&p.end_time, "-et", "--end-time", "End time.");
+  args.AddOption(&p.nbsteps, "-ns", "--nbsteps", "Number of time steps.");
   args.AddOption(&p.t_ramp, "-tr", "--t-ramp",
-                 "Duration of the power ramp (0 disables it), default = 1e5");
+                 "Duration of the power ramp, 0 disables it.");
   args.AddOption(&p.h_conv, "-hc", "--h-conv",
-                 "Thermal convection coefficient, default = 5e4");
+                 "Thermal convection coefficient.");
   args.AddOption(&p.water_pressure, "-wp", "--water-pressure",
-                 "Coolant pressure, default = 1e6");
+                 "Coolant pressure.");
 
   mfem_mgis::declareDefaultOptions(args);
   args.Parse();
 
-  if (!args.Good()) {
-    if (mfem_mgis::getMPIrank() == 0) args.PrintUsage(std::cout);
+  if (args.Help()) {
+    args.PrintUsage(mfem_mgis::getOutputStream());
     mfem_mgis::finalize();
-    exit(0);
+    std::exit(EXIT_SUCCESS);
   }
-  if (mfem_mgis::getMPIrank() == 0) args.PrintOptions(std::cout);
+  if (!args.Good()) {
+    args.PrintUsage(mfem_mgis::getOutputStream());
+    mfem_mgis::abort(EXIT_FAILURE);
+  }
+  args.PrintOptions(mfem_mgis::getOutputStream());
 }
 
 int main(int argc, char* argv[]) {
-  using namespace mfem_mgis;
-  using namespace mfem;
-  initialize(argc, argv);
+  mfem_mgis::initialize(argc, argv);
 
-  auto ctx = mgis::Context{};
+  auto ctx = mfem_mgis::Context{};
   ctx.enableProfiling(true);
   auto or_die = ctx.getFatalFailureHandler();
 
   TestParameters p;
 
-  OptionsParser args(argc, argv);
+  mfem::OptionsParser args(argc, argv);
   common_parameters(args, p);
 
   if (p.t_ramp < 0) {
     ctx.log() << "the duration of the power ramp must not be negative\n";
-    finalize();
+    mfem_mgis::finalize();
     return EXIT_FAILURE;
   }
-  const auto ramp_steps = p.t_ramp * p.nbsteps / p.duree;
-  if ((p.t_ramp < p.duree) &&
+  const auto ramp_steps = p.t_ramp * p.nbsteps / p.end_time;
+  if ((p.t_ramp < p.end_time) &&
       (std::abs(ramp_steps - std::round(ramp_steps)) > 1e-9)) {
     ctx.log() << "the end of the power ramp (t = " << p.t_ramp
               << " s) must be a time step boundary\n";
-    finalize();
+    mfem_mgis::finalize();
     return EXIT_FAILURE;
   }
 
@@ -132,33 +107,35 @@ int main(int argc, char* argv[]) {
     return (t < p.t_ramp) ? p.source * (t / p.t_ramp) : p.source;
   };
 
-  auto mesh =
-      construct<MeshDiscretization>(
-          ctx, ctx,
-          Parameters{
-              {"MeshFileName", p.mesh_file},
-              {"Materials",
-               Parameters{{"comb", 1}, {"gaine", 2}, {"stiffeners", 3}}},
-              {"NumberOfUniformRefinements", p.parallel ? p.refinement : 0},
-              {"Parallel", p.parallel}}) |
-      or_die;
+  auto mesh = mfem_mgis::construct<mfem_mgis::MeshDiscretization>(
+                  ctx, ctx,
+                  mfem_mgis::Parameters{
+                      {"MeshFileName", p.mesh_file},
+                      {"Materials",
+                       mfem_mgis::Parameters{
+                           {"comb", 1}, {"gaine", 2}, {"stiffeners", 3}}},
+                      {"NumberOfUniformRefinements", p.refinement},
+                      {"Parallel", true}}) |
+              or_die;
 
   auto heat_transfer_model =
-      make_shared<NonLinearModel>(ctx, mesh,
-                                  Parameters{{"FiniteElementFamily", "H1"},
-                                             {"FiniteElementOrder", p.order},
-                                             {"Hypothesis", "Tridimensional"},
-                                             {"UnknownsSize", 1},
-                                             {"Name", "Thermal"}}) |
+      mfem_mgis::make_shared<mfem_mgis::NonLinearModel>(
+          ctx, mesh,
+          mfem_mgis::Parameters{{"FiniteElementFamily", "H1"},
+                                {"FiniteElementOrder", p.order},
+                                {"Hypothesis", "Tridimensional"},
+                                {"UnknownsSize", 1},
+                                {"Name", "Thermal"}}) |
       or_die;
 
   auto mechanics_model =
-      make_shared<NonLinearModel>(ctx, mesh,
-                                  Parameters{{"FiniteElementFamily", "H1"},
-                                             {"FiniteElementOrder", p.order},
-                                             {"Hypothesis", "Tridimensional"},
-                                             {"UnknownsSize", 3},
-                                             {"Name", "Mechanics"}}) |
+      mfem_mgis::make_shared<mfem_mgis::NonLinearModel>(
+          ctx, mesh,
+          mfem_mgis::Parameters{{"FiniteElementFamily", "H1"},
+                                {"FiniteElementOrder", p.order},
+                                {"Hypothesis", "Tridimensional"},
+                                {"UnknownsSize", 3},
+                                {"Name", "Mechanics"}}) |
       or_die;
 
   auto& heat_transfer = heat_transfer_model->getProblem();
@@ -181,11 +158,7 @@ int main(int argc, char* argv[]) {
   print_memory_footprint("After_problem_creation:");
 
   auto mechanics_fed = mechanics.getFiniteElementDiscretizationPointer();
-#ifdef MFEM_USE_MPI
   mfem::ParGridFunction u_mech(&mechanics_fed->getFiniteElementSpace<true>());
-#else
-  mfem::GridFunction u_mech(&mechanics_fed->getFiniteElementSpace<false>());
-#endif
   u_mech = 0.0;
 
   const auto setup = setup_properties(mfem_mgis::may_abort, ctx, p,
@@ -199,38 +172,28 @@ int main(int argc, char* argv[]) {
   setLinearSolver(mfem_mgis::may_abort, ctx, mechanics, "mechanics", p,
                   p.verbosity_level);
 
-  if (p.post_processing == 1) {
+  if (p.post_processing) {
     add_post_processings(mfem_mgis::may_abort, ctx, mechanics,
                          "Results/Mechanics", "Displacement");
     add_post_processings(mfem_mgis::may_abort, ctx, heat_transfer,
                          "Results/Thermal", "Temperature");
-
-    // // Exportation du swelling + déformation plastique
-    // mfem_mgis::Parameters params_plast = {
-    //     {"Results", "EquivalentPlasticStrain"},
-    //     {"OutputFileName", "Resultats/MFront_Plasticite"}
-    // };
-    // mechanics.addPostProcessing("ParaviewExportIntegrationPointResultsAtNodes",
-    // params_plast);
-
-    mfem_mgis::Parameters params_swell;
-    params_swell.insert(mfem_mgis::throwing, "Results", "SwellingExport");
-    params_swell.insert(mfem_mgis::throwing, "OutputFileName",
-                        "Results/Swelling");
-
-    std::vector<mfem_mgis::Parameter> mat_filter = {"comb"};
-    params_swell.insert(mfem_mgis::throwing, "Materials", mat_filter);
-
+    // swelling in the fuel
     mechanics.addPostProcessing(
-        ctx, "ParaviewExportIntegrationPointResultsAtNodes", params_swell) |
+        ctx, "ParaviewExportIntegrationPointResultsAtNodes",
+        {{"Results", "SwellingExport"},
+         {"OutputFileName", "Results/Swelling"},
+         {"Materials", std::vector<mfem_mgis::Parameter>{"comb"}}}) |
         or_die;
   }
 
-  auto ps = mfem_mgis::construct<PhysicalSystem>(ctx, mesh) | or_die;
+  auto ps = mfem_mgis::construct<mfem_mgis::PhysicalSystem>(ctx, mesh) | or_die;
 
-  auto c = mfem_mgis::make_shared<IterativeCouplingScheme>(ctx, mesh) | or_die;
+  auto c =
+      mfem_mgis::make_shared<mfem_mgis::IterativeCouplingScheme>(ctx, mesh) |
+      or_die;
   auto criterion =
-      mfem_mgis::make_shared<FirstIterationConvergenceCriterion>(ctx);
+      mfem_mgis::make_shared<mfem_mgis::FirstIterationConvergenceCriterion>(
+          ctx);
 
   c->setMaximumNumberOfIterations(ctx, 10) | or_die;
   c->addConvergenceCriterion(ctx, criterion) | or_die;
@@ -247,24 +210,30 @@ int main(int argc, char* argv[]) {
 
   // declaring the simulation
   const auto times =
-      construct<Simulation::TimesDescription>(ctx, 0, p.duree, p.nbsteps) |
+      mfem_mgis::construct<mfem_mgis::Simulation::TimesDescription>(
+          ctx, 0, p.end_time, p.nbsteps) |
       or_die;
-  auto s = construct<Simulation>(ctx, ctx, ps, times) |
-           or_die;  // mgis::construct could be implemented such that it
-                    // uses/transfers the first context we give
+  auto s =
+      mfem_mgis::construct<mfem_mgis::Simulation>(ctx, ctx, ps, times) | or_die;
   // running the simulation
   const auto [status, output] = s.run(ctx);
-  if (status != ExitStatus::success) {
-    std::cerr << "simulation failed: " << ctx.getErrorMessage() << '\n';
+  if (status != mfem_mgis::ExitStatus::success) {
+    mfem_mgis::getErrorStream()
+        << "simulation failed: " << ctx.getErrorMessage() << '\n';
     print_memory_footprint("After Solving:");
     return EXIT_FAILURE;
   }
   print_memory_footprint("After Solving:");
 
+  const auto stats = computePhysicsStatistics(heat_transfer, mechanics, setup);
   if (p.debug) {
-    debug_print_physics_stats(ctx, heat_transfer, mechanics, p.parallel, setup);
+    printPhysicsStatistics(mfem_mgis::getOutputStream(), stats);
   }
-
-  Profiler::OutputManager::printTimeTable(ctx);
-  return EXIT_SUCCESS;
+  mfem_mgis::Profiler::OutputManager::printTimeTable(ctx);
+  // the swelling is always compared to its exact value
+  auto success = checkSwelling(stats.at("Swelling"), p);
+  if (!std::string_view{p.reference_file}.empty()) {
+    success = checkPhysicsStatistics(stats, p.reference_file) && success;
+  }
+  return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }

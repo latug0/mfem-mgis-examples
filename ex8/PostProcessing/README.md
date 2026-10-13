@@ -1,5 +1,7 @@
 # Post-Processing
 
+> This directory is an archive of the scripts written by Julien Rigal during his internship. They are kept for reference and are not necessarily usable as is.
+
 This directory contains all the tools, scripts (Bash, Python), and data used to analyze the computational performance and physical results of the simulations.
 
 ## Directory Structure

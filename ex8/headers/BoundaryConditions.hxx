@@ -26,18 +26,18 @@ void apply_boundary_conditions(
 // used by the Robin boundary condition.
 class FieldUpdaterModel : public mfem_mgis::ModelBase {
  private:
-  std::shared_ptr<std::vector<mgis::real>> Pow_s0;
-  std::shared_ptr<std::vector<mgis::real>> Pow_s1;
+  std::shared_ptr<std::vector<mfem_mgis::real>> Pow_s0;
+  std::shared_ptr<std::vector<mfem_mgis::real>> Pow_s1;
   std::function<double(double)> power_history;
   mfem::GridFunction* u_mech;
   const mfem::Vector* u_mech_true;
   std::string name;
 
  public:
-  FieldUpdaterModel(mgis::Context& ctx,
+  FieldUpdaterModel(mfem_mgis::Context& ctx,
                     const mfem_mgis::MeshDiscretization& mesh,
-                    std::shared_ptr<std::vector<mgis::real>> pow0,
-                    std::shared_ptr<std::vector<mgis::real>> pow1,
+                    std::shared_ptr<std::vector<mfem_mgis::real>> pow0,
+                    std::shared_ptr<std::vector<mfem_mgis::real>> pow1,
                     std::function<double(double)> history_func,
                     mfem::GridFunction* u,
                     const mfem::Vector* u_true)

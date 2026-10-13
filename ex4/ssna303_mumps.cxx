@@ -1,11 +1,12 @@
 /*!
- * \file   ssna303.cxx
+ * \file   ssna303_mumps.cxx
  * \brief
  * \author Thomas Helfer
  * \date   14/12/2020
  */
 
 #include <memory>
+#include <string_view>
 #include <cstdlib>
 #include <iostream>
 #include "mfem/general/optparser.hpp"
@@ -28,83 +29,123 @@
 #include "MFEMMGIS/NonLinearEvolutionProblem.hxx"
 #include "MFEMMGIS/NonLinearEvolutionProblemImplementation.hxx"
 #include "MFEMMGIS/LinearSolverFactory.hxx"
-
-#define PRINT_DEBUG (std::cout << __FILE__ << ":" << __LINE__ << std::endl)
+#include "CheckResultantForce.hxx"
 
 int main(int argc, char** argv) {
-  auto ctx = mgis::Context{};
+  auto ctx = mfem_mgis::Context{};
   auto or_die = ctx.getFatalFailureHandler();
   // ctx.enableProfiling(true);
   mfem_mgis::initialize(argc, argv);
   constexpr const auto dim = mfem_mgis::size_type{3};
   const char* mesh_file = "ssna303_3d.msh";
-  const char* behaviour = "Plasticity";
+  const char* behaviour = "IsotropicLinearHardeningPlasticity";
   const char* library = "src/libBehaviour.so";
-  const char* petscrc_file = "";
-  auto parallel = int{1};
-  auto ref_para = 0;
-  auto ref_seq = 0;
+  bool use_fbar = false;
+  // not null, since mfem::OptionsParser::PrintUsage stops at the first null
+  // string
+  const char* reference_file = "";
+  const char* standard_reference_file = "";
+  auto parallel = true;
   auto order = 1;
+  auto nbsteps = 50;
+  auto end_time = mfem_mgis::real{1};
 
   // options treatment
   mfem::OptionsParser args(argc, argv);
   mfem_mgis::declareDefaultOptions(args);
-  args.AddOption(&parallel, "-p", "--parallel",
+  args.AddOption(&parallel, "-p", "--parallel", "-no-p", "--no-parallel",
                  "Perform parallel computations.");
   args.AddOption(&order, "-o", "--order",
                  "Finite element order (polynomial degree).");
+  args.AddOption(&nbsteps, "-ns", "--nbsteps", "Number of time steps.");
+  args.AddOption(
+      &end_time, "-et", "--end-time",
+      "End time. The displacement of the upper boundary is 6e-3 * t.");
+  args.AddOption(&reference_file, "-rf", "--reference-file",
+                 "Reference values of the resultant force on the upper "
+                 "boundary, no comparison if empty.");
+#ifdef MGIS_HAVE_TFEL
+  args.AddOption(&use_fbar, "-fb", "--use-fbar", "-no-fb", "--no-use-fbar",
+                 "Use the FBar formulation.");
+  args.AddOption(&standard_reference_file, "-srf", "--standard-reference-file",
+                 "Reference values of the resultant force on the upper "
+                 "boundary computed without FBar, compared with a larger "
+                 "tolerance, no comparison if empty.");
+#endif /* MGIS_HAVE_TFEL */
   args.Parse();
-  if (!args.Good()) {
-    args.PrintUsage(std::cout);
-    return EXIT_FAILURE;
+  if (args.Help()) {
+    args.PrintUsage(mfem_mgis::getOutputStream());
+    mfem_mgis::finalize();
+    return EXIT_SUCCESS;
   }
-  args.PrintOptions(std::cout);
-
-  // loading the mesh
+  if (!args.Good()) {
+    args.PrintUsage(mfem_mgis::getOutputStream());
+    mfem_mgis::abort(EXIT_FAILURE);
+  }
+  args.PrintOptions(mfem_mgis::getOutputStream());
+  const auto* const output_file = use_fbar ? "force-fbar.txt" : "force.txt";
+  // the non linear problem
   auto problem =
       mfem_mgis::construct<mfem_mgis::NonLinearEvolutionProblem>(
-          ctx, mfem_mgis::Parameters{{"MeshFileName", mesh_file},
-                                     {"FiniteElementFamily", "H1"},
-                                     {"FiniteElementOrder", order},
-                                     {"UnknownsSize", dim},
-                                     {"Hypothesis", "Tridimensional"},
-                                     {"Parallel", true},
-                                     {"NumberOfUniformRefinements",
-                                      parallel ? ref_para : ref_seq}}) |
+          ctx,
+          mfem_mgis::Parameters{
+              {"MeshFileName", mesh_file},
+              {"Materials", mfem_mgis::Parameters{{"NotchedBeam", 1}}},
+              {"FiniteElementFamily", "H1"},
+              {"FiniteElementOrder", order},
+              {"UnknownsSize", dim},
+              {"Hypothesis", "Tridimensional"},
+              {"Parallel", parallel}}) |
       or_die;
 
   // 2 1 "Volume"
-  problem.addBehaviourIntegrator(ctx, "Mechanics", 1, library, behaviour) |
+#ifdef MGIS_HAVE_TFEL
+  if (use_fbar) {
+    problem.addBehaviourIntegrator(
+        ctx, "Mechanics", "NotchedBeam", library, behaviour,
+        {{"Regularization",
+          mfem_mgis::Parameters{{"FBar", mfem_mgis::Parameters{}}}}}) |
+        or_die;
+  } else {
+    problem.addBehaviourIntegrator(ctx, "Mechanics", "NotchedBeam", library,
+                                   behaviour) |
+        or_die;
+  }
+#else  /* MGIS_HAVE_TFEL */
+  problem.addBehaviourIntegrator(ctx, "Mechanics", "NotchedBeam", library,
+                                 behaviour) |
       or_die;
+#endif /* MGIS_HAVE_TFEL */
   // materials
-  auto& m1 = problem.getMaterial(ctx, 1, 0) | or_die;
+  auto& m1 = problem.getMaterial(ctx, "NotchedBeam", 0) | or_die;
   mgis::behaviour::setExternalStateVariable(ctx, m1.s0, "Temperature", 293.15) |
       or_die;
   mgis::behaviour::setExternalStateVariable(ctx, m1.s1, "Temperature", 293.15) |
       or_die;
+
   // boundary conditions
 
   // 3 LowerBoundary
   problem.addBoundaryCondition(
-      ctx, make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
+      ctx, mfem_mgis::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
                ctx, problem.getFiniteElementDiscretizationPointer(), 3, 1) |
                or_die) |
       or_die;
   // 4 SymmetryPlane1
   problem.addBoundaryCondition(
-      ctx, make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
+      ctx, mfem_mgis::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
                ctx, problem.getFiniteElementDiscretizationPointer(), 4, 0) |
                or_die) |
       or_die;
   // 5 SymmetryPlane2
   problem.addBoundaryCondition(
-      ctx, make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
+      ctx, mfem_mgis::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
                ctx, problem.getFiniteElementDiscretizationPointer(), 5, 2) |
                or_die) |
       or_die;
   // 2 UpperBoundary
   problem.addBoundaryCondition(
-      ctx, make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
+      ctx, mfem_mgis::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
                ctx, problem.getFiniteElementDiscretizationPointer(), 2, 1,
                [](const auto t) {
                  const auto u = 6e-3 * t;
@@ -115,6 +156,11 @@ int main(int argc, char** argv) {
 
   // solving the problem without petsc
   if (!mfem_mgis::usePETSc()) {
+    // the default prediction concentrates the increment of the imposed
+    // displacement in the elements next to the upper boundary
+    problem.setPredictionPolicy(
+        {.strategy =
+             mfem_mgis::PredictionStrategy::BEGINNING_OF_TIME_STEP_PREDICTION});
     problem.setSolverParameters(ctx, {{"VerbosityLevel", 2},
                                       {"RelativeTolerance", 1e-6},
                                       {"AbsoluteTolerance", 0.},
@@ -134,12 +180,12 @@ int main(int argc, char** argv) {
       or_die;
   problem.addPostProcessing(
       ctx, "ComputeResultantForceOnBoundary",
-      {{"Boundary", 2}, {"OutputFileName", "force.txt"}}) |
+      {{"Boundary", 2}, {"OutputFileName", output_file}}) |
       or_die;
 
   // loop over time step
-  const auto nsteps = mfem_mgis::size_type{2};
-  const auto dt = mfem_mgis::real{0.001};
+  const auto nsteps = mfem_mgis::size_type(nbsteps);
+  const auto dt = end_time / nsteps;
   auto t = mfem_mgis::real{0};
   auto iteration = mfem_mgis::size_type{};
   for (mfem_mgis::size_type i = 0; i != nsteps; ++i) {
@@ -166,13 +212,28 @@ int main(int argc, char** argv) {
         ++niter;
         problem.revert(ctx) | or_die;
         if (niter == 10) {
-          mgis::abort("maximum number of substeps");
+          mfem_mgis::abort("maximum number of substeps");
         }
       }
     }
     t += dt;
     ++iteration;
     std::cout << '\n';
+  }
+  // comparison to the reference values, only on the process writing the
+  // resultant force. The tolerance is above the rounding of the forces, which
+  // are written with 6 significant digits. It is larger for the reference
+  // values computed without FBar, which are only close to the results with
+  // FBar.
+  if (mfem_mgis::isMainProcess(problem.getFiniteElementDiscretization())) {
+    if ((!std::string_view{reference_file}.empty()) &&
+        (!checkVerticalForce(output_file, reference_file, 1e-4))) {
+      return EXIT_FAILURE;
+    }
+    if ((!std::string_view{standard_reference_file}.empty()) &&
+        (!checkVerticalForce(output_file, standard_reference_file, 1e-3))) {
+      return EXIT_FAILURE;
+    }
   }
   // mfem_mgis::Profiler::OutputManager::printTimeTable(ctx);
   return EXIT_SUCCESS;

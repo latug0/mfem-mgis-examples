@@ -1,5 +1,5 @@
 @DSL DefaultDSL;
-@Behaviour Plasticity;
+@Behaviour IsotropicLinearHardeningPlasticity;
 @Author Thomas Helfer;
 @Date 14 / 12 / 2020;
 @Description {
@@ -13,7 +13,7 @@
   "\]"
 }
 
-//@StrainMeasure Hencky;
+@StrainMeasure Hencky;
 @StateVariable StrainStensor eel;
 eel.setGlossaryName("ElasticStrain");
 @StateVariable strain p;
