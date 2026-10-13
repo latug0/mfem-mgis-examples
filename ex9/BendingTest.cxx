@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
   thirdmedium_utils::TestParameters p;
   p.mesh_file = "bending.msh";
   mfem::OptionsParser args = parse_options(p, argc, argv);
-  if (mfem_mgis::getMPIrank() == 0) {
+  if (mfem_mgis::isMPIMainProcessForDefaultCommunicator()) {
     args.PrintOptions(std::cout);
     std::cout << "Parallel : " << p.parallel << '\n';
   }
@@ -187,7 +187,7 @@ int main(int argc, char **argv) {
       thirdmedium_utils::set_preconditioner_parameters(p);
 
   // Print out TestParameters once the solver has been selectioned
-  if (mfem_mgis::getMPIrank() == 0) std::cout << p << '\n';
+  if (mfem_mgis::isMPIMainProcessForDefaultCommunicator()) std::cout << p << '\n';
 
   // selection of the linear solver
   if constexpr (parallel) {
@@ -266,9 +266,10 @@ int main(int argc, char **argv) {
     exporter->RegisterField("CauchyStress", nodal_stress->result.get());
     exporter->RegisterField("vonMisesStress", nodal_vmises->result.get());
     mechanics.addPostProcessing(
-        ctx, [&ctx, &or_die, &mechanics, exporter, vmises, stress, nodal_vmises,
-              nodal_stress, count = 0](const mfem_mgis::real t,
-                                       const mfem_mgis::real dt) mutable {
+        ctx,
+        [&ctx, &or_die, &mechanics, exporter, vmises, stress, nodal_vmises,
+         nodal_stress,
+         count = 0](const mfem_mgis::real t, const mfem_mgis::real dt) mutable {
           exporter->SetCycle(count++);
           exporter->SetTime(t + dt);
           const auto &m = mechanics.getMaterial(ctx, "POUTRE", 0) | or_die;
@@ -282,10 +283,15 @@ int main(int argc, char **argv) {
           auto &fespace = mechanics.getFiniteElementDiscretization()
                               .getFiniteElementSpace<parallel>();
           auto linear_solver = lsf.generate(ctx, "MUMPSSolver", fespace, {}) | or_die;
-          mfem_mgis::updateL2Projection(ctx, *nodal_stress, linear_solver, {*stress});
-          mfem_mgis::updateL2Projection(ctx, *nodal_vmises, linear_solver, {*vmises});
+          mfem_mgis::updateL2Projection(ctx, *nodal_stress, linear_solver,
+                                        {*stress}) |
+              or_die;
+          mfem_mgis::updateL2Projection(ctx, *nodal_vmises, linear_solver,
+                                        {*vmises}) |
+              or_die;
           exporter->Save();
-        });
+        }) |
+        or_die;
   }
 
   std::vector<std::string> materials = {"VOID1", "VOID2"};
@@ -295,7 +301,7 @@ int main(int argc, char **argv) {
 
   auto [exit_status, sim_output] =
       thirdmedium_utils::run_solve(ctx, mechanics, 0, te, nsteps);
-  if (mfem_mgis::getMPIrank() == 0) {
+  if (mfem_mgis::isMPIMainProcessForDefaultCommunicator()) {
     std::cout << "Exit status : "
               << (exit_status == mfem_mgis::ExitStatus::success ? "Success\n"
                                                                 : "Failed\n");

@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
     constexpr bool parallel = false;
   #endif
 
-  if (mfem_mgis::getMPIrank() == 0) {
+  if (mfem_mgis::isMPIMainProcessForDefaultCommunicator()) {
     args.PrintOptions(std::cout);
   }
 
@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
 
   auto [exit_status, sim_output] = thirdmedium_utils::run_solve(ctx, mechanics, 0, te, nsteps);
 
-  if (mfem_mgis::getMPIrank() == 0) {
+  if (mfem_mgis::isMPIMainProcessForDefaultCommunicator()) {
     std::cout << "Exit status : " << (exit_status == mfem_mgis::ExitStatus::success ? "Success\n" : "Failed\n");
     if (sim_output.has_value()) {
         thirdmedium_utils::check_and_save_convergence_info(sim_output.value(), exit_status);

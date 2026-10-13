@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
   tolerance = 1e-12; auto gamma = 1e-11;
   */
 
-  if (mfem_mgis::getMPIrank() == 0) {
+  if (mfem_mgis::isMPIMainProcessForDefaultCommunicator()) {
     args.PrintOptions(std::cout);
     std::cout << "Parallel : " << parallel << '\n';
   }
@@ -180,7 +180,7 @@ int main(int argc, char **argv) {
       thirdmedium_utils::set_preconditioner_parameters(p);
 
   // Print out TestParameters once the solver has been selectioned
-  if (mfem_mgis::getMPIrank() == 0) std::cout << p << '\n';
+  if (mfem_mgis::isMPIMainProcessForDefaultCommunicator()) std::cout << p << '\n';
 
   // selection of the linear solver
   if constexpr (parallel) {
@@ -208,7 +208,7 @@ int main(int argc, char **argv) {
 
   auto [exit_status, sim_output] =
       thirdmedium_utils::run_solve(ctx, mechanics, 0, te, nsteps);
-  if (mfem_mgis::getMPIrank() == 0) {
+  if (mfem_mgis::isMPIMainProcessForDefaultCommunicator()) {
     std::cout << "Exit status : "
               << (exit_status == mfem_mgis::ExitStatus::success ? "Success\n"
                                                                 : "Failed\n");

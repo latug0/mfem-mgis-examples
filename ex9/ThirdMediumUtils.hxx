@@ -99,7 +99,7 @@ namespace thirdmedium_utils {
     int64_t unknowns_local = fespace.GetTrueVSize();
     int64_t unknowns = sum(unknowns_local);
 
-    if (mfem_mgis::getMPIrank() == 0) {
+    if (mfem_mgis::isMPIMainProcessForDefaultCommunicator()) {
       std::ofstream file(output_dir + "unknowns.status");
       file << unknowns;
       file.close();
