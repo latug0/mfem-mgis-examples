@@ -32,7 +32,7 @@ static void forEachIntegrationPoint(
   const auto& fed = s.getFiniteElementDiscretization();
   const auto& fespace = fed.getFiniteElementSpace<parallel>();
   const auto l = s.getLocation();
-  if(isInvalid(l.material_identifier)){
+  if (isInvalid(l.material_identifier)) {
     mfem_mgis::abort("invalid partial quadrature space");
   }
   const auto m = l.material_identifier->id;
@@ -190,8 +190,7 @@ int main(int argc, char** argv) {
       problem.addBoundaryCondition(
           ctx,
           mfem_mgis::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
-              ctx, problem.getFiniteElementDiscretizationPointer(), boundary,
-              dof) |
+              ctx, problem.getFiniteElementDiscretization(), boundary, dof) |
               or_die) |
           or_die;
     }

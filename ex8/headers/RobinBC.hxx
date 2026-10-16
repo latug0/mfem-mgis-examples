@@ -75,7 +75,7 @@ namespace mfem_mgis {
      * \param[in] T_inf: ambient temperature
      * \param[in] u_disp: optional displacement field
      */
-    RobinBC(std::shared_ptr<mfem_mgis::FiniteElementDiscretization> fed,
+    RobinBC(const mfem_mgis::FiniteElementDiscretization& fed,
             int tag,
             double h,
             double T_inf,

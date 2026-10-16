@@ -71,7 +71,7 @@ int main(int argc, char** argv) {
     mesh.GetBdrElement(i)->SetAttribute(b);
   }
   mesh.SetAttributes();
-  auto fed = mfem_mgis::make_shared<mfem_mgis::FiniteElementDiscretization>(
+  auto fed = mfem_mgis::construct<mfem_mgis::FiniteElementDiscretization>(
                  ctx, std::make_shared<mfem::ParMesh>(MPI_COMM_WORLD, mesh),
                  mfem_mgis::Parameters{{"FiniteElementFamily", "H1"},
                                        {"FiniteElementOrder", order},

@@ -128,25 +128,25 @@ int main(int argc, char** argv) {
   // 3 LowerBoundary
   problem.addBoundaryCondition(
       ctx, mfem_mgis::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
-               ctx, problem.getFiniteElementDiscretizationPointer(), 3, 1) |
+               ctx, problem.getFiniteElementDiscretization(), 3, 1) |
                or_die) |
       or_die;
   // 4 SymmetryPlane1
   problem.addBoundaryCondition(
       ctx, mfem_mgis::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
-               ctx, problem.getFiniteElementDiscretizationPointer(), 4, 0) |
+               ctx, problem.getFiniteElementDiscretization(), 4, 0) |
                or_die) |
       or_die;
   // 5 SymmetryPlane2
   problem.addBoundaryCondition(
       ctx, mfem_mgis::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
-               ctx, problem.getFiniteElementDiscretizationPointer(), 5, 2) |
+               ctx, problem.getFiniteElementDiscretization(), 5, 2) |
                or_die) |
       or_die;
   // 2 UpperBoundary
   problem.addBoundaryCondition(
       ctx, mfem_mgis::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
-               ctx, problem.getFiniteElementDiscretizationPointer(), 2, 1,
+               ctx, problem.getFiniteElementDiscretization(), 2, 1,
                [](const auto t) {
                  const auto u = 6e-3 * t;
                  return u;
