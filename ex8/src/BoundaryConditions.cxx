@@ -17,7 +17,7 @@ void apply_boundary_conditions(
     mechanics.addBoundaryCondition(
         ctx,
         mfem_mgis::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
-            ctx, mechanics.getFiniteElementDiscretizationPointer(), 9, j,
+            ctx, mechanics.getFiniteElementDiscretization(), 9, j,
             [](const auto) noexcept { return 0.0; }) |
             or_die) |
         or_die;
@@ -25,7 +25,7 @@ void apply_boundary_conditions(
     mechanics.addBoundaryCondition(
         ctx,
         mfem_mgis::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
-            ctx, mechanics.getFiniteElementDiscretizationPointer(), 10, j,
+            ctx, mechanics.getFiniteElementDiscretization(), 10, j,
             [](const auto) noexcept { return 0.0; }) |
             or_die) |
         or_die;
@@ -33,7 +33,7 @@ void apply_boundary_conditions(
 
   mechanics.addBoundaryCondition(
       ctx, mfem_mgis::make_unique<mfem_mgis::UniformDirichletBoundaryCondition>(
-               ctx, mechanics.getFiniteElementDiscretizationPointer(), 9, 2,
+               ctx, mechanics.getFiniteElementDiscretization(), 9, 2,
                [](const auto) noexcept { return 0.0; }) |
                or_die) |
       or_die;
@@ -41,18 +41,17 @@ void apply_boundary_conditions(
   for (const int surface_id : {5, 7, 8}) {
     // Apply the coolant pressure.
     mechanics.addBoundaryCondition(
-        ctx,
-        mfem_mgis::make_unique<
-            mfem_mgis::UniformImposedPressureBoundaryCondition>(
-            ctx, mechanics.getFiniteElementDiscretizationPointer(), surface_id,
-            [p](const auto) noexcept { return p.water_pressure; }) |
-            or_die) |
+        ctx, mfem_mgis::make_unique<
+                 mfem_mgis::UniformImposedPressureBoundaryCondition>(
+                 ctx, mechanics.getFiniteElementDiscretization(), surface_id,
+                 [p](const auto) noexcept { return p.water_pressure; }) |
+                 or_die) |
         or_die;
 
     // Convective heat transfer at the coolant interface.
     heat_transfer.addBoundaryCondition(
         ctx, mfem_mgis::make_unique<mfem_mgis::RobinBC>(
-                 ctx, heat_transfer.getFiniteElementDiscretizationPointer(),
+                 ctx, heat_transfer.getFiniteElementDiscretization(),
                  surface_id, p.h_conv, p.Te, u_mech) |
                  or_die) |
         or_die;
@@ -62,7 +61,7 @@ void apply_boundary_conditions(
   heat_transfer.addBoundaryCondition(
       ctx,
       mfem_mgis::make_unique<mfem_mgis::UniformHeatSourceBoundaryCondition>(
-          ctx, heat_transfer.getFiniteElementDiscretizationPointer(), 1,
+          ctx, heat_transfer.getFiniteElementDiscretization(), 1,
           [power_history](const auto t) { return power_history(t); }) |
           or_die) |
       or_die;

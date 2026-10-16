@@ -86,7 +86,7 @@ namespace mfem_mgis {
     }
   }  // end of AssembleFaceGrad
 
-  RobinBC::RobinBC(std::shared_ptr<mfem_mgis::FiniteElementDiscretization> fed,
+  RobinBC::RobinBC(const mfem_mgis::FiniteElementDiscretization& fed,
                    int tag,
                    double h,
                    double T_inf,
@@ -94,9 +94,9 @@ namespace mfem_mgis {
       : nfi(new RobinNonlinearFormIntegrator(h, T_inf, u_disp)) {
     int local_max = 0;
 
-    if (fed->describesAParallelComputation()) {
+    if (fed.describesAParallelComputation()) {
 #ifdef MFEM_USE_MPI
-      auto &fes = fed->getFiniteElementSpace<true>();
+      auto &fes = fed.getFiniteElementSpace<true>();
       auto *mesh = fes.GetMesh();
       local_max =
           (mesh->bdr_attributes.Size() > 0) ? mesh->bdr_attributes.Max() : 0;
@@ -104,7 +104,7 @@ namespace mfem_mgis {
       mfem_mgis::raise("RobinBC: unsupported parallel computations");
 #endif
     } else {
-      auto &fes = fed->getFiniteElementSpace<false>();
+      auto &fes = fed.getFiniteElementSpace<false>();
       auto *mesh = fes.GetMesh();
       local_max =
           (mesh->bdr_attributes.Size() > 0) ? mesh->bdr_attributes.Max() : 0;

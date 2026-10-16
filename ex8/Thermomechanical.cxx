@@ -157,8 +157,8 @@ int main(int argc, char* argv[]) {
   print_mesh_information(mechanics.getImplementation<true>());
   print_memory_footprint("After_problem_creation:");
 
-  auto mechanics_fed = mechanics.getFiniteElementDiscretizationPointer();
-  mfem::ParGridFunction u_mech(&mechanics_fed->getFiniteElementSpace<true>());
+  auto mechanics_fed = mechanics.getFiniteElementDiscretization();
+  mfem::ParGridFunction u_mech(&mechanics_fed.getFiniteElementSpace<true>());
   u_mech = 0.0;
 
   const auto setup = setup_properties(mfem_mgis::may_abort, ctx, p,
