@@ -177,7 +177,7 @@ int main(int argc, char** argv) {
   mgis::behaviour::setExternalStateVariable(ctx, m1.s0, "Temperature", 293.15) |
       or_die;
   auto Tg = mfem_mgis::PartialQuadratureFunction::evaluate(
-      m1.getPartialQuadratureSpacePointer(),
+      m1.getPartialQuadratureSpace(),
       [](const mfem_mgis::real x, const mfem_mgis::real) {
         return getTemperature(x);
       });

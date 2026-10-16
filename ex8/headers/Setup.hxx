@@ -169,7 +169,7 @@ inline SetupPropertiesResult setup_properties(
     if (mat_id == 1) {
       auto sw_model =
           mfem_mgis::make_shared<mfem_mgis::PointWiseModel>(
-              ctx, m_mc.getPartialQuadratureSpacePointer(),
+              ctx, m_mc.getPartialQuadratureSpace(),
               mfem_mgis::Parameters{{"Library", p.libraryU3SI2},
                                     {"Model", "U3SI2_SolidSwelling"},
                                     {"Hypothesis", "Tridimensional"}}) |
