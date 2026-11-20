@@ -3,7 +3,9 @@
 # Author: M. Josien
 # Date: 27/09/2021
 #
-# Copyright : see License.txt
+# Adapted from the examples of Mérope.
+# Copyright : see the licence of Mérope,
+# https://github.com/MarcJos/Merope/blob/main/Licence.txt
 #
 # Build a .geo file to be meshed by gmsh
 # The geometry is made of spheres
